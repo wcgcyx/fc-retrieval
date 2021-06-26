@@ -1,23 +1,31 @@
 package fcrregistermgr
 
+import "github.com/wcgcyx/fc-retrieval/common/pkg/register"
+
 type FCRRegisterMgr interface {
-	RegisterGateway(gwInfo GatewayRegisteredInfo) error
+	GetHeight() (uint64, error)
 
-	RegisterProvider(pvdInfo ProviderRegisteredInfo) error
+	RegisterGateway(id string, gwInfo *register.GatewayRegisteredInfo) error
 
-	// TODO: Paging
-	GetAllRegisteredGateway() ([]GatewayRegisteredInfo, error)
+	UpdateGateway(id string, gwInfo *register.GatewayRegisteredInfo) error
 
-	// TODO: Paging
-	GetAllRegisteredProvider() ([]ProviderRegisteredInfo, error)
+	DeregisterGateway(id string) error
 
-	GetRegisteredGatewayByID(id string) (GatewayRegisteredInfo, error)
+	RegisterProvider(id string, pvdInfo *register.ProviderRegisteredInfo) error
 
-	GetRegisteredProviderByID(id string) (ProviderRegisteredInfo, error)
+	UpdateProvider(id string, gwInfo *register.ProviderRegisteredInfo) error
 
-	// TODO: Paging
-	GetRegisteredGatewaysByRegion(region string) ([]GatewayRegisteredInfo, error)
+	DeregisterProvider(id string) error
 
-	// TODO: Paging
-	GetRegisteredProvidersByRegion(region string) ([]ProviderRegisteredInfo, error)
+	GetAllRegisteredGateway(height uint64, page uint64) ([]register.GatewayRegisteredInfo, error)
+
+	GetAllRegisteredProvider(height uint64, page uint64) ([]register.ProviderRegisteredInfo, error)
+
+	GetRegisteredGatewayByID(id string) (*register.GatewayRegisteredInfo, error)
+
+	GetRegisteredProviderByID(id string) (*register.ProviderRegisteredInfo, error)
+
+	GetRegisteredGatewaysByRegion(height uint64, region string, page uint64) ([]register.GatewayRegisteredInfo, error)
+
+	GetRegisteredProvidersByRegion(height uint64, region string, page uint64) ([]register.ProviderRegisteredInfo, error)
 }
