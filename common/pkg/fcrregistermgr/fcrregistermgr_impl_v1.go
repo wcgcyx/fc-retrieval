@@ -28,6 +28,10 @@ func (mgr *FCRRegisterMgrImplV1) UpdateGateway(id string, gwInfo *register.Gatew
 	return nil
 }
 
+func (mgr *FCRRegisterMgrImplV1) RequestDeregisterGateway(id string) error {
+	return nil
+}
+
 func (mgr *FCRRegisterMgrImplV1) DeregisterGateway(id string) error {
 	return nil
 }
@@ -37,6 +41,10 @@ func (mgr *FCRRegisterMgrImplV1) RegisterProvider(id string, pvdInfo *register.P
 }
 
 func (mgr *FCRRegisterMgrImplV1) UpdateProvider(id string, gwInfo *register.ProviderRegisteredInfo) error {
+	return nil
+}
+
+func (mgr *FCRRegisterMgrImplV1) RequestDeregisterProvider(id string) error {
 	return nil
 }
 

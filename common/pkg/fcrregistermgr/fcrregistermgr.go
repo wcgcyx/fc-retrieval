@@ -9,11 +9,15 @@ type FCRRegisterMgr interface {
 
 	UpdateGateway(id string, gwInfo *register.GatewayRegisteredInfo) error
 
+	RequestDeregisterGateway(id string) error
+
 	DeregisterGateway(id string) error
 
 	RegisterProvider(id string, pvdInfo *register.ProviderRegisteredInfo) error
 
-	UpdateProvider(id string, gwInfo *register.ProviderRegisteredInfo) error
+	UpdateProvider(id string, pvdInfo *register.ProviderRegisteredInfo) error
+
+	RequestDeregisterProvider(id string) error
 
 	DeregisterProvider(id string) error
 
