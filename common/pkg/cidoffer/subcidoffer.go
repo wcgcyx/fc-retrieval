@@ -153,10 +153,10 @@ func (c *SubCIDOffer) VerifyMerkleProof() error {
 	return errors.New("Offer does not pass merkle proof verification")
 }
 
-// MarshalJSON is used to marshal offer into bytes.
-func (c SubCIDOffer) MarshalJSON() ([]byte, error) {
+// ToBytes is used to turn offer into bytes.
+func (c *SubCIDOffer) ToBytes() ([]byte, error) {
 	// Merkle proof to string
-	proofData, err := c.merkleProof.MarshalJSON()
+	proofData, err := c.merkleProof.ToBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -173,8 +173,8 @@ func (c SubCIDOffer) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// UnmarshalJSON is used to unmarshal bytes into offer.
-func (c *SubCIDOffer) UnmarshalJSON(p []byte) error {
+// FromBytes is used to turn bytes into offer.
+func (c *SubCIDOffer) FromBytes(p []byte) error {
 	cJson := subCIDOfferJson{}
 	err := json.Unmarshal(p, &cJson)
 	if err != nil {
@@ -191,7 +191,7 @@ func (c *SubCIDOffer) UnmarshalJSON(p []byte) error {
 		return err
 	}
 	c.merkleProof = &fcrmerkletree.FCRMerkleProof{}
-	err = json.Unmarshal(proofData, c.merkleProof)
+	err = c.merkleProof.FromBytes(proofData)
 	if err != nil {
 		return err
 	}

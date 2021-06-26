@@ -88,18 +88,31 @@ func NewRandomContentID() *ContentID {
 	return &ContentID{id.String()}
 }
 
+// GetHashID gets a 32 bytes hash of this cid string
+func (n *ContentID) GetHashID() ([32]byte, error) {
+	var res [32]byte
+	temp, err := n.CalculateHash()
+	if err != nil || len(temp) != 32 {
+		return res, err
+	}
+	for i := 0; i < 32; i++ {
+		res[i] = temp[i]
+	}
+	return res, nil
+}
+
 // ToString returns a string for the ContentID.
 func (n *ContentID) ToString() string {
 	return n.id
 }
 
-// MarshalJSON is used to marshal CID into bytes.
-func (n ContentID) MarshalJSON() ([]byte, error) {
+// ToBytes is used to turn CID into bytes.
+func (n *ContentID) ToBytes() ([]byte, error) {
 	return json.Marshal(n.id)
 }
 
-// UnmarshalJSON is used to unmarshal bytes into ContentID.
-func (n *ContentID) UnmarshalJSON(p []byte) error {
+// FromBytes is used to turn bytes into ContentID.
+func (n *ContentID) FromBytes(p []byte) error {
 	return json.Unmarshal(p, &n.id)
 }
 

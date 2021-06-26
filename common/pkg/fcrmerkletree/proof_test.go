@@ -95,7 +95,7 @@ func TestCreateMerkleProofOneElement(t *testing.T) {
 	assert.True(t, proof.VerifyContent(cid1, tree.GetMerkleRoot()))
 }
 
-func TestJSON(t *testing.T) {
+func TestSerialization(t *testing.T) {
 	cid1, err := cid.NewContentID(Cid1Str)
 	assert.Empty(t, err)
 	cid2, err := cid.NewContentID(Cid2Str)
@@ -114,7 +114,7 @@ func TestJSON(t *testing.T) {
 	assert.Empty(t, err)
 	assert.NotEmpty(t, proof)
 
-	p, err := proof.MarshalJSON()
+	p, err := proof.ToBytes()
 	assert.Empty(t, err)
 	assert.Equal(t, []byte{0x22, 0x41, 0x41, 0x41, 0x41, 0x6a,
 		0x6c, 0x73, 0x69, 0x52, 0x6c, 0x63, 0x76, 0x56, 0x48,
@@ -142,13 +142,13 @@ func TestJSON(t *testing.T) {
 		0x73, 0x4d, 0x53, 0x77, 0x78, 0x58, 0x51, 0x3d, 0x3d,
 		0x22}, p)
 	proof2 := FCRMerkleProof{}
-	err = proof2.UnmarshalJSON(p)
+	err = proof2.FromBytes(p)
 	assert.Empty(t, err)
 	assert.Equal(t, proof.index, proof2.index)
 	assert.Equal(t, proof.path, proof2.path)
 }
 
-func TestJSONError(t *testing.T) {
+func TestSerializationError(t *testing.T) {
 	p := []byte{0x22, 0x41, 0x41, 0x41, 0x41, 0x6a,
 		0x6c, 0x73, 0x69, 0x52, 0x6c, 0x63, 0x76, 0x56, 0x48,
 		0x63, 0x33, 0x55, 0x6c, 0x6c, 0x71, 0x5a, 0x45, 0x63,
@@ -175,23 +175,23 @@ func TestJSONError(t *testing.T) {
 		0x73, 0x4d, 0x53, 0x77, 0x78, 0x58, 0x51, 0x3d, 0x3d,
 		0x22}
 	proof := FCRMerkleProof{}
-	err := proof.UnmarshalJSON(p)
+	err := proof.FromBytes(p)
 	assert.Empty(t, err)
 	p[0] = 0
-	err = proof.UnmarshalJSON(p)
+	err = proof.FromBytes(p)
 	assert.NotEmpty(t, err)
 
 	p, err = json.Marshal([]byte{0x22, 0x41})
 	assert.Empty(t, err)
 	proof = FCRMerkleProof{}
-	err = proof.UnmarshalJSON(p)
+	err = proof.FromBytes(p)
 	assert.NotEmpty(t, err)
 
 	p, err = json.Marshal([]byte{0x00, 0x00, 0x00, 0x01, 0x00})
-	err = proof.UnmarshalJSON(p)
+	err = proof.FromBytes(p)
 	assert.NotEmpty(t, err)
 
 	p, err = json.Marshal([]byte{0x00, 0x00, 0x00, 0x01, 0x00, 0x01})
-	err = proof.UnmarshalJSON(p)
+	err = proof.FromBytes(p)
 	assert.NotEmpty(t, err)
 }

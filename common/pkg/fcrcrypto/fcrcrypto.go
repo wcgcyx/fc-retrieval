@@ -44,12 +44,12 @@ func GenerateRetrievalKeyPair() (string, string, string, error) {
 
 // Sign signs given bytes using given private key and given version,
 // returns the signature in bytes and error.
-func Sign(privKeyStr string, ver byte, msg []byte) (string, error) {
+func Sign(privKeyStr string, ver byte, data []byte) (string, error) {
 	privKey, err := hex.DecodeString(privKeyStr)
 	if err != nil {
 		return "", err
 	}
-	b2sum := blake2b.Sum256(msg)
+	b2sum := blake2b.Sum256(data)
 	sig, err := crypto.Sign(privKey, b2sum[:])
 	if err != nil {
 		return "", err
@@ -60,7 +60,7 @@ func Sign(privKeyStr string, ver byte, msg []byte) (string, error) {
 
 // Verify verifies the given msg and its signature against the public key and key version,
 // returns error.
-func Verify(pubKeyStr string, ver byte, sigStr string, msg []byte) error {
+func Verify(pubKeyStr string, ver byte, sigStr string, data []byte) error {
 	pubKey, err := hex.DecodeString(pubKeyStr)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func Verify(pubKeyStr string, ver byte, sigStr string, msg []byte) error {
 		return errors.New("Key version mismatch")
 	}
 	sig = sig[1:]
-	b2sum := blake2b.Sum256(msg)
+	b2sum := blake2b.Sum256(data)
 	pubk, err := crypto.EcRecover(b2sum[:], sig)
 	if err != nil {
 		return err

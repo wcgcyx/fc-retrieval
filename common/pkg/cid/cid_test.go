@@ -67,13 +67,13 @@ func TestRandomContentID(t *testing.T) {
 	assert.NotEmpty(t, id)
 }
 
-func TestJSON(t *testing.T) {
+func TestSerialization(t *testing.T) {
 	cid1, err := NewContentID("QmX5Rg8t9zh26JcaTk7VnDXqv5SHH2bT6AfeoTFLSsp4dK")
 	assert.Empty(t, err)
-	p, err := cid1.MarshalJSON()
+	p, err := cid1.ToBytes()
 	assert.Empty(t, err)
 	cid2 := ContentID{}
-	err = cid2.UnmarshalJSON(p)
+	err = cid2.FromBytes(p)
 	assert.Empty(t, err)
 	assert.Equal(t, cid1.ToString(), cid2.ToString())
 }

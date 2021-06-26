@@ -205,8 +205,8 @@ func (c *CIDOffer) GetMessageDigest() [32]byte {
 	return sha512.Sum512_256(b)
 }
 
-// MarshalJSON is used to marshal offer into bytes.
-func (c CIDOffer) MarshalJSON() ([]byte, error) {
+// ToBytes is used to turn offer into bytes.
+func (c *CIDOffer) ToBytes() ([]byte, error) {
 	cidStrs := make([]string, 0)
 	for _, id := range c.cids {
 		cidStrs = append(cidStrs, id.ToString())
@@ -222,8 +222,8 @@ func (c CIDOffer) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// UnmarshalJSON is used to unmarshal bytes into offer.
-func (c *CIDOffer) UnmarshalJSON(p []byte) error {
+// FromBytes is used to turn bytes into offer.
+func (c *CIDOffer) FromBytes(p []byte) error {
 	cJson := cidOfferJson{}
 	err := json.Unmarshal(p, &cJson)
 	if err != nil {

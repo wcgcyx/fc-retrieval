@@ -49,8 +49,8 @@ func (mp *FCRMerkleProof) VerifyContent(content merkletree.Content, root string)
 	return hex.EncodeToString(currentHash) == root
 }
 
-// MarshalJSON is used to marshal FCRMerkleProof into bytes.
-func (mp FCRMerkleProof) MarshalJSON() ([]byte, error) {
+// ToBytes is used to turn FCRMerkleProof into bytes.
+func (mp *FCRMerkleProof) ToBytes() ([]byte, error) {
 	// Encode path
 	pathBytes, err := json.Marshal(mp.path)
 	if err != nil {
@@ -75,8 +75,8 @@ func (mp FCRMerkleProof) MarshalJSON() ([]byte, error) {
 	return json.Marshal(res)
 }
 
-// UnmarshalJSON is used to unmarshal bytes into FCRMerkleProof.
-func (mp *FCRMerkleProof) UnmarshalJSON(p []byte) error {
+// FromBytes is used to turn bytes into FCRMerkleProof.
+func (mp *FCRMerkleProof) FromBytes(p []byte) error {
 	var current []byte
 	err := json.Unmarshal(p, &current)
 	if err != nil {

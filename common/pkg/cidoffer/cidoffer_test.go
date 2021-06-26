@@ -164,7 +164,7 @@ func TestDigest(t *testing.T) {
 		0x58, 0x81, 0x82}, offer.GetMessageDigest())
 }
 
-func TestJSON(t *testing.T) {
+func TestSerialization(t *testing.T) {
 	aCid, err := cid.NewContentID(Cid1Str)
 	assert.Empty(t, err)
 	cids := []cid.ContentID{*aCid}
@@ -173,7 +173,7 @@ func TestJSON(t *testing.T) {
 	qos := uint64(5)
 	offer, err := NewCIDOffer("testprovider", cids, price, expiry, qos)
 	assert.Empty(t, err)
-	p, err := offer.MarshalJSON()
+	p, err := offer.ToBytes()
 	assert.Empty(t, err)
 	assert.Equal(t, []byte{0x7b, 0x22, 0x70, 0x72, 0x6f,
 		0x76, 0x69, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64,
@@ -196,7 +196,7 @@ func TestJSON(t *testing.T) {
 		0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65,
 		0x22, 0x3a, 0x22, 0x22, 0x7d}, p)
 	offer2 := CIDOffer{}
-	err = offer2.UnmarshalJSON(p)
+	err = offer2.FromBytes(p)
 	assert.Empty(t, err)
 	assert.Equal(t, offer.GetProviderID(), offer2.GetProviderID())
 	assert.Equal(t, offer.GetCIDs(), offer2.GetCIDs())
@@ -205,6 +205,6 @@ func TestJSON(t *testing.T) {
 	assert.Equal(t, offer.GetQoS(), offer2.GetQoS())
 	assert.Equal(t, offer.GetSignature(), offer2.GetSignature())
 	assert.Equal(t, offer.merkleRoot, offer2.merkleRoot)
-	err = offer2.UnmarshalJSON([]byte{})
+	err = offer2.FromBytes([]byte{})
 	assert.NotEmpty(t, err)
 }

@@ -36,7 +36,7 @@ func TestNewSubCIDOfferWithGet(t *testing.T) {
 	assert.Equal(t, expiry, subOffer.GetExpiry())
 	assert.Equal(t, qos, subOffer.GetQoS())
 	assert.Equal(t, offer.GetSignature(), subOffer.GetSignature())
-	p, err := subOffer.GetMerkleProof().MarshalJSON()
+	p, err := subOffer.GetMerkleProof().ToBytes()
 	assert.Empty(t, err)
 	assert.Equal(t, []byte{0x22, 0x41, 0x41, 0x41, 0x41, 0x58,
 		0x31, 0x73, 0x69, 0x52, 0x6c, 0x63, 0x76, 0x56, 0x48,
@@ -115,7 +115,7 @@ func TestSubOfferVerify(t *testing.T) {
 	assert.NotEmpty(t, subOffer.VerifyMerkleProof())
 }
 
-func TestJSONSubOffer(t *testing.T) {
+func TestSerializationSubOffer(t *testing.T) {
 	aCid1, err := cid.NewContentID(Cid1Str)
 	assert.Empty(t, err)
 	assert.NotEmpty(t, aCid1)
@@ -134,7 +134,7 @@ func TestJSONSubOffer(t *testing.T) {
 	subOffer, err := offer.GenerateSubCIDOffer(aCid1)
 	assert.Empty(t, err)
 	assert.NotEmpty(t, subOffer)
-	p, err := subOffer.MarshalJSON()
+	p, err := subOffer.ToBytes()
 	assert.Empty(t, err)
 	assert.Equal(t, []byte{0x7b, 0x22, 0x70, 0x72, 0x6f, 0x76,
 		0x69, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x22, 0x3a,
@@ -199,7 +199,7 @@ func TestJSONSubOffer(t *testing.T) {
 		0x61, 0x74, 0x75, 0x72, 0x65, 0x22, 0x3a, 0x22, 0x22,
 		0x7d}, p)
 	subOffer2 := SubCIDOffer{}
-	err = subOffer2.UnmarshalJSON(p)
+	err = subOffer2.FromBytes(p)
 	assert.Empty(t, err)
 	assert.Equal(t, subOffer.providerID, subOffer2.providerID)
 	assert.Equal(t, subOffer.subCID, subOffer2.subCID)
@@ -208,11 +208,11 @@ func TestJSONSubOffer(t *testing.T) {
 	assert.Equal(t, subOffer.expiry, subOffer2.expiry)
 	assert.Equal(t, subOffer.qos, subOffer2.qos)
 	assert.Equal(t, subOffer.signature, subOffer2.signature)
-	p1, err := subOffer.merkleProof.MarshalJSON()
+	p1, err := subOffer.merkleProof.ToBytes()
 	assert.Empty(t, err)
-	p2, err := subOffer2.merkleProof.MarshalJSON()
+	p2, err := subOffer2.merkleProof.ToBytes()
 	assert.Empty(t, err)
 	assert.Equal(t, p1, p2)
-	err = subOffer2.UnmarshalJSON([]byte{})
+	err = subOffer2.FromBytes([]byte{})
 	assert.NotEmpty(t, err)
 }
