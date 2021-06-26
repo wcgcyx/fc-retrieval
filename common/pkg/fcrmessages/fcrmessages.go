@@ -6,7 +6,7 @@ type FCRMessage interface {
 	GetProtocolSupported() int32
 	GetMessageBody() []byte
 	GetSignature() string
-	Sign(privKey string, keyVer byte) error
+	Sign(prvKey string, keyVer byte) error
 	Verify(pubKey string, keyVer byte) error
 
 	ToBytes() ([]byte, error)

@@ -34,7 +34,7 @@ const (
 	Cid1Str     = "baga6ea4seaqo3bt5lts3745ejrq3sh5jarauuwjn4vlsnc7f63fuxcq3psio2hq"
 	Cid2Str     = "QmekfhK273inQzFqx14G1oK2iY2jkuM1q71bjFA47ZieYt"
 	Cid3Str     = "mAXCg5AIgxeF8+e09cmz4EVe5eJ9a5hczOe0h+FyAO5Xd5g1dS+E"
-	PrivKey     = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
+	PrvKey      = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
 	PubKey      = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
 	PubKeyWrong = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62a"
 )
@@ -131,7 +131,7 @@ func TestSigning(t *testing.T) {
 
 	// Generate private key
 	assert.Empty(t, err)
-	err = offer.Sign(PrivKey)
+	err = offer.Sign(PrvKey)
 	assert.Empty(t, err)
 	assert.Equal(t, "00344497164a52734bb28ef7cb9ce8279ef5018340df53254de26c207d5408aa9f55507e012d235e8f3fc66dcb7603329fbba4d3a5ebdc0465a1a77c314f5becb201", offer.GetSignature())
 
@@ -155,7 +155,7 @@ func TestDigest(t *testing.T) {
 	qos := uint64(5)
 	offer, err := NewCIDOffer("testprovider", cids, price, expiry, qos)
 	assert.Empty(t, err)
-	err = offer.Sign(PrivKey)
+	err = offer.Sign(PrvKey)
 	assert.Empty(t, err)
 	assert.Equal(t, [32]byte{0xbb, 0x6d, 0x76, 0x96, 0xcf,
 		0xb2, 0xbf, 0xb6, 0xaa, 0x5e, 0x5, 0xe4, 0x81,

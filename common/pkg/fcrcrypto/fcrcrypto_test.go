@@ -25,22 +25,22 @@ import (
  */
 
 const (
-	PrivKey      = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
-	PrivKeyWrong = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd16480"
-	PubKey       = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
-	PubKeyWrong  = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62a"
+	PrvKey      = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
+	PrvKeyWrong = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd16480"
+	PubKey      = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
+	PubKeyWrong = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62a"
 )
 
 func TestGenerateKey(t *testing.T) {
-	privKey, pubKey, address, err := GenerateRetrievalKeyPair()
+	prvKey, pubKey, address, err := GenerateRetrievalKeyPair()
 	assert.Empty(t, err)
-	assert.NotEmpty(t, privKey)
+	assert.NotEmpty(t, prvKey)
 	assert.NotEmpty(t, pubKey)
 	assert.NotEmpty(t, address)
 }
 
 func TestSign(t *testing.T) {
-	sig, err := Sign(PrivKey, 0, []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	sig, err := Sign(PrvKey, 0, []byte{0x00, 0x01, 0x02, 0x03, 0x04})
 	assert.Empty(t, err)
 	assert.Equal(t, "006e9654ac82348a7ff3ff5e0bf906a34c799f3841e0119ed32a64d32ba92258f2735c90af4295684485735c63d85514beda21037cdb2b501735cdccec6d3a625301", sig)
 
@@ -48,7 +48,7 @@ func TestSign(t *testing.T) {
 	assert.NotEmpty(t, err)
 	assert.Empty(t, sig)
 
-	sig, err = Sign(PrivKeyWrong, 0, []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	sig, err = Sign(PrvKeyWrong, 0, []byte{0x00, 0x01, 0x02, 0x03, 0x04})
 	assert.NotEmpty(t, err)
 	assert.Empty(t, sig)
 }

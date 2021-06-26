@@ -30,27 +30,27 @@ import (
 // GenerateRetrievalKeyPair generates a new key,
 // returns the private key, its associated public key, address and error.
 func GenerateRetrievalKeyPair() (string, string, string, error) {
-	privKey, err := crypto.GenerateKey()
+	prvKey, err := crypto.GenerateKey()
 	if err != nil {
 		return "", "", "", err
 	}
-	pubKey := crypto.PublicKey(privKey)
+	pubKey := crypto.PublicKey(prvKey)
 	addr, err := address.NewSecp256k1Address(pubKey)
 	if err != nil {
 		return "", "", "", err
 	}
-	return hex.EncodeToString(privKey), hex.EncodeToString(pubKey), addr.String(), nil
+	return hex.EncodeToString(prvKey), hex.EncodeToString(pubKey), addr.String(), nil
 }
 
 // Sign signs given bytes using given private key and given version,
 // returns the signature in bytes and error.
-func Sign(privKeyStr string, ver byte, data []byte) (string, error) {
-	privKey, err := hex.DecodeString(privKeyStr)
+func Sign(prvKeyStr string, ver byte, data []byte) (string, error) {
+	prvKey, err := hex.DecodeString(prvKeyStr)
 	if err != nil {
 		return "", err
 	}
 	b2sum := blake2b.Sum256(data)
-	sig, err := crypto.Sign(privKey, b2sum[:])
+	sig, err := crypto.Sign(prvKey, b2sum[:])
 	if err != nil {
 		return "", err
 	}
