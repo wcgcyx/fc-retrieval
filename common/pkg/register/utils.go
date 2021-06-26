@@ -21,11 +21,13 @@ package register
 // ValidateGatewayInfo check if a given gateway info is valid.
 // It is used when before registering and updating.
 func ValidateGatewayInfo(gwInfo *GatewayRegisteredInfo) bool {
+	// TODO, Need to check
 	return true
 }
 
 // ValidateGatewayInfo check if a given provider info is valid.
 // It is used when before registering and updating.
 func ValidateProviderInfo(pvdInfo *ProviderRegisteredInfo) bool {
+	// TODO, Need to check
 	return true
 }
