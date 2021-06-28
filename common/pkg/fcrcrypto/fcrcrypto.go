@@ -34,12 +34,25 @@ func GenerateRetrievalKeyPair() (string, string, string, error) {
 	if err != nil {
 		return "", "", "", err
 	}
-	pubKey := crypto.PublicKey(prvKey)
-	addr, err := address.NewSecp256k1Address(pubKey)
+	prvKeyStr := hex.EncodeToString(prvKey)
+	pubKeyStr, addr, err := GetPublicKey(prvKeyStr)
 	if err != nil {
 		return "", "", "", err
 	}
-	return hex.EncodeToString(prvKey), hex.EncodeToString(pubKey), addr.String(), nil
+	return prvKeyStr, pubKeyStr, addr, nil
+}
+
+func GetPublicKey(prvKeyStr string) (string, string, error) {
+	prvKey, err := hex.DecodeString(prvKeyStr)
+	if err != nil {
+		return "", "", err
+	}
+	pubKey := crypto.PublicKey(prvKey)
+	addr, err := address.NewSecp256k1Address(pubKey)
+	if err != nil {
+		return "", "", err
+	}
+	return hex.EncodeToString(pubKey), addr.String(), nil
 }
 
 // Sign signs given bytes using given private key and given version,

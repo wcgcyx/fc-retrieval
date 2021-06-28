@@ -35,7 +35,7 @@ type FCRRegisterMgrImplV1 struct {
 	lock        sync.RWMutex
 }
 
-func NewFCRRegisterMgrVImplV1(registerAPI string, client *http.Client) FCRRegisterMgr {
+func NewFCRRegisterMgrImplV1(registerAPI string, client *http.Client) FCRRegisterMgr {
 	return &FCRRegisterMgrImplV1{registerAPI: registerAPI, client: client, lock: sync.RWMutex{}}
 }
 

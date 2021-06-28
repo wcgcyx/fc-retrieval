@@ -22,7 +22,6 @@ import "github.com/wcgcyx/fc-retrieval/common/pkg/register"
 
 // FCRRegisterMgr represents the manager that interacts with the register.
 type FCRRegisterMgr interface {
-
 	// GetHeight gets the current height of the register.
 	GetHeight() (uint64, error)
 

@@ -26,7 +26,7 @@ func TestRegisterGateway(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
 	err := mgr.RegisterGateway("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", &register.GatewayRegisteredInfo{
 		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
@@ -54,7 +54,7 @@ func TestRegisterProvider(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
 	err := mgr.RegisterProvider("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", &register.ProviderRegisteredInfo{
 		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
@@ -101,7 +101,7 @@ func TestGetAllRegisteredGateway(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
 	gws, err := mgr.GetAllRegisteredGateway(0, 0)
 	assert.Empty(t, err)
@@ -148,7 +148,7 @@ func TestGetAllRegisteredProvider(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
 	pvds, err := mgr.GetAllRegisteredProvider(0, 0)
 	assert.Empty(t, err)
@@ -178,7 +178,7 @@ func TestGetAllRegisteredGatewayByID(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
 	gw, err := mgr.GetRegisteredGatewayByID("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0")
 	assert.Empty(t, err)
@@ -206,7 +206,7 @@ func TestGetAllRegisteredProviderByID(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
 	pvd, err := mgr.GetRegisteredProviderByID("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0")
 	assert.Empty(t, err)
@@ -218,7 +218,7 @@ func TestUnimplemented(t *testing.T) {
 	}))
 	defer ts.Close()
 	// Initialise a manager
-	mgr := NewFCRRegisterMgrVImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
+	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 	_, err := mgr.GetHeight()
 	assert.NotEmpty(t, err)
 	assert.NotEmpty(t, mgr.UpdateGateway("test", nil))
