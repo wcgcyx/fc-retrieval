@@ -3,6 +3,8 @@ Package register - location for smart contract registration structs.
 */
 package register
 
+import "encoding/hex"
+
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -18,16 +20,53 @@ package register
  * SPDX-License-Identifier: Apache-2.0
  */
 
+const (
+	validNodeIDLen = 32
+	validKeyLen    = 32
+)
+
 // ValidateGatewayInfo check if a given gateway info is valid.
-// It is used when before registering and updating.
 func ValidateGatewayInfo(gwInfo *GatewayRegisteredInfo) bool {
-	// TODO, Need to check
+	nodeID, err := hex.DecodeString(gwInfo.NodeID)
+	if err != nil {
+		return false
+	}
+	if len(nodeID) != validNodeIDLen {
+		return false
+	}
+	key, err := hex.DecodeString(gwInfo.MsgSigningKey)
+	if err != nil {
+		return false
+	}
+	if len(key) != validKeyLen {
+		return false
+	}
+	if gwInfo.RegionCode == "" || gwInfo.NetworkAddr == "" {
+		return false
+	}
+	// TODO, Need to check if the region code and the network addr is valid.
 	return true
 }
 
 // ValidateGatewayInfo check if a given provider info is valid.
-// It is used when before registering and updating.
 func ValidateProviderInfo(pvdInfo *ProviderRegisteredInfo) bool {
-	// TODO, Need to check
+	nodeID, err := hex.DecodeString(pvdInfo.NodeID)
+	if err != nil {
+		return false
+	}
+	if len(nodeID) != validNodeIDLen {
+		return false
+	}
+	key, err := hex.DecodeString(pvdInfo.MsgSigningKey)
+	if err != nil {
+		return false
+	}
+	if len(key) != validKeyLen {
+		return false
+	}
+	if pvdInfo.RegionCode == "" || pvdInfo.NetworkAddr == "" {
+		return false
+	}
+	// TODO, Need to check if the region code and the network addr is valid.
 	return true
 }

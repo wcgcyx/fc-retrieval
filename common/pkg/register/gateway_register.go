@@ -42,8 +42,10 @@ type GatewayRegisteredInfo struct {
 	NetworkAddr string
 
 	// Deregistering indicates whether or not this gateway is in the middle of deregistering itself.
+	// It is set by the smart contract.
 	Deregistering bool
 
 	// DeregisteringHeight is the height of the block which contains the deregistering transaction.
+	// It is set by the smart contract.
 	DeregisteringHeight uint64
 }
