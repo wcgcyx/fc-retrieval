@@ -37,11 +37,11 @@ type ProviderRegisteredInfo struct {
 	// It is a 32 bytes hex string.
 	OfferSigningKey string
 
-	// RegionCode is the region code of this gateway.
+	// RegionCode is the region code of this provider.
 	// It is a ISO 3166-1 alpha-2 string.
 	RegionCode string
 
-	// NetworkAddr is the network address of this gateway.
+	// NetworkAddr is the network address of this provider.
 	// It should be a valid libp2p address.
 	NetworkAddr string
 

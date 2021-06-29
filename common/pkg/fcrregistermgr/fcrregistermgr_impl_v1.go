@@ -28,7 +28,7 @@ import (
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// FCRRegisterMgrImplV1 implements FCRRegisterMgr, it interacts with a mocked register.
+// FCRRegisterMgrImplV1 implements FCRRegisterMgr, it interacts with a mocked register (http server).
 type FCRRegisterMgrImplV1 struct {
 	registerAPI string
 	client      *http.Client
