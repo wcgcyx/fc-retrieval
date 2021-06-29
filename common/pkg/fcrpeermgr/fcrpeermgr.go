@@ -94,6 +94,18 @@ type FCRPeerMgr interface {
 
 	// GetBlockedPVDS gets a list of blocked providers.
 	GetBlockedPVDS() ([]Peer, error)
+
+	// GetGWViolations gets a list of violations from given index to given index for a given gateway.
+	GetGWViolations(gwID string, from int, to int) ([]reputation.Record, error)
+
+	// GetPVDViolations gets a list of violations from given index to given index for a given provider.
+	GetPVDViolations(pvdID string, from int, to int) ([]reputation.Record, error)
+
+	// GetGWHistory gets a list of history from given index to given index for a given gateway.
+	GetGWHistory(gwID string, from int, to int) ([]reputation.Record, error)
+
+	// GetPVDHistory gets a list of history from given index to given index for a given provider.
+	GetPVDHistory(pvdID string, from int, to int) ([]reputation.Record, error)
 }
 
 // Peer represents a peer in the system.
@@ -113,8 +125,4 @@ type Peer struct {
 	Pending bool
 	// Blocked indicates whether this peer is blocked
 	Blocked bool
-	// Violations store the list of recent violations (recent 50 entries)
-	Violations []reputation.Record
-	// History stores the list of recent record updating activies (recent 500 entries)
-	History []reputation.Record
 }
