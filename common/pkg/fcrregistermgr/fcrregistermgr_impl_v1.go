@@ -40,8 +40,11 @@ func NewFCRRegisterMgrImplV1(registerAPI string, client *http.Client) FCRRegiste
 }
 
 func (mgr *FCRRegisterMgrImplV1) GetHeight() (uint64, error) {
-	// Not implemented
-	return 0, errors.New("No implementation")
+	return 0, nil
+}
+
+func (mgr *FCRRegisterMgrImplV1) GetMaxPage(height uint64) (uint64, error) {
+	return 0, nil
 }
 
 func (mgr *FCRRegisterMgrImplV1) RegisterGateway(id string, gwInfo *register.GatewayRegisteredInfo) error {

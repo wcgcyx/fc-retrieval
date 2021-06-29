@@ -28,9 +28,11 @@ type GatewayRegisteredInfo struct {
 
 	// MsgSigningKey is the message signing public key.
 	// It is a 32 bytes hex string.
+	// This can be updated via smart contract.
 	MsgSigningKey string
 
 	// MsgSigningKeyVer is the message signing public key version.
+	// This can be updated via smart contract.
 	MsgSigningKeyVer byte
 
 	// RegionCode is the region code of this gateway.

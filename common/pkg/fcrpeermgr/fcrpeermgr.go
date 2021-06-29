@@ -3,11 +3,6 @@ Package fcrpeermgr - peer manager manages all retrieval peers.
 */
 package fcrpeermgr
 
-import (
-	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
-)
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -25,7 +20,7 @@ import (
 
 type FCRPeerMgr interface {
 	// Start starts the manager's routine.
-	Start()
+	Start() error
 
 	// Shutdown ends the manager's routine safely.
 	Shutdown()
@@ -46,83 +41,38 @@ type FCRPeerMgr interface {
 	GetPVDInfo(pvdID string) (*Peer, error)
 
 	// GetGWSNearCID gets 16 gateways that are near given CID. Called only by gateways.
-	GetGWSNearCID(id *cid.ContentID) ([]Peer, error)
+	GetGWSNearCIDHash(hash string, except string) ([]Peer, error)
 
-	// GetCIDHashRange gets the cid min hash and cid max hash that a gateway should store based on current network. Called only by gateways.
-	GetCIDHashRange() (string, string, error)
-
-	/* Reputation related functions */
-
-	// UpdateGWRecord updates the gateway's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
-	UpdateGWRecord(gwID string, record *reputation.Record, replica int) error
-
-	// UpdatePVDRecord updates the provider's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
-	UpdatePVDRecord(gwID string, record *reputation.Record, replica int) error
-
-	// PendGW puts a given gateway into pending.
-	PendGW(gwID string) error
-
-	// PendPVD puts a given provider into pending.
-	PendPVD(pvdID string) error
-
-	// ResumeGW puts a given gateway out of pending.
-	ResumeGW(gwID string) error
-
-	// ResumePVD puts a provider out of pending.
-	ResumePVD(pvdID string) error
-
-	// GetPendingGWS gets a list of gateways currently in pending.
-	GetPendingGWS() ([]Peer, error)
-
-	// GetPendingPVDS gets a list of providers currently in pending.
-	GetPendingPVDS() ([]Peer, error)
-
-	// BlockGW blocks a gateway.
-	BlockGW(gwID string) error
-
-	// BlockPVD blocks a provider.
-	BlockPVD(pvdID string) error
-
-	// UnBlockGW unblocks a gateway.
-	UnBlockGW(gwID string) error
-
-	// UnBlockPVD unblocks a provider.
-	UnBlockPVD(pvdID string) error
-
-	// GetBlockedGWS gets a list of blocked gateways.
-	GetBlockedGWS() ([]Peer, error)
-
-	// GetBlockedPVDS gets a list of blocked providers.
-	GetBlockedPVDS() ([]Peer, error)
-
-	// GetGWViolations gets a list of violations from given index to given index for a given gateway.
-	GetGWViolations(gwID string, from int, to int) ([]reputation.Record, error)
-
-	// GetPVDViolations gets a list of violations from given index to given index for a given provider.
-	GetPVDViolations(pvdID string, from int, to int) ([]reputation.Record, error)
-
-	// GetGWHistory gets a list of history from given index to given index for a given gateway.
-	GetGWHistory(gwID string, from int, to int) ([]reputation.Record, error)
-
-	// GetPVDHistory gets a list of history from given index to given index for a given provider.
-	GetPVDHistory(pvdID string, from int, to int) ([]reputation.Record, error)
+	// GetCurrentCIDHashRange gets the cid min hash and cid max hash that a gateway should store based on current network. Called only by gateways.
+	GetCurrentCIDHashRange() (string, string, error)
 }
 
 // Peer represents a peer in the system.
 type Peer struct {
-	NodeID           string
-	MsgSigningKey    string
-	MsgSigningKeyVER string
-	OfferSigningKey  string
-	RegionCode       string
-	NetworkAddr      string
+	// NodeID is the peer's ID,
+	// the filecoin public key,
+	// and can be used to derive the filecoin wallet address for payment.
+	NodeID string
 
-	/* Reputation related fields */
+	// MsgSigningKey is the message signing public key.
+	MsgSigningKey string
 
-	// Reputation is the overall reputation score of this peer
-	Reputation int64
-	// Pending indicates whether this peer is in pending
-	Pending bool
-	// Blocked indicates whether this peer is blocked
-	Blocked bool
+	// MsgSigningKeyVer is the message signing public key version.
+	MsgSigningKeyVer byte
+
+	// OfferSigningKey is the offer signing public key.
+	// It is a 32 bytes hex string. Empty for gateway peer.
+	OfferSigningKey string
+
+	// RegionCode is the region code of this peer.
+	RegionCode string
+
+	// NetworkAddr is the network address of this peer.
+	NetworkAddr string
+
+	// Deregistering indicates whether or not this peer is in the middle of deregistering itself.
+	Deregistering bool
+
+	// DeregisteringHeight is the height of the block which contains the deregistering transaction.
+	DeregisteringHeight uint64
 }

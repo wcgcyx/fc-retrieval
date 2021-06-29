@@ -1,0 +1,104 @@
+/*
+Package fcrreputationmgr - reputation manager manages the reputation of all retrieval peers.
+*/
+package fcrreputationmgr
+
+import "github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
+
+/*
+ * Copyright 2020 ConsenSys Software Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+type FCRReputationMgr interface {
+	// Start starts the manager's routine.
+	Start() error
+
+	// Shutdown ends the manager's routine safely.
+	Shutdown()
+
+	// GetGWReputation gets the reputation of a given gateway.
+	GetGWReputation(gwID string) (*Reputation, error)
+
+	// GetPVDReputation gets the reputation of a given provider.
+	GetPVDReputation(pvdID string) (*Reputation, error)
+
+	// UpdateGWRecord updates the gateway's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
+	UpdateGWRecord(gwID string, record *reputation.Record, replica int) error
+
+	// UpdatePVDRecord updates the provider's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
+	UpdatePVDRecord(gwID string, record *reputation.Record, replica int) error
+
+	// PendGW puts a given gateway into pending.
+	PendGW(gwID string) error
+
+	// PendPVD puts a given provider into pending.
+	PendPVD(pvdID string) error
+
+	// ResumeGW puts a given gateway out of pending.
+	ResumeGW(gwID string) error
+
+	// ResumePVD puts a provider out of pending.
+	ResumePVD(pvdID string) error
+
+	// GetPendingGWS gets a list of gateways currently in pending.
+	GetPendingGWS() ([]string, error)
+
+	// GetPendingPVDS gets a list of providers currently in pending.
+	GetPendingPVDS() ([]string, error)
+
+	// BlockGW blocks a gateway.
+	BlockGW(gwID string) error
+
+	// BlockPVD blocks a provider.
+	BlockPVD(pvdID string) error
+
+	// UnBlockGW unblocks a gateway.
+	UnBlockGW(gwID string) error
+
+	// UnBlockPVD unblocks a provider.
+	UnBlockPVD(pvdID string) error
+
+	// GetBlockedGWS gets a list of blocked gateways.
+	GetBlockedGWS() ([]string, error)
+
+	// GetBlockedPVDS gets a list of blocked providers.
+	GetBlockedPVDS() ([]string, error)
+
+	// GetGWViolations gets a list of violations from given index to given index for a given gateway.
+	GetGWViolations(gwID string, from int, to int) ([]reputation.Record, error)
+
+	// GetPVDViolations gets a list of violations from given index to given index for a given provider.
+	GetPVDViolations(pvdID string, from int, to int) ([]reputation.Record, error)
+
+	// GetGWHistory gets a list of history from given index to given index for a given gateway.
+	GetGWHistory(gwID string, from int, to int) ([]reputation.Record, error)
+
+	// GetPVDHistory gets a list of history from given index to given index for a given provider.
+	GetPVDHistory(pvdID string, from int, to int) ([]reputation.Record, error)
+}
+
+// Reputation represents the reputation of a peer in the system.
+type Reputation struct {
+	// NodeID is the peer's ID
+	NodeID string
+
+	// Score is the overall reputation score of this peer
+	Score int64
+
+	// Pending indicates whether this peer is in pending
+	Pending bool
+
+	// Blocked indicates whether this peer is blocked
+	Blocked bool
+}

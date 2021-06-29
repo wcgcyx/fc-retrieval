@@ -219,7 +219,12 @@ func TestUnimplemented(t *testing.T) {
 	defer ts.Close()
 	// Initialise a manager
 	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
-	_, err := mgr.GetHeight()
+	height, err := mgr.GetHeight()
+	assert.Empty(t, err)
+	assert.Equal(t, 0, height)
+	maxPage, err := mgr.GetMaxPage(height)
+	assert.Empty(t, err)
+	assert.Equal(t, 0, maxPage)
 	assert.NotEmpty(t, err)
 	assert.NotEmpty(t, mgr.UpdateGateway("test", nil))
 	assert.NotEmpty(t, mgr.RequestDeregisterGateway("test"))
