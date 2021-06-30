@@ -36,7 +36,7 @@ type FCRLotusMgr interface {
 	TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error
 
 	// SettlePaymentChannel settles a payment channel using the given private key, channel address and a final voucher.
-	SettlePaymentChannel(prvKey string, chAddr string, voucher string) error
+	SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error
 
 	// CollectPaymentChannel collects a payment channel using the given private key, channel address.
 	CollectPaymentChannel(prvKey string, chAddr string) error
@@ -49,7 +49,7 @@ type FCRLotusMgr interface {
 	GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error)
 
 	// GetCostToSettle gets the current cost to settle a payment channel + updating voucher.
-	GetCostToSettle(prvKey string, chAddr string) (*big.Int, error)
+	GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error)
 
 	// GetPaymentChannelCreationBlock gets the block number at which given payment channel is created.
 	GetPaymentChannelCreationBlock(chAddr string) (*big.Int, error)

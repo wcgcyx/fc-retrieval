@@ -219,13 +219,13 @@ func TestUnimplemented(t *testing.T) {
 	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
-	err := mgr.SettlePaymentChannel("", "", "")
+	err := mgr.SettlePaymentChannel("", "", []string{""})
 	assert.NotEmpty(t, err)
 	err = mgr.CollectPaymentChannel("", "")
 	assert.NotEmpty(t, err)
 	_, err = mgr.GetCostToCreate("", "", nil)
 	assert.NotEmpty(t, err)
-	_, err = mgr.GetCostToSettle("", "")
+	_, err = mgr.GetCostToSettle("", "", []string{""})
 	assert.NotEmpty(t, err)
 	_, err = mgr.GetPaymentChannelCreationBlock("")
 	assert.NotEmpty(t, err)

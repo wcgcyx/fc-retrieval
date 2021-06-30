@@ -163,7 +163,7 @@ func (mgr *FCRLotusMgrImpl) TopupPaymentChannel(prvKey string, chAddr string, am
 	return nil
 }
 
-func (mgr *FCRLotusMgrImpl) SettlePaymentChannel(prvKey string, chAddr string, voucher string) error {
+func (mgr *FCRLotusMgrImpl) SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error {
 	return errors.New("No implementation")
 }
 
@@ -210,7 +210,7 @@ func (mgr *FCRLotusMgrImpl) GetCostToCreate(prvKey string, recipientAddr string,
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) GetCostToSettle(prvKey string, chAddr string) (*big.Int, error) {
+func (mgr *FCRLotusMgrImpl) GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
