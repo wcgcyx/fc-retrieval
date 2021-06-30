@@ -30,7 +30,7 @@ import (
 // FCRLotusMgr represents the manager that interacts with the lotus.
 type FCRLotusMgr interface {
 	// CreatePaymentChannel creates a payment channel using the given private key, recipient address and a given amount.
-	CreatePaymentChannel(prvKey string, to string, amt *big.Int) (string, error)
+	CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error)
 
 	// TopupPaymentChannel topups a payment channel using the given private key, channel address and a given amount.
 	TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error
@@ -46,16 +46,23 @@ type FCRLotusMgr interface {
 	CheckPaymentChannel(chAddr string) (bool, *big.Int, string, error)
 
 	// GetCostToCreate gets the current cost to create a payment channel.
-	GetCostToCreate(fromAddr string, to string, amt *big.Int) (*big.Int, error)
+	GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error)
 
 	// GetCostToSettle gets the current cost to settle a payment channel + updating voucher.
-	GetCostToSettle(fromAddr string, chAddr string) (*big.Int, error)
+	GetCostToSettle(prvKey string, chAddr string) (*big.Int, error)
 
 	// GetPaymentChannelCreationBlock gets the block number at which given payment channel is created.
 	GetPaymentChannelCreationBlock(chAddr string) (*big.Int, error)
 
 	// GetPaymentChannelSettlementBlock gets the block number at which given payment channel is called to settle.
 	GetPaymentChannelSettlementBlock(chAddr string) (*big.Int, error)
+
+	// GenerateVoucher generates a voucher by given private key, channel address, lane number and amount.
+	GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error)
+
+	// VerifyVoucher verifies a voucher by given voucher.
+	// It returns the sender's address, channel address, lane, nonce, new redeemed, and error)
+	VerifyVoucher(voucher string) (string, string, uint64, uint64, *big.Int, error)
 }
 
 // LotusAPI is the minimum interface interacting with the Lotus to achieve payment function.

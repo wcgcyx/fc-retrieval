@@ -49,9 +49,13 @@ type FCRPeerMgr interface {
 
 // Peer represents a peer in the system.
 type Peer struct {
-	// NodeID is the peer's ID,
-	// the filecoin public key,
+	// RootKey is the peer's public key,
 	// and can be used to derive the filecoin wallet address for payment.
+	// It is a 65 bytes hex string.
+	RootKey string
+
+	// NodeID is derived from the root key, it is set by the smart contract.
+	// It is a 32 bytes hex string.
 	NodeID string
 
 	// MsgSigningKey is the message signing public key.

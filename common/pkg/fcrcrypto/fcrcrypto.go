@@ -19,40 +19,46 @@ package fcrcrypto
  */
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 
-	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-crypto"
 	"github.com/minio/blake2b-simd"
 )
 
 // GenerateRetrievalKeyPair generates a new key,
-// returns the private key, its associated public key, address and error.
+// returns the private key, its associated public key, node id and error.
 func GenerateRetrievalKeyPair() (string, string, string, error) {
 	prvKey, err := crypto.GenerateKey()
 	if err != nil {
 		return "", "", "", err
 	}
 	prvKeyStr := hex.EncodeToString(prvKey)
-	pubKeyStr, addr, err := GetPublicKey(prvKeyStr)
+	pubKeyStr, id, err := GetPublicKey(prvKeyStr)
 	if err != nil {
 		return "", "", "", err
 	}
-	return prvKeyStr, pubKeyStr, addr, nil
+	return prvKeyStr, pubKeyStr, id, nil
 }
 
+// GetPublicKey gets the public key, node id and error of giving private key
 func GetPublicKey(prvKeyStr string) (string, string, error) {
 	prvKey, err := hex.DecodeString(prvKeyStr)
 	if err != nil {
 		return "", "", err
 	}
 	pubKey := crypto.PublicKey(prvKey)
-	addr, err := address.NewSecp256k1Address(pubKey)
+	pubKeyStr := hex.EncodeToString(pubKey)
+	h := sha256.New()
+	if _, err := h.Write([]byte(pubKeyStr)); err != nil {
+		return "", "", err
+	}
+	nodeID := h.Sum(nil)
 	if err != nil {
 		return "", "", err
 	}
-	return hex.EncodeToString(pubKey), addr.String(), nil
+	return pubKeyStr, hex.EncodeToString(nodeID), nil
 }
 
 // Sign signs given bytes using given private key and given version,

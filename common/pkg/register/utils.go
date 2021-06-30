@@ -18,20 +18,39 @@ package register
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "encoding/hex"
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+)
 
 const (
 	validNodeIDLen = 32
-	validKeyLen    = 32
+	validKeyLen    = 65
 )
 
 // ValidateGatewayInfo check if a given gateway info is valid.
 func ValidateGatewayInfo(gwInfo *GatewayRegisteredInfo) bool {
+	rootKey, err := hex.DecodeString(gwInfo.RootKey)
+	if err != nil {
+		return false
+	}
+	if len(rootKey) != validKeyLen {
+		return false
+	}
 	nodeID, err := hex.DecodeString(gwInfo.NodeID)
 	if err != nil {
 		return false
 	}
 	if len(nodeID) != validNodeIDLen {
+		return false
+	}
+	h := sha256.New()
+	if _, err := h.Write([]byte(gwInfo.RootKey)); err != nil {
+		return false
+	}
+	calculatedNodeID := h.Sum(nil)
+	if bytes.Compare(nodeID, calculatedNodeID) != 0 {
 		return false
 	}
 	key, err := hex.DecodeString(gwInfo.MsgSigningKey)
@@ -50,6 +69,13 @@ func ValidateGatewayInfo(gwInfo *GatewayRegisteredInfo) bool {
 
 // ValidateGatewayInfo check if a given provider info is valid.
 func ValidateProviderInfo(pvdInfo *ProviderRegisteredInfo) bool {
+	rootKey, err := hex.DecodeString(pvdInfo.RootKey)
+	if err != nil {
+		return false
+	}
+	if len(rootKey) != validKeyLen {
+		return false
+	}
 	nodeID, err := hex.DecodeString(pvdInfo.NodeID)
 	if err != nil {
 		return false
@@ -57,7 +83,22 @@ func ValidateProviderInfo(pvdInfo *ProviderRegisteredInfo) bool {
 	if len(nodeID) != validNodeIDLen {
 		return false
 	}
+	h := sha256.New()
+	if _, err := h.Write([]byte(pvdInfo.RootKey)); err != nil {
+		return false
+	}
+	calculatedNodeID := h.Sum(nil)
+	if bytes.Compare(nodeID, calculatedNodeID) != 0 {
+		return false
+	}
 	key, err := hex.DecodeString(pvdInfo.MsgSigningKey)
+	if err != nil {
+		return false
+	}
+	if len(key) != validKeyLen {
+		return false
+	}
+	key, err = hex.DecodeString(pvdInfo.OfferSigningKey)
 	if err != nil {
 		return false
 	}

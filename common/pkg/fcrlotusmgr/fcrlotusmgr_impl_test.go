@@ -156,7 +156,7 @@ func TestTopup(t *testing.T) {
 	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
-	err := mgr.TopupPaymentChannel(PrvKey, "t1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", big.NewInt(1000000))
+	err := mgr.TopupPaymentChannel(PrvKey, "f2n6prop4c3wmayti7d26hdwjitfu6ttkp5qhu6ni", big.NewInt(1000000))
 	assert.Empty(t, err)
 }
 
@@ -194,6 +194,24 @@ func TestCheck(t *testing.T) {
 	assert.False(t, settling)
 	assert.Equal(t, big.NewInt(1000000), balance)
 	assert.Equal(t, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", recipient)
+}
+
+func TestVoucher(t *testing.T) {
+	mock := mockLotusAPI{}
+	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
+		return &mock, nil, nil
+	})
+	voucher, err := mgr.GenerateVoucher(PrvKey, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", 0, 12, big.NewInt(1000000))
+	assert.Empty(t, err)
+	assert.Equal(t, "i1UBO3bukuIiV6pggPkLLa0CdmmBGPkAAED2AAxEAA9CQACAWEIBzTRDsIzaryn3q-JGV-OnvzUDG3ejzq8MdK2HQVRCP993QVCNDPVYFQQe0MsXkqjN3UBNWCF3guS7GRWjBMsTDwA", voucher)
+
+	senderID, chAddr, lane, nonce, newRedeemed, err := mgr.VerifyVoucher(voucher)
+	assert.Empty(t, err)
+	assert.Equal(t, "f12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", senderID)
+	assert.Equal(t, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", chAddr)
+	assert.Equal(t, uint64(0), lane)
+	assert.Equal(t, uint64(12), nonce)
+	assert.Equal(t, "1000000", newRedeemed.String())
 }
 
 func TestUnimplemented(t *testing.T) {

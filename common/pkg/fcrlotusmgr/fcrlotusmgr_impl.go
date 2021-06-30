@@ -21,6 +21,7 @@ package fcrlotusmgr
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -57,16 +58,20 @@ func NewFCRLotusMgrImpl(lotusAPIAddr string, authToken string, getLotusAPI func(
 	return &FCRLotusMgrImpl{lotusAPIAddr: lotusAPIAddr, authToken: authToken, getLotusAPI: getLotusAPI}
 }
 
-func (mgr *FCRLotusMgrImpl) CreatePaymentChannel(prvKey string, to string, amt *big.Int) (string, error) {
-	_, from, err := fcrcrypto.GetPublicKey(prvKey)
+func (mgr *FCRLotusMgrImpl) CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error) {
+	pubKey, _, err := fcrcrypto.GetPublicKey(prvKey)
 	if err != nil {
 		return "", err
 	}
-	fromAddr, err := address.NewFromString(from)
+	pubKeyBytes, err := hex.DecodeString(pubKey)
 	if err != nil {
 		return "", err
 	}
-	toAddr, err := address.NewFromString(to)
+	fromAddr, err := address.NewSecp256k1Address(pubKeyBytes)
+	if err != nil {
+		return "", err
+	}
+	toAddr, err := address.NewFromString(recipientAddr)
 	if err != nil {
 		return "", err
 	}
@@ -109,11 +114,15 @@ func (mgr *FCRLotusMgrImpl) CreatePaymentChannel(prvKey string, to string, amt *
 }
 
 func (mgr *FCRLotusMgrImpl) TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error {
-	_, from, err := fcrcrypto.GetPublicKey(prvKey)
+	pubKey, _, err := fcrcrypto.GetPublicKey(prvKey)
 	if err != nil {
 		return err
 	}
-	fromAddr, err := address.NewFromString(from)
+	pubKeyBytes, err := hex.DecodeString(pubKey)
+	if err != nil {
+		return err
+	}
+	fromAddr, err := address.NewSecp256k1Address(pubKeyBytes)
 	if err != nil {
 		return err
 	}
@@ -197,11 +206,11 @@ func (mgr *FCRLotusMgrImpl) CheckPaymentChannel(chAddr string) (bool, *big.Int, 
 	return state.SettlingAt != 0, actor.Balance.Int, recipient.String(), nil
 }
 
-func (mgr *FCRLotusMgrImpl) GetCostToCreate(fromAddr string, to string, amt *big.Int) (*big.Int, error) {
+func (mgr *FCRLotusMgrImpl) GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) GetCostToSettle(fromAddr string, chAddr string) (*big.Int, error) {
+func (mgr *FCRLotusMgrImpl) GetCostToSettle(prvKey string, chAddr string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
@@ -211,6 +220,56 @@ func (mgr *FCRLotusMgrImpl) GetPaymentChannelCreationBlock(chAddr string) (*big.
 
 func (mgr *FCRLotusMgrImpl) GetPaymentChannelSettlementBlock(chAddr string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
+}
+
+func (mgr *FCRLotusMgrImpl) GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error) {
+	addr, err := address.NewFromString(chAddr)
+	if err != nil {
+		return "", err
+	}
+	sv := &paych.SignedVoucher{
+		ChannelAddr: addr,
+		Lane:        lane,
+		Nonce:       nonce,
+		Amount:      lotusbig.NewFromGo(newRedeemed),
+	}
+	vb, err := sv.SigningBytes()
+	if err != nil {
+		return "", err
+	}
+	pk, err := hex.DecodeString(prvKey)
+	if err != nil {
+		return "", err
+	}
+	sig, err := Sign(pk, vb)
+	sv.Signature = &crypto2.Signature{
+		Type: crypto2.SigTypeSecp256k1,
+		Data: sig,
+	}
+	voucher, err := encodedVoucher(sv)
+	if err != nil {
+		return "", err
+	}
+	return voucher, nil
+}
+
+func (mgr *FCRLotusMgrImpl) VerifyVoucher(voucher string) (string, string, uint64, uint64, *big.Int, error) {
+	sv, err := paych.DecodeSignedVoucher(voucher)
+	if err != nil {
+		return "", "", 0, 0, nil, err
+	}
+	vb, err := sv.SigningBytes()
+	if err != nil {
+		return "", "", 0, 0, nil, err
+	}
+	if sv.Signature.Type != crypto2.SigTypeSecp256k1 {
+		return "", "", 0, 0, nil, errors.New("Wrong signature type")
+	}
+	sender, err := Verify(sv.Signature.Data, vb)
+	if err != nil {
+		return "", "", 0, 0, nil, err
+	}
+	return sender, sv.ChannelAddr.String(), sv.Lane, sv.Nonce, sv.Amount.Int, nil
 }
 
 // fillMsg will fill the gas and sign a given message
@@ -297,4 +356,29 @@ func Sign(pk []byte, msg []byte) ([]byte, error) {
 	}
 
 	return sig, nil
+}
+
+// Verify calculates the sender address from signature and message
+func Verify(sig []byte, msg []byte) (string, error) {
+	b2sum := blake2b.Sum256(msg)
+	pubk, err := crypto.EcRecover(b2sum[:], sig)
+	if err != nil {
+		return "", err
+	}
+	maybeaddr, err := address.NewSecp256k1Address(pubk)
+	if err != nil {
+		return "", err
+	}
+
+	return maybeaddr.String(), nil
+}
+
+// encodedVoucher returns the encoded string of a given signed voucher
+func encodedVoucher(sv *paych.SignedVoucher) (string, error) {
+	buf := new(bytes.Buffer)
+	if err := sv.MarshalCBOR(buf); err != nil {
+		return "", err
+	}
+
+	return base64.RawURLEncoding.EncodeToString(buf.Bytes()), nil
 }

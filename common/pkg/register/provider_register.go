@@ -20,14 +20,17 @@ package register
 
 // ProviderRegisteredInfo represents the state or the stored information of a registered provider.
 type ProviderRegisteredInfo struct {
-	// NodeID is the provider's ID,
-	// the filecoin public key,
+	// RootKey is the provider's public key,
 	// and can be used to derive the filecoin wallet address for payment.
+	// It is a 65 bytes hex string.
+	RootKey string
+
+	// NodeIDD is derived from the root key, it is set by the smart contract.
 	// It is a 32 bytes hex string.
 	NodeID string
 
 	// MsgSigningKey is the message signing public key.
-	// It is a 32 bytes hex string.
+	// It is a 65 bytes hex string.
 	// This can be updated via smart contract.
 	MsgSigningKey string
 
@@ -36,7 +39,7 @@ type ProviderRegisteredInfo struct {
 	MsgSigningKeyVer byte
 
 	// OfferSigningKey is the offer signing public key.
-	// It is a 32 bytes hex string.
+	// It is a 65 bytes hex string.
 	OfferSigningKey string
 
 	// RegionCode is the region code of this provider.

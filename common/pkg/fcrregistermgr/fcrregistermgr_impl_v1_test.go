@@ -36,8 +36,9 @@ func TestRegisterGateway(t *testing.T) {
 		target := register.GatewayRegisteredInfo{}
 		err := json.NewDecoder(r.Body).Decode(&target)
 		assert.Empty(t, err)
-		assert.Equal(t, "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", target.NodeID)
-		assert.Equal(t, "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1", target.MsgSigningKey)
+		assert.Equal(t, "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16", target.RootKey)
+		assert.Equal(t, "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11", target.NodeID)
+		assert.Equal(t, "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16", target.MsgSigningKey)
 		assert.Equal(t, byte(1), target.MsgSigningKeyVer)
 		assert.Equal(t, "au", target.RegionCode)
 		assert.Equal(t, "testaddr", target.NetworkAddr)
@@ -46,9 +47,10 @@ func TestRegisterGateway(t *testing.T) {
 	// Initialise a manager
 	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
-	err := mgr.RegisterGateway("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", &register.GatewayRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1",
+	err := mgr.RegisterGateway("256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11", &register.GatewayRegisteredInfo{
+		RootKey:          "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
+		NodeID:           "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11",
+		MsgSigningKey:    "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		MsgSigningKeyVer: 1,
 		RegionCode:       "au",
 		NetworkAddr:      "testaddr",
@@ -63,10 +65,11 @@ func TestRegisterProvider(t *testing.T) {
 		target := register.ProviderRegisteredInfo{}
 		err := json.NewDecoder(r.Body).Decode(&target)
 		assert.Empty(t, err)
-		assert.Equal(t, "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", target.NodeID)
-		assert.Equal(t, "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1", target.MsgSigningKey)
+		assert.Equal(t, "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16", target.RootKey)
+		assert.Equal(t, "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11", target.NodeID)
+		assert.Equal(t, "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16", target.MsgSigningKey)
 		assert.Equal(t, byte(1), target.MsgSigningKeyVer)
-		assert.Equal(t, "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef2", target.OfferSigningKey)
+		assert.Equal(t, "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16", target.OfferSigningKey)
 		assert.Equal(t, "au", target.RegionCode)
 		assert.Equal(t, "testaddr", target.NetworkAddr)
 	}))
@@ -74,11 +77,12 @@ func TestRegisterProvider(t *testing.T) {
 	// Initialise a manager
 	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
-	err := mgr.RegisterProvider("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", &register.ProviderRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1",
+	err := mgr.RegisterProvider("256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11", &register.ProviderRegisteredInfo{
+		RootKey:          "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
+		NodeID:           "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11",
+		MsgSigningKey:    "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		MsgSigningKeyVer: 1,
-		OfferSigningKey:  "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef2",
+		OfferSigningKey:  "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		RegionCode:       "au",
 		NetworkAddr:      "testaddr",
 	})
@@ -87,22 +91,25 @@ func TestRegisterProvider(t *testing.T) {
 
 func TestGetAllRegisteredGateway(t *testing.T) {
 	gwInfo0 := &register.GatewayRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1",
+		RootKey:          "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
+		NodeID:           "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11",
+		MsgSigningKey:    "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		MsgSigningKeyVer: 1,
 		RegionCode:       "au",
 		NetworkAddr:      "testaddr0",
 	}
 	gwInfo1 := &register.GatewayRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef2",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef3",
+		RootKey:          "04dacfa291dfcf4b04c0936a5b2ec4e253af7032be38366de3d3ac5406345a1817999316c4a8cd7c3a8496e54886e7f3a47da0a962adebe569a42360d193316082",
+		NodeID:           "ac1f490e923852ffc1a99d11b60b5ef378ff16f3cc71a1ce1f6983f064696ac5",
+		MsgSigningKey:    "04dacfa291dfcf4b04c0936a5b2ec4e253af7032be38366de3d3ac5406345a1817999316c4a8cd7c3a8496e54886e7f3a47da0a962adebe569a42360d193316082",
 		MsgSigningKeyVer: 2,
 		RegionCode:       "us",
 		NetworkAddr:      "testaddr1",
 	}
 	gwInfo2 := &register.GatewayRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef4",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef5",
+		RootKey:          "04934a397c4c61f6c86c9630f25b668f0081798e8cd399442f44029f92fef11c345132d461b71db7e2abe6234edd51e8036f7530bc3f5abb9c8f539cbb23387b97",
+		NodeID:           "844488bb57b7f6ae52f1797b8fea7663d3eb27efae2bea87875a44c37dbe983e",
+		MsgSigningKey:    "04934a397c4c61f6c86c9630f25b668f0081798e8cd399442f44029f92fef11c345132d461b71db7e2abe6234edd51e8036f7530bc3f5abb9c8f539cbb23387b97",
 		MsgSigningKeyVer: 3,
 		RegionCode:       "ca",
 		NetworkAddr:      "testaddr2",
@@ -114,7 +121,7 @@ func TestGetAllRegisteredGateway(t *testing.T) {
 		data, err := json.Marshal([]register.GatewayRegisteredInfo{*gwInfo0, *gwInfo1, *gwInfo2})
 		assert.Empty(t, err)
 		len, err := w.Write(data)
-		assert.Equal(t, 817, len)
+		assert.Equal(t, 1447, len)
 		assert.Empty(t, err)
 	}))
 	defer ts.Close()
@@ -131,26 +138,29 @@ func TestGetAllRegisteredGateway(t *testing.T) {
 
 func TestGetAllRegisteredProvider(t *testing.T) {
 	pvdInfo0 := &register.ProviderRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1",
+		RootKey:          "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
+		NodeID:           "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11",
+		MsgSigningKey:    "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		MsgSigningKeyVer: 1,
-		OfferSigningKey:  "00112233445566778899aabbccddeeff00112233445566778899aabbccddeefa",
+		OfferSigningKey:  "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		RegionCode:       "au",
 		NetworkAddr:      "testaddr0",
 	}
 	pvdInfo1 := &register.ProviderRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef2",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef3",
+		RootKey:          "04dacfa291dfcf4b04c0936a5b2ec4e253af7032be38366de3d3ac5406345a1817999316c4a8cd7c3a8496e54886e7f3a47da0a962adebe569a42360d193316082",
+		NodeID:           "ac1f490e923852ffc1a99d11b60b5ef378ff16f3cc71a1ce1f6983f064696ac5",
+		MsgSigningKey:    "04dacfa291dfcf4b04c0936a5b2ec4e253af7032be38366de3d3ac5406345a1817999316c4a8cd7c3a8496e54886e7f3a47da0a962adebe569a42360d193316082",
 		MsgSigningKeyVer: 2,
-		OfferSigningKey:  "00112233445566778899aabbccddeeff00112233445566778899aabbccddeefb",
+		OfferSigningKey:  "04dacfa291dfcf4b04c0936a5b2ec4e253af7032be38366de3d3ac5406345a1817999316c4a8cd7c3a8496e54886e7f3a47da0a962adebe569a42360d193316082",
 		RegionCode:       "us",
 		NetworkAddr:      "testaddr1",
 	}
 	pvdInfo2 := &register.ProviderRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef4",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef5",
+		RootKey:          "04934a397c4c61f6c86c9630f25b668f0081798e8cd399442f44029f92fef11c345132d461b71db7e2abe6234edd51e8036f7530bc3f5abb9c8f539cbb23387b97",
+		NodeID:           "844488bb57b7f6ae52f1797b8fea7663d3eb27efae2bea87875a44c37dbe983e",
+		MsgSigningKey:    "04934a397c4c61f6c86c9630f25b668f0081798e8cd399442f44029f92fef11c345132d461b71db7e2abe6234edd51e8036f7530bc3f5abb9c8f539cbb23387b97",
 		MsgSigningKeyVer: 3,
-		OfferSigningKey:  "00112233445566778899aabbccddeeff00112233445566778899aabbccddeefc",
+		OfferSigningKey:  "04934a397c4c61f6c86c9630f25b668f0081798e8cd399442f44029f92fef11c345132d461b71db7e2abe6234edd51e8036f7530bc3f5abb9c8f539cbb23387b97",
 		RegionCode:       "ca",
 		NetworkAddr:      "testaddr2",
 	}
@@ -161,7 +171,7 @@ func TestGetAllRegisteredProvider(t *testing.T) {
 		data, err := json.Marshal([]register.ProviderRegisteredInfo{*pvdInfo0, *pvdInfo1, *pvdInfo2})
 		assert.Empty(t, err)
 		len, err := w.Write(data)
-		assert.Equal(t, 1072, len)
+		assert.Equal(t, 1900, len)
 		assert.Empty(t, err)
 	}))
 	defer ts.Close()
@@ -178,55 +188,57 @@ func TestGetAllRegisteredProvider(t *testing.T) {
 
 func TestGetAllRegisteredGatewayByID(t *testing.T) {
 	gwInfo := &register.GatewayRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1",
+		RootKey:          "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
+		NodeID:           "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11",
+		MsgSigningKey:    "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		MsgSigningKeyVer: 1,
 		RegionCode:       "au",
 		NetworkAddr:      "testaddr0",
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/registers/gateway/00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", r.URL.Path)
+		assert.Equal(t, "/registers/gateway/256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11", r.URL.Path)
 		assert.Equal(t, "GET", r.Method)
 		data, err := json.Marshal(gwInfo)
 		assert.Empty(t, err)
 		len, err := w.Write(data)
-		assert.Equal(t, 271, len)
+		assert.Equal(t, 481, len)
 		assert.Empty(t, err)
 	}))
 	defer ts.Close()
 	// Initialise a manager
 	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
-	gw, err := mgr.GetRegisteredGatewayByID("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0")
+	gw, err := mgr.GetRegisteredGatewayByID("256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11")
 	assert.Empty(t, err)
 	assert.Equal(t, gwInfo, gw)
 }
 
 func TestGetAllRegisteredProviderByID(t *testing.T) {
 	pvdInfo := &register.ProviderRegisteredInfo{
-		NodeID:           "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0",
-		MsgSigningKey:    "00112233445566778899aabbccddeeff00112233445566778899aabbccddeef1",
+		RootKey:          "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
+		NodeID:           "256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11",
+		MsgSigningKey:    "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		MsgSigningKeyVer: 1,
-		OfferSigningKey:  "00112233445566778899aabbccddeeff00112233445566778899aabbccddeefa",
+		OfferSigningKey:  "0496a1a3c388b63a577d7c6661cf615ede5c1d7c5545dbd9f3745ef81e8dbfbdb63139b78ecdc2d44982782f00bdaa1f77463a052debe93c86947f81d59bff2d16",
 		RegionCode:       "au",
 		NetworkAddr:      "testaddr0",
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/registers/provider/00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0", r.URL.Path)
+		assert.Equal(t, "/registers/provider/256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11", r.URL.Path)
 		assert.Equal(t, "GET", r.Method)
 		data, err := json.Marshal(pvdInfo)
 		assert.Empty(t, err)
 		len, err := w.Write(data)
-		assert.Equal(t, 356, len)
+		assert.Equal(t, 632, len)
 		assert.Empty(t, err)
 	}))
 	defer ts.Close()
 	// Initialise a manager
 	mgr := NewFCRRegisterMgrImplV1(ts.URL, &http.Client{Timeout: 180 * time.Second})
 
-	pvd, err := mgr.GetRegisteredProviderByID("00112233445566778899aabbccddeeff00112233445566778899aabbccddeef0")
+	pvd, err := mgr.GetRegisteredProviderByID("256a237ce1f8abac72728ac8f2edbe4a436ff1f898cd2e8ff869899e9bd92d11")
 	assert.Empty(t, err)
 	assert.Equal(t, pvdInfo, pvd)
 }

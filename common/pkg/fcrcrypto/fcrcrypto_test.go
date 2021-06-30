@@ -29,22 +29,22 @@ const (
 	PrvKeyWrong = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd16480"
 	PubKey      = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
 	PubKeyWrong = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62a"
-	Addr        = "t12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi"
+	ID          = "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe"
 )
 
 func TestGenerateKey(t *testing.T) {
-	prvKey, pubKey, address, err := GenerateRetrievalKeyPair()
+	prvKey, pubKey, id, err := GenerateRetrievalKeyPair()
 	assert.Empty(t, err)
 	assert.NotEmpty(t, prvKey)
 	assert.NotEmpty(t, pubKey)
-	assert.NotEmpty(t, address)
+	assert.NotEmpty(t, id)
 }
 
 func TestGetPublicKey(t *testing.T) {
-	pubKey, address, err := GetPublicKey(PrvKey)
+	pubKey, id, err := GetPublicKey(PrvKey)
 	assert.Empty(t, err)
 	assert.Equal(t, PubKey, pubKey)
-	assert.Equal(t, Addr, address)
+	assert.Equal(t, ID, id)
 }
 
 func TestSign(t *testing.T) {

@@ -23,6 +23,7 @@ package cid
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io/fs"
 	"io/ioutil"
@@ -88,17 +89,13 @@ func NewRandomContentID() *ContentID {
 	return &ContentID{id.String()}
 }
 
-// GetHashID gets a 32 bytes hash of this cid string
-func (n *ContentID) GetHashID() ([32]byte, error) {
-	var res [32]byte
+// GetHashID gets a 32 bytes hash of this cid string in hex string format
+func (n *ContentID) GetHashID() (string, error) {
 	temp, err := n.CalculateHash()
 	if err != nil || len(temp) != 32 {
-		return res, err
+		return "", err
 	}
-	for i := 0; i < 32; i++ {
-		res[i] = temp[i]
-	}
-	return res, nil
+	return hex.EncodeToString(temp), nil
 }
 
 // ToString returns a string for the ContentID.

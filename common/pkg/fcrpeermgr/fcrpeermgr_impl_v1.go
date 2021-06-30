@@ -163,6 +163,7 @@ func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) {
 		mgr.closestGatewaysIDs.Insert(gwID)
 	}
 	// Mostly used to updating msg key
+	gwPeer.RootKey = gwReg.RootKey
 	gwPeer.MsgSigningKey = gwReg.MsgSigningKey
 	gwPeer.MsgSigningKeyVer = gwReg.MsgSigningKeyVer
 	gwPeer.RegionCode = gwReg.RegionCode
@@ -191,6 +192,7 @@ func (mgr *FCRPeerMgrImplV1) SyncPVD(pvdID string) {
 		mgr.discoveredPVDS[pvdID] = pvdPeer
 	}
 	// Mostly used to updating msg key
+	pvdPeer.RootKey = pvdReg.RootKey
 	pvdPeer.MsgSigningKey = pvdReg.MsgSigningKey
 	pvdPeer.MsgSigningKeyVer = pvdReg.MsgSigningKeyVer
 	pvdPeer.OfferSigningKey = pvdReg.OfferSigningKey
@@ -212,6 +214,7 @@ func (mgr *FCRPeerMgrImplV1) GetGWInfo(gwID string) (*Peer, error) {
 		return nil, errors.New("Gateway not found locally")
 	}
 	return &Peer{
+		RootKey:             peer.RootKey,
 		NodeID:              peer.NodeID,
 		MsgSigningKey:       peer.MsgSigningKey,
 		MsgSigningKeyVer:    peer.MsgSigningKeyVer,
@@ -234,6 +237,7 @@ func (mgr *FCRPeerMgrImplV1) GetPVDInfo(pvdID string) (*Peer, error) {
 		return nil, errors.New("Provider not found locally")
 	}
 	return &Peer{
+		RootKey:             peer.RootKey,
 		NodeID:              peer.NodeID,
 		MsgSigningKey:       peer.MsgSigningKey,
 		MsgSigningKeyVer:    peer.MsgSigningKeyVer,
@@ -262,6 +266,7 @@ func (mgr *FCRPeerMgrImplV1) GetGWSNearCIDHash(hash string, except string) ([]Pe
 	for _, id := range ids {
 		peer := mgr.discoveredGWS[id]
 		res = append(res, Peer{
+			RootKey:             peer.RootKey,
 			NodeID:              peer.NodeID,
 			MsgSigningKey:       peer.MsgSigningKey,
 			MsgSigningKeyVer:    peer.MsgSigningKeyVer,
@@ -353,6 +358,7 @@ func (mgr *FCRPeerMgrImplV1) gwSyncRoutine() {
 				if update {
 					mgr.discoveredGWSLock.Lock()
 					mgr.discoveredGWS[gwInfo.NodeID] = &Peer{
+						RootKey:             gwInfo.RootKey,
 						NodeID:              gwInfo.NodeID,
 						MsgSigningKey:       gwInfo.MsgSigningKey,
 						MsgSigningKeyVer:    gwInfo.MsgSigningKeyVer,
@@ -447,6 +453,7 @@ func (mgr *FCRPeerMgrImplV1) pvdSyncRoutine() {
 				if update {
 					mgr.discoveredPVDSLock.Lock()
 					mgr.discoveredPVDS[pvdInfo.NodeID] = &Peer{
+						RootKey:             pvdInfo.RootKey,
 						NodeID:              pvdInfo.NodeID,
 						MsgSigningKey:       pvdInfo.MsgSigningKey,
 						MsgSigningKeyVer:    pvdInfo.MsgSigningKeyVer,
