@@ -3,16 +3,6 @@ Package fcrpeermgr - peer manager manages all retrieval peers.
 */
 package fcrpeermgr
 
-import (
-	"errors"
-	"sync"
-	"time"
-
-	"github.com/wcgcyx/fc-retrieval/common/pkg/dhtring"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
-)
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -27,6 +17,16 @@ import (
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import (
+	"errors"
+	"sync"
+	"time"
+
+	"github.com/wcgcyx/fc-retrieval/common/pkg/dhtring"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
+)
 
 // FCRPeerMgrImplV1 implements FCRPeerMgr, it is an in-memory version.
 type FCRPeerMgrImplV1 struct {

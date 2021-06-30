@@ -46,6 +46,18 @@ func (r *Record) Copy() *Record {
 }
 
 // A list of global variables representing list records.
+var MockGoodRecord = Record{
+	reason:    "Mock good record",
+	point:     1000,
+	violation: false,
+}
+
+var MockBadRecord = Record{
+	reason:    "Mock bad record",
+	point:     -1,
+	violation: true,
+}
+
 var InitialEstablishmentSucceed = Record{
 	reason:    "Succeed in initial establishment",
 	point:     1000,
