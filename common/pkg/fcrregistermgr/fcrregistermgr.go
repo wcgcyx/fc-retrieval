@@ -25,8 +25,11 @@ type FCRRegisterMgr interface {
 	// GetHeight gets the current height of the register.
 	GetHeight() (uint64, error)
 
-	// GetMaxPage gets the maximum page of the register at given height.
-	GetMaxPage(height uint64) (uint64, error)
+	// GetGWMaxPage gets the maximum page of the gateway register at given height.
+	GetGWMaxPage(height uint64) (uint64, error)
+
+	// GetPVDMaxPage gets the maximum page of the provider register at given height.
+	GetPVDMaxPage(height uint64) (uint64, error)
 
 	// RegisterGateway registers a given gateway.
 	RegisterGateway(id string, gwInfo *register.GatewayRegisteredInfo) error

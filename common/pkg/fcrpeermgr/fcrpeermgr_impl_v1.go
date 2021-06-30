@@ -160,6 +160,7 @@ func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) {
 			NodeID: gwID,
 		}
 		mgr.discoveredGWS[gwID] = gwPeer
+		mgr.closestGatewaysIDs.Insert(gwID)
 	}
 	// Mostly used to updating msg key
 	gwPeer.MsgSigningKey = gwReg.MsgSigningKey
@@ -315,7 +316,7 @@ func (mgr *FCRPeerMgrImplV1) gwSyncRoutine() {
 			toRemove[key] = true
 		}
 		mgr.discoveredGWSLock.RUnlock()
-		maxPage, err := mgr.registerMgr.GetMaxPage(height)
+		maxPage, err := mgr.registerMgr.GetGWMaxPage(height)
 		if err != nil {
 			logging.Warn("FCRPeerManager gateway sync fail to get max page at height %v: %v", height, err.Error())
 			continue
@@ -335,6 +336,9 @@ func (mgr *FCRPeerMgrImplV1) gwSyncRoutine() {
 				storedInfo, ok := mgr.discoveredGWS[gwInfo.NodeID]
 				if !ok {
 					// Not exist, we need to add a new entry
+					mgr.closestGatewaysIDsLock.Lock()
+					mgr.closestGatewaysIDs.Insert(gwInfo.NodeID)
+					mgr.closestGatewaysIDsLock.Unlock()
 					refreshRange = true
 					update = true
 				} else {
@@ -410,7 +414,7 @@ func (mgr *FCRPeerMgrImplV1) pvdSyncRoutine() {
 			toRemove[key] = true
 		}
 		mgr.discoveredPVDSLock.RUnlock()
-		maxPage, err := mgr.registerMgr.GetMaxPage(height)
+		maxPage, err := mgr.registerMgr.GetPVDMaxPage(height)
 		if err != nil {
 			logging.Warn("FCRPeerManager provider sync fail to get max page at height %v: %v", height, err.Error())
 			continue

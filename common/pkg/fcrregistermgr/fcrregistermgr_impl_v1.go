@@ -43,7 +43,11 @@ func (mgr *FCRRegisterMgrImplV1) GetHeight() (uint64, error) {
 	return 0, nil
 }
 
-func (mgr *FCRRegisterMgrImplV1) GetMaxPage(height uint64) (uint64, error) {
+func (mgr *FCRRegisterMgrImplV1) GetGWMaxPage(height uint64) (uint64, error) {
+	return 0, nil
+}
+
+func (mgr *FCRRegisterMgrImplV1) GetPVDMaxPage(height uint64) (uint64, error) {
 	return 0, nil
 }
 
