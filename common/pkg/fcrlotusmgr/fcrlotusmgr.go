@@ -3,15 +3,6 @@ Package fcrlotusmgr - lotus manager handles the interaction with filecoin via lo
 */
 package fcrlotusmgr
 
-import (
-	"context"
-	"math/big"
-
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/lotus/chain/types"
-	"github.com/ipfs/go-cid"
-)
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -26,6 +17,15 @@ import (
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import (
+	"context"
+	"math/big"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/lotus/chain/types"
+	"github.com/ipfs/go-cid"
+)
 
 // FCRLotusMgr represents the manager that interacts with the lotus.
 type FCRLotusMgr interface {

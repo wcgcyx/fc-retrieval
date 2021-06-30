@@ -3,8 +3,6 @@ Package fcrregistermgr - register manager handles the interaction with the regis
 */
 package fcrregistermgr
 
-import "github.com/wcgcyx/fc-retrieval/common/pkg/register"
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -19,6 +17,8 @@ import "github.com/wcgcyx/fc-retrieval/common/pkg/register"
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import "github.com/wcgcyx/fc-retrieval/common/pkg/register"
 
 // FCRRegisterMgr represents the manager that interacts with the register.
 type FCRRegisterMgr interface {

@@ -5,8 +5,6 @@ FCRP2PServer is a wrapper over libp2p.
 */
 package fcrserver
 
-import "github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -21,6 +19,8 @@ import "github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import "github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 
 // FCRP2PServer represents a server handling p2p connection.
 type FCRP2PServer interface {

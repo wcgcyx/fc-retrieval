@@ -3,16 +3,6 @@ Package fcrregistermgr - register manager handles the interaction with the regis
 */
 package fcrregistermgr
 
-import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"net/http"
-	"sync"
-
-	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
-)
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -27,6 +17,16 @@ import (
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"sync"
+
+	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
+)
 
 // FCRRegisterMgrImplV1 implements FCRRegisterMgr, it interacts with a mocked register (http server).
 type FCRRegisterMgrImplV1 struct {

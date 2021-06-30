@@ -3,15 +3,6 @@ Package fcrpeermgr - peer manager manages all retrieval peers.
 */
 package fcrpeermgr
 
-import (
-	"errors"
-	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
-)
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -26,6 +17,15 @@ import (
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
+)
 
 type mockRegisterMgr struct {
 	gws  map[uint64]([]register.GatewayRegisteredInfo)

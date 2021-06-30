@@ -3,12 +3,6 @@ Package fcrcrypto - location for cryptographic tools to perform common operation
 */
 package fcrcrypto
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -23,6 +17,12 @@ import (
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 const (
 	PrvKey      = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"

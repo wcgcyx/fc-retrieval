@@ -3,8 +3,6 @@ Package fcrreputationmgr - reputation manager manages the reputation of all retr
 */
 package fcrreputationmgr
 
-import "github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -19,6 +17,8 @@ import "github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import "github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
 
 type FCRReputationMgr interface {
 	// Start starts the manager's routine.

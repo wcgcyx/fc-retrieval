@@ -3,8 +3,6 @@ Package register - location for smart contract registration structs.
 */
 package register
 
-import "encoding/hex"
-
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -19,6 +17,8 @@ import "encoding/hex"
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import "encoding/hex"
 
 const (
 	validNodeIDLen = 32
