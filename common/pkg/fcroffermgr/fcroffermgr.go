@@ -33,42 +33,42 @@ type FCROfferMgr interface {
 
 	/* CID Offer related functions */
 	// AddOffer adds an cid offer to the storage.
-	AddOffer(offer *cidoffer.CIDOffer) error
+	AddOffer(offer *cidoffer.CIDOffer)
 
 	// AddOffer adds an offer to the storage with a tag.
 	// Should be called by a provider to link offer with filename.
-	AddOfferWithTag(offer *cidoffer.CIDOffer, tag string) error
+	AddOfferWithTag(offer *cidoffer.CIDOffer, tag string)
 
 	// GetOffers gets offers containing given cid.
-	GetOffers(cID *cid.ContentID) ([]cidoffer.CIDOffer, error)
+	GetOffers(cID *cid.ContentID) []cidoffer.CIDOffer
 
 	// GetOffersByTag gets offers by given tag.
 	// Should be called by a provider to show offers linked with filename.
-	GetOffersByTag(tag string) ([]cidoffer.CIDOffer, error)
+	GetOffersByTag(tag string) []cidoffer.CIDOffer
 
 	// ListOffers gets a list of offers from given index to given index.
-	ListOffers(from uint, to uint) ([]cidoffer.CIDOffer, error)
+	ListOffers(from uint, to uint) []cidoffer.CIDOffer
 
 	// ListOffersWithTag gets a list of offers and their tag from given index to given index.
-	ListOffersWithTag(from uint, to uint) ([]cidoffer.CIDOffer, []string, error)
+	ListOffersWithTag(from uint, to uint) ([]cidoffer.CIDOffer, []string)
 
 	// ListOffersWithAccessCount gets a list of offers and their access count from given index to given index.
 	// From most frequently accessed offer to least frequently accessed offer.
 	// It is used by gateway to list offers.
-	ListOffersWithAccessCount(from uint, to uint) ([]cidoffer.CIDOffer, []int, error)
+	ListOffersWithAccessCount(from uint, to uint) ([]cidoffer.CIDOffer, []int)
 
 	// RemoveOffer removes an offer by digest
 	RemoveOffer(digest string)
 
 	/* SubCID Offer related functions */
 	// AddSubOffer adds an cid offer to the storage.
-	AddSubOffer(offer *cidoffer.SubCIDOffer) error
+	AddSubOffer(offer *cidoffer.SubCIDOffer)
 
 	// GetSubOffers gets offers containing given cid.
-	GetSubOffers(cID *cid.ContentID) ([]cidoffer.SubCIDOffer, error)
+	GetSubOffers(cID *cid.ContentID) []cidoffer.SubCIDOffer
 
 	// ListSubOffers gets a list of offers from given index to given index.
-	ListSubOffers(from uint, to uint) ([]cidoffer.SubCIDOffer, error)
+	ListSubOffers(from uint, to uint) []cidoffer.SubCIDOffer
 
 	// RemoveSubOffer removes an offer by digest
 	RemoveSubOffer(digest string)

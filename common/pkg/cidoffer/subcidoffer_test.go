@@ -237,4 +237,14 @@ func TestSerializationSubOffer(t *testing.T) {
 	assert.Equal(t, p1, p2)
 	err = subOffer2.FromBytes([]byte{})
 	assert.NotEmpty(t, err)
+
+	subOffer3 := subOffer.Copy()
+	assert.NotEmpty(t, subOffer3)
+	assert.Equal(t, subOffer.providerID, subOffer3.providerID)
+	assert.Equal(t, subOffer.subCID, subOffer3.subCID)
+	assert.Equal(t, subOffer.merkleRoot, subOffer3.merkleRoot)
+	assert.Equal(t, subOffer.price, subOffer3.price)
+	assert.Equal(t, subOffer.expiry, subOffer3.expiry)
+	assert.Equal(t, subOffer.qos, subOffer3.qos)
+	assert.Equal(t, subOffer.signature, subOffer3.signature)
 }

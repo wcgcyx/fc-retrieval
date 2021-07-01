@@ -203,4 +203,14 @@ func TestSerialization(t *testing.T) {
 	assert.Equal(t, offer.merkleRoot, offer2.merkleRoot)
 	err = offer2.FromBytes([]byte{})
 	assert.NotEmpty(t, err)
+
+	offer3 := offer.Copy()
+	assert.NotEmpty(t, offer3)
+	assert.Equal(t, offer.GetProviderID(), offer3.GetProviderID())
+	assert.Equal(t, offer.GetCIDs(), offer3.GetCIDs())
+	assert.Equal(t, offer.GetPrice(), offer3.GetPrice())
+	assert.Equal(t, offer.GetExpiry(), offer3.GetExpiry())
+	assert.Equal(t, offer.GetQoS(), offer3.GetQoS())
+	assert.Equal(t, offer.GetSignature(), offer3.GetSignature())
+	assert.Equal(t, offer.merkleRoot, offer3.merkleRoot)
 }

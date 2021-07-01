@@ -225,3 +225,11 @@ func (c *SubCIDOffer) FromBytes(p []byte) error {
 	c.signature = cJson.Signature
 	return nil
 }
+
+// Copy returns a copy of the Sub CID Offer
+func (c *SubCIDOffer) Copy() *SubCIDOffer {
+	data, _ := c.ToBytes()
+	var copy SubCIDOffer
+	copy.FromBytes(data)
+	return &copy
+}

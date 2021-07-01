@@ -261,3 +261,11 @@ func (c *CIDOffer) FromBytes(p []byte) error {
 	c.merkleRoot = c.merkleTree.GetMerkleRoot()
 	return nil
 }
+
+// Copy returns a copy of the CID Offer
+func (c *CIDOffer) Copy() *CIDOffer {
+	data, _ := c.ToBytes()
+	var copy CIDOffer
+	copy.FromBytes(data)
+	return &copy
+}
