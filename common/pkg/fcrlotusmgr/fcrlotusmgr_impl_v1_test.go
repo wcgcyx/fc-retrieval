@@ -118,7 +118,7 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
+	mgr := NewFCRLotusMgrImplV1(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
 
@@ -153,7 +153,7 @@ func TestTopup(t *testing.T) {
 		},
 	}
 
-	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
+	mgr := NewFCRLotusMgrImplV1(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
 	err := mgr.TopupPaymentChannel(PrvKey, "f2n6prop4c3wmayti7d26hdwjitfu6ttkp5qhu6ni", big.NewInt(1000000))
@@ -186,7 +186,7 @@ func TestCheck(t *testing.T) {
 		},
 	}
 
-	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
+	mgr := NewFCRLotusMgrImplV1(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
 	settling, balance, recipient, err := mgr.CheckPaymentChannel("f2n6prop4c3wmayti7d26hdwjitfu6ttkp5qhu6ni")
@@ -212,7 +212,7 @@ func TestVoucher(t *testing.T) {
 
 func TestUnimplemented(t *testing.T) {
 	mock := mockLotusAPI{}
-	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
+	mgr := NewFCRLotusMgrImplV1(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
 	err := mgr.SettlePaymentChannel("", "", []string{""})

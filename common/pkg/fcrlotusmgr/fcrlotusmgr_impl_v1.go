@@ -45,20 +45,20 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 )
 
-type FCRLotusMgrImpl struct {
+type FCRLotusMgrImplV1 struct {
 	lotusAPIAddr string
 	authToken    string
 	getLotusAPI  func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error)
 }
 
-func NewFCRLotusMgrImpl(lotusAPIAddr string, authToken string, getLotusAPI func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error)) FCRLotusMgr {
+func NewFCRLotusMgrImplV1(lotusAPIAddr string, authToken string, getLotusAPI func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error)) FCRLotusMgr {
 	if getLotusAPI == nil {
 		getLotusAPI = getRemoteLotusAPI
 	}
-	return &FCRLotusMgrImpl{lotusAPIAddr: lotusAPIAddr, authToken: authToken, getLotusAPI: getLotusAPI}
+	return &FCRLotusMgrImplV1{lotusAPIAddr: lotusAPIAddr, authToken: authToken, getLotusAPI: getLotusAPI}
 }
 
-func (mgr *FCRLotusMgrImpl) CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error) {
+func (mgr *FCRLotusMgrImplV1) CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error) {
 	pubKey, _, err := fcrcrypto.GetPublicKey(prvKey)
 	if err != nil {
 		return "", err
@@ -113,7 +113,7 @@ func (mgr *FCRLotusMgrImpl) CreatePaymentChannel(prvKey string, recipientAddr st
 	return decodedReturn.RobustAddress.String(), nil
 }
 
-func (mgr *FCRLotusMgrImpl) TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error {
+func (mgr *FCRLotusMgrImplV1) TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error {
 	pubKey, _, err := fcrcrypto.GetPublicKey(prvKey)
 	if err != nil {
 		return err
@@ -163,15 +163,15 @@ func (mgr *FCRLotusMgrImpl) TopupPaymentChannel(prvKey string, chAddr string, am
 	return nil
 }
 
-func (mgr *FCRLotusMgrImpl) SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error {
+func (mgr *FCRLotusMgrImplV1) SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error {
 	return errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) CollectPaymentChannel(prvKey string, chAddr string) error {
+func (mgr *FCRLotusMgrImplV1) CollectPaymentChannel(prvKey string, chAddr string) error {
 	return errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) CheckPaymentChannel(chAddr string) (bool, *big.Int, string, error) {
+func (mgr *FCRLotusMgrImplV1) CheckPaymentChannel(chAddr string) (bool, *big.Int, string, error) {
 	to, err := address.NewFromString(chAddr)
 	if err != nil {
 		return false, nil, "", err
@@ -206,19 +206,19 @@ func (mgr *FCRLotusMgrImpl) CheckPaymentChannel(chAddr string) (bool, *big.Int, 
 	return state.SettlingAt != 0, actor.Balance.Int, recipient.String(), nil
 }
 
-func (mgr *FCRLotusMgrImpl) GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
+func (mgr *FCRLotusMgrImplV1) GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error) {
+func (mgr *FCRLotusMgrImplV1) GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) GetPaymentChannelCreationBlock(chAddr string) (*big.Int, error) {
+func (mgr *FCRLotusMgrImplV1) GetPaymentChannelCreationBlock(chAddr string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) GetPaymentChannelSettlementBlock(chAddr string) (*big.Int, error) {
+func (mgr *FCRLotusMgrImplV1) GetPaymentChannelSettlementBlock(chAddr string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
