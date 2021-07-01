@@ -1,7 +1,5 @@
 /*
-Package fcrp2pserver - provides an interface to interact with libp2p.
-
-FCRP2PServer is a wrapper over libp2p.
+Package fcrserver - provides an interface to do networking.
 */
 package fcrserver
 
@@ -20,19 +18,37 @@ package fcrserver
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
+import (
+	"time"
 
-// FCRP2PServer represents a server handling p2p connection.
-type FCRP2PServer interface {
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
+)
+
+// FCRServer represents a server handling p2p connection.
+type FCRServer interface {
 	// Start starts the server.
-	Start()
+	Start() error
 
 	// Shutdown stops the server.
 	Shutdown()
 
 	// AddHandler adds a handler to the server, which handles a given message type.
-	AddHandler(msgType int32, handler func(reader *FCRServerReader, writer *FCRServerWriter, request *fcrmessages.FCRMessage) error) *FCRP2PServer
+	AddHandler(msgType int32, handler func(reader *FCRServerReader, writer *FCRServerWriter, request *fcrmessages.FCRMessage) error) FCRServer
 
 	// AddRequester adds a requester to the server, which is used to send a request for a given message type.
-	AddRequester(msgType int32, requester func(reader *FCRServerReader, writer *FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) *FCRP2PServer
+	AddRequester(msgType int32, requester func(reader *FCRServerReader, writer *FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) FCRServer
+}
+
+// FCRServerReader is a reader for reading message.
+type FCRServerReader interface {
+	// Read reads a message for a given timeout.
+	// It returns the message, a boolean indicates whether a timeout occurs and error.
+	Read(timeout time.Duration) (*fcrmessages.FCRMessage, bool, error)
+}
+
+// FCRServerWriter is a reader for writer message.
+type FCRServerWriter interface {
+	// Write writes a message for a given timeout.
+	// It returns a boolean indicates whether a timeout occurs and error.
+	Write(msg *fcrmessages.FCRMessage, timeout time.Duration) (bool, error)
 }
