@@ -302,3 +302,61 @@ func TestInValidPVD(t *testing.T) {
 	res = ValidateProviderInfo(pvdInfo)
 	assert.False(t, res)
 }
+
+func TestGetWalletAddress(t *testing.T) {
+	gwInfo := &GatewayRegisteredInfo{
+		RootKey:             "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		NodeID:              "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe",
+		MsgSigningKey:       "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		MsgSigningKeyVer:    0,
+		RegionCode:          "us",
+		NetworkAddr:         "addr0",
+		Deregistering:       false,
+		DeregisteringHeight: 0,
+	}
+	addr, err := GetGWWalletAddress(gwInfo)
+	assert.Empty(t, err)
+	assert.Equal(t, "t12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", addr)
+
+	gwInfo = &GatewayRegisteredInfo{
+		RootKey:             "p04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		NodeID:              "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe",
+		MsgSigningKey:       "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		MsgSigningKeyVer:    0,
+		RegionCode:          "us",
+		NetworkAddr:         "addr0",
+		Deregistering:       false,
+		DeregisteringHeight: 0,
+	}
+	_, err = GetGWWalletAddress(gwInfo)
+	assert.NotEmpty(t, err)
+
+	pvdInfo := &ProviderRegisteredInfo{
+		RootKey:             "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		NodeID:              "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe",
+		MsgSigningKey:       "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		MsgSigningKeyVer:    0,
+		OfferSigningKey:     "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		RegionCode:          "us",
+		NetworkAddr:         "addr0",
+		Deregistering:       false,
+		DeregisteringHeight: 0,
+	}
+	addr, err = GetPVDWalletAddress(pvdInfo)
+	assert.Empty(t, err)
+	assert.Equal(t, "t12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", addr)
+
+	pvdInfo = &ProviderRegisteredInfo{
+		RootKey:             "p04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		NodeID:              "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe",
+		MsgSigningKey:       "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		MsgSigningKeyVer:    0,
+		OfferSigningKey:     "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d",
+		RegionCode:          "us",
+		NetworkAddr:         "addr0",
+		Deregistering:       false,
+		DeregisteringHeight: 0,
+	}
+	_, err = GetPVDWalletAddress(pvdInfo)
+	assert.NotEmpty(t, err)
+}
