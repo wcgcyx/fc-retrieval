@@ -15,7 +15,15 @@ require (
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/ipfs/go-cid v0.0.7
 	github.com/kr/text v0.2.0 // indirect
+	github.com/libp2p/go-libp2p v0.12.0
+	github.com/libp2p/go-libp2p-connmgr v0.2.4
+	github.com/libp2p/go-libp2p-core v0.7.0
+	github.com/libp2p/go-libp2p-crypto v0.1.0
+	github.com/libp2p/go-libp2p-host v0.0.3
+	github.com/libp2p/go-libp2p-net v0.0.2
+	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1
+	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/multiformats/go-multihash v0.0.15
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/rs/zerolog v1.23.0

@@ -33,10 +33,13 @@ type FCRServer interface {
 	Shutdown()
 
 	// AddHandler adds a handler to the server, which handles a given message type.
-	AddHandler(msgType int32, handler func(reader *FCRServerReader, writer *FCRServerWriter, request *fcrmessages.FCRMessage) error) FCRServer
+	AddHandler(msgType byte, handler func(reader FCRServerReader, writer FCRServerWriter, request *fcrmessages.FCRMessage) error) FCRServer
 
 	// AddRequester adds a requester to the server, which is used to send a request for a given message type.
-	AddRequester(msgType int32, requester func(reader *FCRServerReader, writer *FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) FCRServer
+	AddRequester(msgType byte, requester func(reader FCRServerReader, writer FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) FCRServer
+
+	// Request uses a requester corresponding to the given message type to send a request to given multiaddr.
+	Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, bool, error)
 }
 
 // FCRServerReader is a reader for reading message.
