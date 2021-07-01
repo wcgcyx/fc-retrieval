@@ -231,7 +231,16 @@ func (mgr *FCROfferMgrImplV1) ListOffersWithTag(from uint, to uint) ([]cidoffer.
 
 	index := uint(0)
 	for _, key := range keys {
+		// Sort digests
+		digests := make([]string, len(mgr.tagMap[key]))
+		i := 0
 		for digest := range mgr.tagMap[key] {
+			digests[i] = digest
+			i++
+		}
+		sort.Strings(digests)
+
+		for _, digest := range digests {
 			if index >= from {
 				if index < to {
 					copy := mgr.dMap[digest].offer.Copy()
@@ -267,11 +276,20 @@ func (mgr *FCROfferMgrImplV1) ListOffersWithAccessCount(from uint, to uint) ([]c
 		keys[i] = key
 		i++
 	}
-	sort.Ints(keys)
+	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
 
 	index := uint(0)
 	for _, key := range keys {
+		// Sort digests
+		digests := make([]string, len(mgr.countMap[key]))
+		i := 0
 		for digest := range mgr.countMap[key] {
+			digests[i] = digest
+			i++
+		}
+		sort.Strings(digests)
+
+		for _, digest := range digests {
 			if index >= from {
 				if index < to {
 					copy := mgr.dMap[digest].offer.Copy()

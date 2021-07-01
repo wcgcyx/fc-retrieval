@@ -109,21 +109,182 @@ func TestAddOffer(t *testing.T) {
 
 	res = mgr.ListOffers(1, 3)
 	assert.Equal(t, 2, len(res))
+	assert.Equal(t, "1d8b5afd46676b00a4433b313a83e40719fdf7c3b52131b8b09b304c26ec1e82", res[0].GetMessageDigest())
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[1].GetMessageDigest())
 
 	res = mgr.ListOffers(2, 3)
 	assert.Equal(t, 1, len(res))
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[0].GetMessageDigest())
 
 	res = mgr.ListOffers(2, 5)
 	assert.Equal(t, 3, len(res))
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[0].GetMessageDigest())
+	assert.Equal(t, "9198ee39730bad84b65185b1c306f7b575a0a669ab958f7aba7a35c71f779652", res[1].GetMessageDigest())
+	assert.Equal(t, "d746ad9bf2a5deafe1f8848eed376e0c68ccd4c600d8b2c9c5d7b832a729ea21", res[2].GetMessageDigest())
 
 	res = mgr.ListOffers(2, 10)
 	assert.Equal(t, 4, len(res))
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[0].GetMessageDigest())
+	assert.Equal(t, "9198ee39730bad84b65185b1c306f7b575a0a669ab958f7aba7a35c71f779652", res[1].GetMessageDigest())
+	assert.Equal(t, "d746ad9bf2a5deafe1f8848eed376e0c68ccd4c600d8b2c9c5d7b832a729ea21", res[2].GetMessageDigest())
+	assert.Equal(t, "fb46952a0a8c2c58d76d3b131099d2cbbfdb0029905efb7a7aad709dd827a9f5", res[3].GetMessageDigest())
 
 	res, tags := mgr.ListOffersWithTag(3, 2)
 	assert.Equal(t, 0, len(res))
 	assert.Equal(t, 0, len(tags))
 
-	res, tags = mgr.ListOffersWithTag(2, 3)
+	res, tags = mgr.ListOffersWithTag(2, 5)
+	assert.Equal(t, 3, len(res))
+	assert.Equal(t, 3, len(tags))
+	assert.Equal(t, "9198ee39730bad84b65185b1c306f7b575a0a669ab958f7aba7a35c71f779652", res[0].GetMessageDigest())
+	assert.Equal(t, "d746ad9bf2a5deafe1f8848eed376e0c68ccd4c600d8b2c9c5d7b832a729ea21", res[1].GetMessageDigest())
+	assert.Equal(t, "fb46952a0a8c2c58d76d3b131099d2cbbfdb0029905efb7a7aad709dd827a9f5", res[2].GetMessageDigest())
+	assert.Equal(t, []string{"", "", ""}, tags)
+
+	res, tags = mgr.ListOffersWithTag(5, 6)
 	assert.Equal(t, 1, len(res))
 	assert.Equal(t, 1, len(tags))
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[0].GetMessageDigest())
+	assert.Equal(t, []string{"testtag"}, tags)
+
+	res, counts := mgr.ListOffersWithAccessCount(0, 10)
+	assert.Equal(t, 6, len(res))
+	assert.Equal(t, "09aac8229414ad4f42e73cf93e79f922ff65d5a6465c83be6070baaeeca988ff", res[0].GetMessageDigest())
+	assert.Equal(t, "1d8b5afd46676b00a4433b313a83e40719fdf7c3b52131b8b09b304c26ec1e82", res[1].GetMessageDigest())
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[2].GetMessageDigest())
+	assert.Equal(t, "9198ee39730bad84b65185b1c306f7b575a0a669ab958f7aba7a35c71f779652", res[3].GetMessageDigest())
+	assert.Equal(t, "fb46952a0a8c2c58d76d3b131099d2cbbfdb0029905efb7a7aad709dd827a9f5", res[4].GetMessageDigest())
+	assert.Equal(t, "d746ad9bf2a5deafe1f8848eed376e0c68ccd4c600d8b2c9c5d7b832a729ea21", res[5].GetMessageDigest())
+	assert.Equal(t, []int{2, 2, 1, 1, 1, 0}, counts)
+
+	mgr.RemoveOffer("19aac8229414ad4f42e73cf93e79f922ff65d5a6465c83be6070baaeeca988ff")
+	mgr.RemoveOffer("09aac8229414ad4f42e73cf93e79f922ff65d5a6465c83be6070baaeeca988ff")
+	res, counts = mgr.ListOffersWithAccessCount(0, 3)
+	assert.Equal(t, 3, len(res))
+	assert.Equal(t, "1d8b5afd46676b00a4433b313a83e40719fdf7c3b52131b8b09b304c26ec1e82", res[0].GetMessageDigest())
+	assert.Equal(t, "697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311", res[1].GetMessageDigest())
+	assert.Equal(t, "9198ee39730bad84b65185b1c306f7b575a0a669ab958f7aba7a35c71f779652", res[2].GetMessageDigest())
+	assert.Equal(t, []int{2, 1, 1}, counts)
+
+	mgr.RemoveOffer("d746ad9bf2a5deafe1f8848eed376e0c68ccd4c600d8b2c9c5d7b832a729ea21")
+	res, counts = mgr.ListOffersWithAccessCount(3, 5)
+	assert.Equal(t, 1, len(res))
+	assert.Equal(t, "fb46952a0a8c2c58d76d3b131099d2cbbfdb0029905efb7a7aad709dd827a9f5", res[0].GetMessageDigest())
+	assert.Equal(t, []int{1}, counts)
+
+	mgr.RemoveOffer("697dfe073c9714504b6364e7333feceba4b3bbe64f2104efa5842c1a2331a311")
+	res = mgr.GetOffersByTag("testtag")
+	assert.Equal(t, 0, len(res))
+}
+
+func TestSubOffer(t *testing.T) {
+	mgr := NewFCROfferMgrImplV1(false)
+	err := mgr.Start()
+	assert.Empty(t, err)
+	defer mgr.Shutdown()
+
+	cid1, err := cid.NewContentID(CID1)
+	assert.Empty(t, err)
+	cid2, err := cid.NewContentID(CID2)
+	assert.Empty(t, err)
+	cid3, err := cid.NewContentID(CID3)
+	assert.Empty(t, err)
+	cid4, err := cid.NewContentID(CID4)
+	assert.Empty(t, err)
+	cid5, err := cid.NewContentID(CID5)
+	assert.Empty(t, err)
+	cid6, err := cid.NewContentID(CID6)
+	assert.Empty(t, err)
+	cid7, err := cid.NewContentID(CID7)
+	assert.Empty(t, err)
+
+	offer, err := cidoffer.NewCIDOffer("testID", []cid.ContentID{*cid1, *cid2, *cid3, *cid4, *cid5, *cid6}, big.NewInt(10), 10, 10)
+	assert.Empty(t, err)
+
+	offer2, err := cidoffer.NewCIDOffer("testID", []cid.ContentID{*cid1, *cid2}, big.NewInt(10), 10, 10)
+	assert.Empty(t, err)
+
+	subOffer0, err := offer.GenerateSubCIDOffer(cid1)
+	assert.Empty(t, err)
+
+	subOffer1, err := offer.GenerateSubCIDOffer(cid2)
+	assert.Empty(t, err)
+
+	subOffer2, err := offer.GenerateSubCIDOffer(cid3)
+	assert.Empty(t, err)
+
+	subOffer3, err := offer.GenerateSubCIDOffer(cid4)
+	assert.Empty(t, err)
+
+	subOffer4, err := offer.GenerateSubCIDOffer(cid5)
+	assert.Empty(t, err)
+
+	subOffer5, err := offer.GenerateSubCIDOffer(cid6)
+	assert.Empty(t, err)
+
+	subOffer6, err := offer2.GenerateSubCIDOffer(cid1)
+	assert.Empty(t, err)
+
+	subOffer7, err := offer2.GenerateSubCIDOffer(cid2)
+	assert.Empty(t, err)
+
+	mgr.AddSubOffer(subOffer0)
+	mgr.AddSubOffer(subOffer0)
+	mgr.AddSubOffer(subOffer1)
+	mgr.AddSubOffer(subOffer2)
+	mgr.AddSubOffer(subOffer3)
+	mgr.AddSubOffer(subOffer4)
+	mgr.AddSubOffer(subOffer5)
+	mgr.AddSubOffer(subOffer6)
+	mgr.AddSubOffer(subOffer7)
+
+	res := mgr.GetSubOffers(cid1)
+	assert.Equal(t, 2, len(res))
+	res = mgr.GetSubOffers(cid2)
+	assert.Equal(t, 2, len(res))
+	res = mgr.GetSubOffers(cid3)
+	assert.Equal(t, 1, len(res))
+	res = mgr.GetSubOffers(cid4)
+	assert.Equal(t, 1, len(res))
+	res = mgr.GetSubOffers(cid7)
+	assert.Equal(t, 0, len(res))
+
+	res = mgr.ListSubOffers(3, 1)
+	assert.Equal(t, 0, len(res))
+
+	res = mgr.ListSubOffers(1, 3)
+	assert.Equal(t, 2, len(res))
+	assert.Equal(t, "254c88ee494aa0b61fa394d23ed493ffae277f95f36166c4d8e2de03a9708faf", res[0].GetMessageDigest())
+	assert.Equal(t, "6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0", res[1].GetMessageDigest())
+
+	res = mgr.ListSubOffers(2, 3)
+	assert.Equal(t, 1, len(res))
+	assert.Equal(t, "6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0", res[0].GetMessageDigest())
+
+	res = mgr.ListSubOffers(2, 5)
+	assert.Equal(t, 3, len(res))
+	assert.Equal(t, "6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0", res[0].GetMessageDigest())
+	assert.Equal(t, "975e4e63d8e71bceeff50bfcdf408861bb656d97d86339c33d85e715da94963a", res[1].GetMessageDigest())
+	assert.Equal(t, "9761a57643bc9a1c7fa57b7860a7705b8bac7dd8c6d7933718f195005ac6950f", res[2].GetMessageDigest())
+
+	res = mgr.ListSubOffers(2, 10)
+	assert.Equal(t, 6, len(res))
+	assert.Equal(t, "6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0", res[0].GetMessageDigest())
+	assert.Equal(t, "975e4e63d8e71bceeff50bfcdf408861bb656d97d86339c33d85e715da94963a", res[1].GetMessageDigest())
+	assert.Equal(t, "9761a57643bc9a1c7fa57b7860a7705b8bac7dd8c6d7933718f195005ac6950f", res[2].GetMessageDigest())
+	assert.Equal(t, "ae291b1b04d853387cedbb5d4a05578b516e3838b5ce5e206a340dacaef7387e", res[3].GetMessageDigest())
+	assert.Equal(t, "d1b1a90b7430bef3113868b13a2ea71fecd06b3ba98950afa54ba5ef31af3382", res[4].GetMessageDigest())
+	assert.Equal(t, "e567ac85122552402b0e142925998fdbebf086441d24d31a91e5022105a84ee9", res[5].GetMessageDigest())
+
+	mgr.RemoveSubOffer("8cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0")
+	mgr.RemoveSubOffer("6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0")
+	res = mgr.ListSubOffers(2, 4)
+	assert.Equal(t, 2, len(res))
+	assert.Equal(t, "975e4e63d8e71bceeff50bfcdf408861bb656d97d86339c33d85e715da94963a", res[0].GetMessageDigest())
+	assert.Equal(t, "9761a57643bc9a1c7fa57b7860a7705b8bac7dd8c6d7933718f195005ac6950f", res[1].GetMessageDigest())
+
+	mgr.RemoveSubOffer("e567ac85122552402b0e142925998fdbebf086441d24d31a91e5022105a84ee9")
+	res = mgr.ListSubOffers(5, 6)
+	assert.Equal(t, 1, len(res))
+	assert.Equal(t, "d1b1a90b7430bef3113868b13a2ea71fecd06b3ba98950afa54ba5ef31af3382", res[0].GetMessageDigest())
 }
