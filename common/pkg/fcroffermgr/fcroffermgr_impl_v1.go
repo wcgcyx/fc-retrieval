@@ -187,16 +187,28 @@ func (mgr *FCROfferMgrImplV1) ListOffers(from uint, to uint) []cidoffer.CIDOffer
 	if from >= to || from >= uint(len(mgr.dMap)) {
 		return res
 	}
-	i := uint(0)
-	for _, val := range mgr.dMap {
-		if i >= from && i < to {
-			copy := val.offer.Copy()
-			if copy == nil {
-				panic("Fail to get an offer copy")
-			}
-			res = append(res, *copy)
-		}
+	keys := make([]string, len(mgr.dMap))
+	i := 0
+	for key := range mgr.dMap {
+		keys[i] = key
 		i++
+	}
+	sort.Strings(keys)
+
+	index := uint(0)
+	for _, key := range keys {
+		if index >= from {
+			if index < to {
+				copy := mgr.dMap[key].offer.Copy()
+				if copy == nil {
+					panic("Fail to get an offer copy")
+				}
+				res = append(res, *copy)
+			} else {
+				return res
+			}
+		}
+		index++
 	}
 	return res
 }
@@ -209,17 +221,34 @@ func (mgr *FCROfferMgrImplV1) ListOffersWithTag(from uint, to uint) ([]cidoffer.
 	if from >= to || from >= uint(len(mgr.dMap)) {
 		return res1, res2
 	}
-	i := uint(0)
-	for _, val := range mgr.dMap {
-		if i >= from && i < to {
-			copy := val.offer.Copy()
-			if copy == nil {
-				panic("Fail to get an offer copy")
-			}
-			res1 = append(res1, *copy)
-			res2 = append(res2, val.tag)
-		}
+	keys := make([]string, len(mgr.tagMap))
+	i := 0
+	for key := range mgr.tagMap {
+		keys[i] = key
 		i++
+	}
+	sort.Strings(keys)
+
+	index := uint(0)
+	for _, key := range keys {
+		for digest := range mgr.tagMap[key] {
+			if index >= from {
+				if index < to {
+					copy := mgr.dMap[digest].offer.Copy()
+					if copy == nil {
+						panic("Fail to get an offer copy")
+					}
+					if key != mgr.dMap[digest].tag {
+						panic("Offer access count mismatch")
+					}
+					res1 = append(res1, *copy)
+					res2 = append(res2, key)
+				} else {
+					return res1, res2
+				}
+			}
+			index++
+		}
 	}
 	return res1, res2
 }
@@ -241,7 +270,7 @@ func (mgr *FCROfferMgrImplV1) ListOffersWithAccessCount(from uint, to uint) ([]c
 	sort.Ints(keys)
 
 	index := uint(0)
-	for key := range keys {
+	for _, key := range keys {
 		for digest := range mgr.countMap[key] {
 			if index >= from {
 				if index < to {
@@ -344,19 +373,31 @@ func (mgr *FCROfferMgrImplV1) ListSubOffers(from uint, to uint) []cidoffer.SubCI
 	res := make([]cidoffer.SubCIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-	if from >= to || from >= uint(len(mgr.dMap)) {
+	if from >= to || from >= uint(len(mgr.dsMap)) {
 		return res
 	}
-	i := uint(0)
-	for _, val := range mgr.dsMap {
-		if i >= from && i < to {
-			copy := val.Copy()
-			if copy == nil {
-				panic("Fail to get an offer copy")
-			}
-			res = append(res, *copy)
-		}
+	keys := make([]string, len(mgr.dsMap))
+	i := 0
+	for key := range mgr.dsMap {
+		keys[i] = key
 		i++
+	}
+	sort.Strings(keys)
+
+	index := uint(0)
+	for _, key := range keys {
+		if index >= from {
+			if index < to {
+				copy := mgr.dsMap[key].Copy()
+				if copy == nil {
+					panic("Fail to get an offer copy")
+				}
+				res = append(res, *copy)
+			} else {
+				return res
+			}
+		}
+		index++
 	}
 	return res
 }
