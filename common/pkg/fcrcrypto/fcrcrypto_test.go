@@ -83,3 +83,11 @@ func TestVerify(t *testing.T) {
 	err = Verify(PubKeyWrong, 0, "006e9654ac82348a7ff3ff5e0bf906a34c799f3841e0119ed32a64d32ba92258f2735c90af4295684485735c63d85514beda21037cdb2b501735cdccec6d3a625301", []byte{0x00, 0x01, 0x02, 0x03, 0x04})
 	assert.NotEmpty(t, err)
 }
+
+func TestGetAddress(t *testing.T) {
+	_, err := GetWalletAddress("ppp")
+	assert.NotEmpty(t, err)
+	addr, err := GetWalletAddress(PubKey)
+	assert.Empty(t, err)
+	assert.Equal(t, "t12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", addr)
+}

@@ -23,6 +23,7 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-crypto"
 	"github.com/minio/blake2b-simd"
 )
@@ -59,6 +60,19 @@ func GetPublicKey(prvKeyStr string) (string, string, error) {
 		return "", "", err
 	}
 	return pubKeyStr, hex.EncodeToString(nodeID), nil
+}
+
+// GetWalletAddress gets the wallet address from a public key.
+func GetWalletAddress(pubKeyStr string) (string, error) {
+	pubKey, err := hex.DecodeString(pubKeyStr)
+	if err != nil {
+		return "", err
+	}
+	addr, err := address.NewSecp256k1Address(pubKey)
+	if err != nil {
+		return "", err
+	}
+	return addr.String(), nil
 }
 
 // Sign signs given bytes using given private key and given version,
