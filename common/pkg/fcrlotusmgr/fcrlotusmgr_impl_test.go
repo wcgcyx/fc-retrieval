@@ -197,15 +197,11 @@ func TestCheck(t *testing.T) {
 }
 
 func TestVoucher(t *testing.T) {
-	mock := mockLotusAPI{}
-	mgr := NewFCRLotusMgrImpl(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
-		return &mock, nil, nil
-	})
-	voucher, err := mgr.GenerateVoucher(PrvKey, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", 0, 12, big.NewInt(1000000))
+	voucher, err := GenerateVoucher(PrvKey, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", 0, 12, big.NewInt(1000000))
 	assert.Empty(t, err)
 	assert.Equal(t, "i1UBO3bukuIiV6pggPkLLa0CdmmBGPkAAED2AAxEAA9CQACAWEIBzTRDsIzaryn3q-JGV-OnvzUDG3ejzq8MdK2HQVRCP993QVCNDPVYFQQe0MsXkqjN3UBNWCF3guS7GRWjBMsTDwA", voucher)
 
-	senderID, chAddr, lane, nonce, newRedeemed, err := mgr.VerifyVoucher(voucher)
+	senderID, chAddr, lane, nonce, newRedeemed, err := VerifyVoucher(voucher)
 	assert.Empty(t, err)
 	assert.Equal(t, "f12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", senderID)
 	assert.Equal(t, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", chAddr)

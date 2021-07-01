@@ -19,12 +19,10 @@ package fcrpaymentmgr
  */
 
 import (
-	"encoding/hex"
 	"errors"
 	"math/big"
 	"sync"
 
-	"github.com/filecoin-project/go-address"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrlotusmgr"
 )
@@ -80,15 +78,11 @@ func (mgr *FCRPaymentMgrImplV1) Start() error {
 	if err != nil {
 		return err
 	}
-	pubKeyBytes, err := hex.DecodeString(pubKey)
+	addr, err := fcrcrypto.GetWalletAddress(pubKey)
 	if err != nil {
 		return err
 	}
-	addr, err := address.NewSecp256k1Address(pubKeyBytes)
-	if err != nil {
-		return err
-	}
-	mgr.addr = addr.String()
+	mgr.addr = addr
 	return nil
 }
 
@@ -164,7 +158,7 @@ func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.
 	}
 	// Create a voucher
 	lNewRedeemed := big.NewInt(0).Add(&ls.redeemed, amt)
-	voucher, err := mgr.lotusMgr.GenerateVoucher(mgr.prvKey, cs.addr, lane, ls.nonce, lNewRedeemed)
+	voucher, err := fcrlotusmgr.GenerateVoucher(mgr.prvKey, cs.addr, lane, ls.nonce, lNewRedeemed)
 	if err != nil {
 		return "", false, false, err
 	}
@@ -178,7 +172,7 @@ func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.
 }
 
 func (mgr *FCRPaymentMgrImplV1) ReceiveRefund(recipientAddr string, voucher string) (*big.Int, error) {
-	senderVAddr, chAddr, lane, nonce, newRedeemed, err := mgr.lotusMgr.VerifyVoucher(voucher)
+	senderVAddr, chAddr, lane, nonce, newRedeemed, err := fcrlotusmgr.VerifyVoucher(voucher)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +226,7 @@ func (mgr *FCRPaymentMgrImplV1) RemoveOutboundCh(recipientAddr string) error {
 	_, ok := mgr.outboundChs[recipientAddr]
 	mgr.outboundChsLock.RUnlock()
 	if !ok {
-		return nil
+		return errors.New("Channel not found")
 	}
 	mgr.outboundChsLock.Lock()
 	defer mgr.outboundChsLock.Unlock()
@@ -241,7 +235,7 @@ func (mgr *FCRPaymentMgrImplV1) RemoveOutboundCh(recipientAddr string) error {
 }
 
 func (mgr *FCRPaymentMgrImplV1) GetCostToCreate(recipientAddr string, amt *big.Int) (*big.Int, error) {
-	return mgr.lotusMgr.GetCostToCreate(mgr.prvKey, recipientAddr, amt)
+	return nil, errors.New("No implementation")
 }
 
 func (mgr *FCRPaymentMgrImplV1) CheckRecipientSettlementValidity(recipientAddr string) (bool, error) {
@@ -249,26 +243,11 @@ func (mgr *FCRPaymentMgrImplV1) CheckRecipientSettlementValidity(recipientAddr s
 }
 
 func (mgr *FCRPaymentMgrImplV1) Settle(senderAddr string) error {
-	mgr.inboundChsLock.Lock()
-	defer mgr.inboundChsLock.Unlock()
-	cs, ok := mgr.inboundChs[senderAddr]
-	if !ok {
-		return errors.New("Channel not found")
-	}
-	vouchers := make([]string, 0)
-	for _, ls := range cs.laneStates {
-		vouchers = append(vouchers, ls.vouchers[len(ls.vouchers)-1])
-	}
-	err := mgr.lotusMgr.SettlePaymentChannel(mgr.prvKey, cs.addr, vouchers)
-	if err != nil {
-		return err
-	}
-	delete(mgr.inboundChs, senderAddr)
-	return nil
+	return errors.New("No implementation")
 }
 
 func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big.Int, uint64, error) {
-	senderVAddr, chAddr, lane, nonce, newRedeemed, err := mgr.lotusMgr.VerifyVoucher(voucher)
+	senderVAddr, chAddr, lane, nonce, newRedeemed, err := fcrlotusmgr.VerifyVoucher(voucher)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -285,7 +264,7 @@ func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big
 			return nil, 0, err
 		}
 		if recipientAddr != mgr.addr {
-			return nil, 0, errors.New("Receive sender address mismatch")
+			return nil, 0, errors.New("Receive receiver address mismatch")
 		}
 		mgr.inboundChsLock.RUnlock()
 		mgr.inboundChsLock.Lock()
@@ -364,10 +343,10 @@ func (mgr *FCRPaymentMgrImplV1) Refund(senderAddr string, lane uint64, amt *big.
 	lNewRedeemed := big.NewInt(0).Sub(&ls.redeemed, amt)
 	if lNewRedeemed.Cmp(big.NewInt(0)) < 0 {
 		// Refund too much
-		return "", errors.New("")
+		return "", errors.New("Refund too much")
 	}
 	// Create a voucher
-	voucher, err := mgr.lotusMgr.GenerateVoucher(mgr.prvKey, cs.addr, lane, ls.nonce, lNewRedeemed)
+	voucher, err := fcrlotusmgr.GenerateVoucher(mgr.prvKey, cs.addr, lane, ls.nonce, lNewRedeemed)
 	if err != nil {
 		return "", err
 	}
@@ -396,7 +375,7 @@ func (mgr *FCRPaymentMgrImplV1) RemoveInboundCh(senderAddr string) error {
 	_, ok := mgr.inboundChs[senderAddr]
 	mgr.inboundChsLock.RUnlock()
 	if !ok {
-		return nil
+		return errors.New("Channel not found")
 	}
 	mgr.inboundChsLock.Lock()
 	defer mgr.inboundChsLock.Unlock()

@@ -222,56 +222,6 @@ func (mgr *FCRLotusMgrImpl) GetPaymentChannelSettlementBlock(chAddr string) (*bi
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImpl) GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error) {
-	addr, err := address.NewFromString(chAddr)
-	if err != nil {
-		return "", err
-	}
-	sv := &paych.SignedVoucher{
-		ChannelAddr: addr,
-		Lane:        lane,
-		Nonce:       nonce,
-		Amount:      lotusbig.NewFromGo(newRedeemed),
-	}
-	vb, err := sv.SigningBytes()
-	if err != nil {
-		return "", err
-	}
-	pk, err := hex.DecodeString(prvKey)
-	if err != nil {
-		return "", err
-	}
-	sig, err := Sign(pk, vb)
-	sv.Signature = &crypto2.Signature{
-		Type: crypto2.SigTypeSecp256k1,
-		Data: sig,
-	}
-	voucher, err := encodedVoucher(sv)
-	if err != nil {
-		return "", err
-	}
-	return voucher, nil
-}
-
-func (mgr *FCRLotusMgrImpl) VerifyVoucher(voucher string) (string, string, uint64, uint64, *big.Int, error) {
-	sv, err := paych.DecodeSignedVoucher(voucher)
-	if err != nil {
-		return "", "", 0, 0, nil, err
-	}
-	vb, err := sv.SigningBytes()
-	if err != nil {
-		return "", "", 0, 0, nil, err
-	}
-	if sv.Signature.Type != crypto2.SigTypeSecp256k1 {
-		return "", "", 0, 0, nil, errors.New("Wrong signature type")
-	}
-	sender, err := Verify(sv.Signature.Data, vb)
-	if err != nil {
-		return "", "", 0, 0, nil, err
-	}
-	return sender, sv.ChannelAddr.String(), sv.Lane, sv.Nonce, sv.Amount.Int, nil
-}
-
 // fillMsg will fill the gas and sign a given message
 func fillMsg(prvKeyStr string, api LotusAPI, msg *types.Message) (*types.SignedMessage, error) {
 	prvKey, err := hex.DecodeString(prvKeyStr)

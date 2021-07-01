@@ -20,9 +20,14 @@ package fcrlotusmgr
 
 import (
 	"context"
+	"encoding/hex"
+	"errors"
 	"math/big"
 
 	"github.com/filecoin-project/go-address"
+	lotusbig "github.com/filecoin-project/go-state-types/big"
+	crypto2 "github.com/filecoin-project/go-state-types/crypto"
+	"github.com/filecoin-project/lotus/chain/actors/builtin/paych"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/ipfs/go-cid"
 )
@@ -56,13 +61,6 @@ type FCRLotusMgr interface {
 
 	// GetPaymentChannelSettlementBlock gets the block number at which given payment channel is called to settle.
 	GetPaymentChannelSettlementBlock(chAddr string) (*big.Int, error)
-
-	// GenerateVoucher generates a voucher by given private key, channel address, lane number and amount.
-	GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error)
-
-	// VerifyVoucher verifies a voucher by given voucher.
-	// It returns the sender's address, channel address, lane, nonce, new redeemed, and error)
-	VerifyVoucher(voucher string) (string, string, uint64, uint64, *big.Int, error)
 }
 
 // LotusAPI is the minimum interface interacting with the Lotus to achieve payment function.
@@ -84,4 +82,57 @@ type LotusAPI interface {
 	StateGetActor(ctx context.Context, actor address.Address, tsk types.TipSetKey) (*types.Actor, error)
 
 	StateGetReceipt(ctx context.Context, msg cid.Cid, tsk types.TipSetKey) (*types.MessageReceipt, error)
+}
+
+// GenerateVoucher generates a voucher by given private key, channel address, lane number and amount.
+func GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error) {
+	addr, err := address.NewFromString(chAddr)
+	if err != nil {
+		return "", err
+	}
+	sv := &paych.SignedVoucher{
+		ChannelAddr: addr,
+		Lane:        lane,
+		Nonce:       nonce,
+		Amount:      lotusbig.NewFromGo(newRedeemed),
+	}
+	vb, err := sv.SigningBytes()
+	if err != nil {
+		return "", err
+	}
+	pk, err := hex.DecodeString(prvKey)
+	if err != nil {
+		return "", err
+	}
+	sig, err := Sign(pk, vb)
+	sv.Signature = &crypto2.Signature{
+		Type: crypto2.SigTypeSecp256k1,
+		Data: sig,
+	}
+	voucher, err := encodedVoucher(sv)
+	if err != nil {
+		return "", err
+	}
+	return voucher, nil
+}
+
+// VerifyVoucher verifies a voucher by given voucher.
+// It returns the sender's address, channel address, lane, nonce, new redeemed, and error)
+func VerifyVoucher(voucher string) (string, string, uint64, uint64, *big.Int, error) {
+	sv, err := paych.DecodeSignedVoucher(voucher)
+	if err != nil {
+		return "", "", 0, 0, nil, err
+	}
+	vb, err := sv.SigningBytes()
+	if err != nil {
+		return "", "", 0, 0, nil, err
+	}
+	if sv.Signature.Type != crypto2.SigTypeSecp256k1 {
+		return "", "", 0, 0, nil, errors.New("Wrong signature type")
+	}
+	sender, err := Verify(sv.Signature.Data, vb)
+	if err != nil {
+		return "", "", 0, 0, nil, err
+	}
+	return sender, sv.ChannelAddr.String(), sv.Lane, sv.Nonce, sv.Amount.Int, nil
 }
