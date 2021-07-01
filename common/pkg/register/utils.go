@@ -22,8 +22,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-
-	"github.com/filecoin-project/go-address"
 )
 
 const (
@@ -112,30 +110,4 @@ func ValidateProviderInfo(pvdInfo *ProviderRegisteredInfo) bool {
 	}
 	// TODO, Need to check if the region code and the network addr is valid.
 	return true
-}
-
-// GetGWWalletAddress gets the wallet address of a given gateway info
-func GetGWWalletAddress(gwInfo *GatewayRegisteredInfo) (string, error) {
-	pubKey, err := hex.DecodeString(gwInfo.RootKey)
-	if err != nil {
-		return "", err
-	}
-	addr, err := address.NewSecp256k1Address(pubKey)
-	if err != nil {
-		return "", err
-	}
-	return addr.String(), nil
-}
-
-// GetPVDWalletAddress gets the wallet address of a given provider info
-func GetPVDWalletAddress(pvdInfo *ProviderRegisteredInfo) (string, error) {
-	pubKey, err := hex.DecodeString(pvdInfo.RootKey)
-	if err != nil {
-		return "", err
-	}
-	addr, err := address.NewSecp256k1Address(pubKey)
-	if err != nil {
-		return "", err
-	}
-	return addr.String(), nil
 }
