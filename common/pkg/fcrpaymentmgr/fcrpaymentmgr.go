@@ -20,6 +20,7 @@ package fcrpaymentmgr
 
 import "math/big"
 
+// FCRPaymentMgr represents the manager that manages all payment.
 type FCRPaymentMgr interface {
 	// Start starts the manager's routine.
 	Start() error

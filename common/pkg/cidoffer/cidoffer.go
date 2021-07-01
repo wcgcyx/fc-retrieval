@@ -24,6 +24,7 @@ package cidoffer
 import (
 	"crypto/sha512"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"math/big"
@@ -189,8 +190,8 @@ func (c *CIDOffer) GenerateSubCIDOffer(cid *cid.ContentID) (*SubCIDOffer, error)
 
 // GetMessageDigest calculate the message digest of this CID Group Offer.
 // Note that the methodology used here should not be externally visible. The
-// message digest should only be used within the gateway.
-func (c *CIDOffer) GetMessageDigest() [32]byte {
+// message digest should only be used within the system.
+func (c *CIDOffer) GetMessageDigest() string {
 	b := []byte(c.providerID)
 	for _, id := range c.cids {
 		b = append(b, []byte(id.ToString())...)
@@ -202,7 +203,8 @@ func (c *CIDOffer) GetMessageDigest() [32]byte {
 	bQoS := make([]byte, 8)
 	binary.BigEndian.PutUint64(bQoS, uint64(c.qos))
 	b = append(b, bQoS...)
-	return sha512.Sum512_256(b)
+	res := sha512.Sum512_256(b)
+	return hex.EncodeToString(res[:])
 }
 
 // ToBytes is used to turn offer into bytes.

@@ -20,6 +20,7 @@ package fcrreputationmgr
 
 import "github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
 
+// FCRReputationMgr represents the manager that manages all reputation.
 type FCRReputationMgr interface {
 	// Start starts the manager's routine.
 	Start() error

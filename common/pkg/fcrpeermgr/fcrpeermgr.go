@@ -18,6 +18,7 @@ package fcrpeermgr
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// FCRPeerMgr represents the manager that manages all peers.
 type FCRPeerMgr interface {
 	// Start starts the manager's routine.
 	Start() error

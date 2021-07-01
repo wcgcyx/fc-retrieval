@@ -22,6 +22,8 @@ package cidoffer
  */
 
 import (
+	"crypto/sha512"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -151,6 +153,24 @@ func (c *SubCIDOffer) VerifyMerkleProof() error {
 		return nil
 	}
 	return errors.New("Offer does not pass merkle proof verification")
+}
+
+// GetMessageDigest calculate the message digest of this sub CID Offer.
+// Note that the methodology used here should not be externally visible. The
+// message digest should only be used within the system.
+func (c *SubCIDOffer) GetMessageDigest() string {
+	b := []byte(c.providerID)
+	b = append(b, []byte(c.merkleRoot)...)
+	b = append(b, []byte(c.subCID.ToString())...)
+	b = append(b, []byte(c.price.String())...)
+	bExpiry := make([]byte, 8)
+	binary.BigEndian.PutUint64(bExpiry, uint64(c.expiry))
+	b = append(b, bExpiry...)
+	bQoS := make([]byte, 8)
+	binary.BigEndian.PutUint64(bQoS, uint64(c.qos))
+	b = append(b, bQoS...)
+	res := sha512.Sum512_256(b)
+	return hex.EncodeToString(res[:])
 }
 
 // ToBytes is used to turn offer into bytes.
