@@ -19,6 +19,7 @@ package fcroffermgr
  */
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
@@ -183,7 +184,9 @@ func (mgr *FCROfferMgrImplV1) ListOffers(from uint, to uint) []cidoffer.CIDOffer
 	res := make([]cidoffer.CIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-
+	if from >= to || from >= uint(len(mgr.dMap)) {
+		return res
+	}
 	i := uint(0)
 	for _, val := range mgr.dMap {
 		if i >= from && i < to {
@@ -203,7 +206,9 @@ func (mgr *FCROfferMgrImplV1) ListOffersWithTag(from uint, to uint) ([]cidoffer.
 	res2 := make([]string, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-
+	if from >= to || from >= uint(len(mgr.dMap)) {
+		return res1, res2
+	}
 	i := uint(0)
 	for _, val := range mgr.dMap {
 		if i >= from && i < to {
@@ -224,18 +229,37 @@ func (mgr *FCROfferMgrImplV1) ListOffersWithAccessCount(from uint, to uint) ([]c
 	res2 := make([]int, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-
-	i := uint(0)
-	for _, val := range mgr.dMap {
-		if i >= from && i < to {
-			copy := val.offer.Copy()
-			if copy == nil {
-				panic("Fail to get an offer copy")
-			}
-			res1 = append(res1, *copy)
-			res2 = append(res2, val.count)
-		}
+	if from >= to || from >= uint(len(mgr.dMap)) {
+		return res1, res2
+	}
+	keys := make([]int, len(mgr.countMap))
+	i := 0
+	for key := range mgr.countMap {
+		keys[i] = key
 		i++
+	}
+	sort.Ints(keys)
+
+	index := uint(0)
+	for key := range keys {
+		for digest := range mgr.countMap[key] {
+			if index >= from {
+				if index < to {
+					copy := mgr.dMap[digest].offer.Copy()
+					if copy == nil {
+						panic("Fail to get an offer copy")
+					}
+					if key != mgr.dMap[digest].count {
+						panic("Offer access count mismatch")
+					}
+					res1 = append(res1, *copy)
+					res2 = append(res2, key)
+				} else {
+					return res1, res2
+				}
+			}
+			index++
+		}
 	}
 	return res1, res2
 }
@@ -320,7 +344,9 @@ func (mgr *FCROfferMgrImplV1) ListSubOffers(from uint, to uint) []cidoffer.SubCI
 	res := make([]cidoffer.SubCIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-
+	if from >= to || from >= uint(len(mgr.dMap)) {
+		return res
+	}
 	i := uint(0)
 	for _, val := range mgr.dsMap {
 		if i >= from && i < to {
