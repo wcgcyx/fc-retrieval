@@ -24,11 +24,15 @@ import "github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 
 // FCRP2PServer represents a server handling p2p connection.
 type FCRP2PServer interface {
+	// Start starts the server.
 	Start()
 
+	// Shutdown stops the server.
 	Shutdown()
 
+	// AddHandler adds a handler to the server, which handles a given message type.
 	AddHandler(msgType int32, handler func(reader *FCRServerReader, writer *FCRServerWriter, request *fcrmessages.FCRMessage) error) *FCRP2PServer
 
+	// AddRequester adds a requester to the server, which is used to send a request for a given message type.
 	AddRequester(msgType int32, requester func(reader *FCRServerReader, writer *FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) *FCRP2PServer
 }
