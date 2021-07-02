@@ -39,19 +39,19 @@ type FCRServer interface {
 	AddRequester(msgType byte, requester func(reader FCRServerReader, writer FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) FCRServer
 
 	// Request uses a requester corresponding to the given message type to send a request to given multiaddr.
-	Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, bool, error)
+	Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, error)
 }
 
 // FCRServerReader is a reader for reading message.
 type FCRServerReader interface {
 	// Read reads a message for a given timeout.
-	// It returns the message, a boolean indicates whether a timeout occurs and error.
-	Read(timeout time.Duration) (*fcrmessages.FCRMessage, bool, error)
+	// It returns the message, and error.
+	Read(timeout time.Duration) (*fcrmessages.FCRMessage, error)
 }
 
 // FCRServerWriter is a reader for writer message.
 type FCRServerWriter interface {
 	// Write writes a message for a given timeout.
-	// It returns a boolean indicates whether a timeout occurs and error.
-	Write(msg *fcrmessages.FCRMessage, timeout time.Duration) (bool, error)
+	// It returns error.
+	Write(msg *fcrmessages.FCRMessage, timeout time.Duration) error
 }

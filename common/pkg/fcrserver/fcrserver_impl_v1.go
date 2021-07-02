@@ -31,11 +31,10 @@ import (
 
 	"github.com/libp2p/go-libp2p"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
+	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	crypto "github.com/libp2p/go-libp2p-crypto"
-	host "github.com/libp2p/go-libp2p-host"
-	inet "github.com/libp2p/go-libp2p-net"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
@@ -121,6 +120,8 @@ func (s *FCRServerImplV1) Start() error {
 		}
 	}()
 
+	s.host = h
+	s.start = true
 	return nil
 }
 
@@ -149,36 +150,37 @@ func (s *FCRServerImplV1) AddRequester(msgType byte, requester func(reader FCRSe
 	return s
 }
 
-func (s *FCRServerImplV1) Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, bool, error) {
+func (s *FCRServerImplV1) Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, error) {
 	if !s.start {
-		return nil, false, errors.New("Server not started")
+		return nil, errors.New("Server not started")
 	}
 	requester := s.requesters[msgType]
 	if requester == nil {
-		return nil, false, errors.New("No available requester found for given type")
+		return nil, errors.New("No available requester found for given type")
 	}
 	// Get multiaddr
 	maddr, err := multiaddr.NewMultiaddr(multiaddrStr)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	info, err := peer.AddrInfoFromP2pAddr(maddr)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	// Store peer
 	s.host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
 	// Start new stream
 	conn, err := s.host.NewStream(context.Background(), info.ID, "/fc-retrieval/0.0.1")
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
+	defer conn.Close()
 	logging.Info("Established connection to %v", info.ID)
 
-	writer := &FCRServerWriterImplV1{conn2: conn}
-	reader := &FCRServerReaderImplV1{conn2: conn}
+	writer := &FCRServerWriterImplV1{conn: conn}
+	reader := &FCRServerReaderImplV1{conn: conn}
 	response, err := requester(reader, writer, args...)
-	return response, isTimeoutError(err), nil
+	return response, nil
 }
 
 func (s *FCRServerImplV1) handleIncomingConnection(conn network.Stream) {
@@ -186,69 +188,41 @@ func (s *FCRServerImplV1) handleIncomingConnection(conn network.Stream) {
 	logging.Info("P2P server has incoming connection from :%s", conn.ID())
 
 	// Close connection on exit.
-	defer func() {
-		if err := conn.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer conn.Close()
 
-	// Loop until error occurs and connection is dropped.
-	for {
-		message, err := readFCRMessage(conn, nil, s.timeout)
-		if err != nil && !isTimeoutError(err) {
-			// Error in tcp communication, drop the connection.
-			logging.Error("P2P Server has error reading message from %s: %s - Connection dropped", conn.ID(), err.Error())
-			return
-		}
-		// TODO: discard a connection if it doesn’t give a valid response for a really long time
-		if err != nil && isTimeoutError(err) {
-			continue
-		}
-		handler := s.handlers[message.GetMessageType()]
-		if handler != nil {
-			// Call handler to handle the request
-			writer := &FCRServerWriterImplV1{conn1: conn}
-			reader := &FCRServerReaderImplV1{conn1: conn}
-			err = handler(reader, writer, message)
-			if err != nil {
-				// Error that couldn't ignore, drop the connection.
-				logging.Error("P2P Server has error handling message from %s: %s - Connection dropped", conn.ID(), err.Error())
-				return
-			}
-		} else {
-			// Message is invalid, drop the connection.
-			logging.Error("P2P Server received unsupported message type %v from %s - Connection dropped", message.GetMessageType(), conn.ID())
-			return
-		}
+	message, err := readFCRMessage(conn, time.Second)
+	if err != nil {
+		// Error in tcp communication, drop the connection.
+		logging.Error("P2P Server has error reading message from %s: %s - Connection dropped", conn.ID(), err.Error())
+		return
 	}
-}
-
-// isTimeoutError checks if the given error is a timeout error
-func isTimeoutError(err error) bool {
-	neterr, ok := err.(net.Error)
-	return ok && neterr.Timeout()
+	handler := s.handlers[message.GetMessageType()]
+	if handler != nil {
+		// Call handler to handle the request
+		writer := &FCRServerWriterImplV1{conn: conn}
+		reader := &FCRServerReaderImplV1{conn: conn}
+		err = handler(reader, writer, message)
+		if err != nil {
+			// Error that couldn't ignore, drop the connection.
+			logging.Error("P2P Server has error handling message from %s: %s - Connection dropped", conn.ID(), err.Error())
+			return
+		}
+	} else {
+		// Message is invalid, drop the connection.
+		logging.Error("P2P Server received unsupported message type %v from %s - Connection dropped", message.GetMessageType(), conn.ID())
+		return
+	}
 }
 
 // readFCRMessage read a fcr message from a given connection.
-func readFCRMessage(conn1 network.Stream, conn2 inet.Stream, timeout time.Duration) (*fcrmessages.FCRMessage, error) {
+func readFCRMessage(conn network.Stream, timeout time.Duration) (*fcrmessages.FCRMessage, error) {
 	// Initialise a reader
-	var reader *bufio.Reader
-	if conn1 != nil {
-		reader = bufio.NewReader(conn1)
-	} else {
-		reader = bufio.NewReader(conn2)
-	}
+	reader := bufio.NewReader(conn)
 	// Read the length
 	length := make([]byte, 4)
 	// Set timeout
-	if conn1 != nil {
-		if err := conn1.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
-	} else {
-		if err := conn2.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
+	if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
+		panic(err)
 	}
 	_, err := io.ReadFull(reader, length)
 	if err != nil {
@@ -257,14 +231,8 @@ func readFCRMessage(conn1 network.Stream, conn2 inet.Stream, timeout time.Durati
 	// Read the data
 	data := make([]byte, int(binary.BigEndian.Uint32(length)))
 	// Set timeout
-	if conn1 != nil {
-		if err := conn1.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
-	} else {
-		if err := conn2.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
+	if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
+		panic(err)
 	}
 	_, err = io.ReadFull(reader, data)
 	if err != nil {
@@ -274,66 +242,68 @@ func readFCRMessage(conn1 network.Stream, conn2 inet.Stream, timeout time.Durati
 }
 
 // sendFCRMessage sends a fcr message to a given connection.
-func sendFCRMessage(conn1 network.Stream, conn2 inet.Stream, fcrMsg *fcrmessages.FCRMessage, timeout time.Duration) error {
+func sendFCRMessage(conn network.Stream, fcrMsg *fcrmessages.FCRMessage, timeout time.Duration) error {
 	// Get data
 	data, err := fcrMsg.ToBytes()
 	if err != nil {
 		return err
 	}
 	// Initialise a writer
-	var writer *bufio.Writer
-	if conn1 != nil {
-		writer = bufio.NewWriter(conn1)
-	} else {
-		writer = bufio.NewWriter(conn2)
-	}
+	writer := bufio.NewWriter(conn)
 	length := make([]byte, 4)
 	binary.BigEndian.PutUint32(length, uint32(len(data)))
 	// Set timeout
-	if conn1 != nil {
-		if err := conn1.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
-	} else {
-		if err := conn2.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
+	if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
+		panic(err)
 	}
 	_, err = writer.Write(append(length, data...))
 	if err != nil {
 		return err
 	}
 	// Set timeout
-	if conn1 != nil {
-		if err := conn1.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
-	} else {
-		if err := conn2.SetDeadline(time.Now().Add(timeout)); err != nil {
-			panic(err)
-		}
+	if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
+		panic(err)
 	}
 	return writer.Flush()
 }
 
 // FCRServerReaderImplV1 implements FCRServerReader.
 type FCRServerReaderImplV1 struct {
-	conn1 network.Stream
-	conn2 inet.Stream
+	conn network.Stream
 }
 
-func (r *FCRServerReaderImplV1) Read(timeout time.Duration) (*fcrmessages.FCRMessage, bool, error) {
-	msg, err := readFCRMessage(r.conn1, r.conn2, timeout)
-	return msg, isTimeoutError(err), err
+func (r *FCRServerReaderImplV1) Read(timeout time.Duration) (*fcrmessages.FCRMessage, error) {
+	return readFCRMessage(r.conn, timeout)
 }
 
 // FCRServerWriterImplV1 implements FCRServerWriter.
 type FCRServerWriterImplV1 struct {
-	conn1 network.Stream
-	conn2 inet.Stream
+	conn network.Stream
 }
 
-func (w *FCRServerWriterImplV1) Write(msg *fcrmessages.FCRMessage, timeout time.Duration) (bool, error) {
-	err := sendFCRMessage(w.conn1, w.conn2, msg, timeout)
-	return isTimeoutError(err), err
+func (w *FCRServerWriterImplV1) Write(msg *fcrmessages.FCRMessage, timeout time.Duration) error {
+	return sendFCRMessage(w.conn, msg, timeout)
+}
+
+// IsTimeoutError checks if the given error is a timeout error
+func IsTimeoutError(err error) bool {
+	neterr, ok := err.(net.Error)
+	return ok && neterr.Timeout()
+}
+
+// GetMultiAddr returns the supposed multiaddr string from given private key, ip address and port.
+func GetMultiAddr(prvKeyStr string, ip string, port uint) (string, error) {
+	prvKeyBytes, err := hex.DecodeString(prvKeyStr)
+	if err != nil {
+		return "", err
+	}
+	prvKey, err := crypto.UnmarshalRsaPrivateKey(prvKeyBytes)
+	if err != nil {
+		return "", err
+	}
+	pid, err := peer.IDFromPublicKey(prvKey.GetPublic())
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("/ip4/%v/tcp/%v/p2p/%v", ip, port, pid), nil
 }
