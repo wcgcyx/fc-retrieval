@@ -24,4 +24,7 @@ const (
 	DHTOfferDiscoveryRequestType       = 2
 	DHTOfferDiscoveryResponseType      = 3
 	OfferPublishRequestType            = 4
+	DataRetrievalRequestType           = 5 // Placeholder, TBD
+	DataRetrievalResponseType          = 6 // Placeholder, TBD
+	ACKType                            = 7
 )
