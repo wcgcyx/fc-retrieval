@@ -3,6 +3,8 @@ Package fcrdatabase - handles the database inside the system.
 */
 package fcrdatabase
 
+import "errors"
+
 /*
  * Copyright 2020 ConsenSys Software Inc.
  *
@@ -18,11 +20,26 @@ package fcrdatabase
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// FCRDatabase represents the database.
-type FCRDatabase interface {
-	// Start starts the database routine.
-	Start() error
+// FCRDatabaseImplV1 implements the FCRDatabase interface, it is a placeholder.
+type FCRDatabaseImplV1 struct {
+	start bool
+}
 
-	// Shutdown ends the database routine safely.
-	Shutdown()
+func NewFCRDatabaseImplV1() FCRDatabase {
+	return &FCRDatabaseImplV1{start: false}
+}
+
+func (db *FCRDatabaseImplV1) Start() error {
+	if db.start {
+		return errors.New("FCRDatabase has already started")
+	}
+	db.start = true
+	return nil
+}
+
+func (db *FCRDatabaseImplV1) Shutdown() {
+	if !db.start {
+		return
+	}
+	db.start = false
 }

@@ -25,7 +25,7 @@ import (
 
 // FCROfferMgr represents the manager that manages all stored offers.
 type FCROfferMgr interface {
-	// Start starts the manager's routine
+	// Start starts the manager's routine.
 	Start() error
 
 	// Shutdown ends the manager's routine safely.

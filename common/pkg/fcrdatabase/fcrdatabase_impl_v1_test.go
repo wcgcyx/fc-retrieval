@@ -18,11 +18,18 @@ package fcrdatabase
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// FCRDatabase represents the database.
-type FCRDatabase interface {
-	// Start starts the database routine.
-	Start() error
+import (
+	"testing"
 
-	// Shutdown ends the database routine safely.
-	Shutdown()
+	"github.com/stretchr/testify/assert"
+)
+
+func TestPlaceholder(t *testing.T) {
+	db := NewFCRDatabaseImplV1()
+	db.Shutdown()
+	err := db.Start()
+	assert.Empty(t, err)
+	defer db.Shutdown()
+	err = db.Start()
+	assert.NotEmpty(t, err)
 }
