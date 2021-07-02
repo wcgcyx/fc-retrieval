@@ -26,5 +26,7 @@ const (
 	OfferPublishRequestType            = 4
 	DataRetrievalRequestType           = 5 // Placeholder, TBD
 	DataRetrievalResponseType          = 6 // Placeholder, TBD
-	ACKType                            = 7
+	PaymentProxyRequestType            = 8 // Placeholder, TBD
+	PaymentProxyResponseType           = 9 // Placeholder, TBD
+	ACKType                            = 10
 )
