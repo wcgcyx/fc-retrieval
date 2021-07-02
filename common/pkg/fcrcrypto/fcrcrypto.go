@@ -123,3 +123,32 @@ func Verify(pubKeyStr string, ver byte, sigStr string, data []byte) error {
 	}
 	return nil
 }
+
+// VerifyByID verifies the signature using the ID (hashed public key).
+// By default, the signing version is 0.
+func VerifyByID(id string, sigStr string, data []byte) error {
+	sig, err := hex.DecodeString(sigStr)
+	if err != nil {
+		return err
+	}
+	// First to check key version
+	if sig[0] != 0 {
+		return errors.New("Key version mismatch")
+	}
+	sig = sig[1:]
+	b2sum := blake2b.Sum256(data)
+	pubk, err := crypto.EcRecover(b2sum[:], sig)
+	if err != nil {
+		return err
+	}
+	pubKey := hex.EncodeToString(pubk)
+	h := sha256.New()
+	if _, err := h.Write([]byte(pubKey)); err != nil {
+		return errors.New("Error in verifying")
+	}
+	calculatedNodeID := h.Sum(nil)
+	if hex.EncodeToString(calculatedNodeID) != id {
+		return errors.New("Node ID mismatch")
+	}
+	return nil
+}

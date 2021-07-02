@@ -27,6 +27,7 @@ import (
 const (
 	PrvKey = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
 	PubKey = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
+	ID     = "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe"
 )
 
 func TestGetter(t *testing.T) {
@@ -65,5 +66,12 @@ func TestSigning(t *testing.T) {
 	err = msg.Verify(PubKey, 1)
 	assert.NotEmpty(t, err)
 	err = msg.Verify(PubKey, 0)
+	assert.Empty(t, err)
+
+	// Test Verify By ID
+	err = msg.VerifyByID("wrong id")
+	assert.NotEmpty(t, err)
+
+	err = msg.VerifyByID(ID)
 	assert.Empty(t, err)
 }

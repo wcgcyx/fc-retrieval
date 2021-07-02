@@ -86,6 +86,16 @@ func (fcrMsg *FCRMessage) Verify(pubKey string, keyVer byte) error {
 	return nil
 }
 
+// VerifyByID is used to verify the offer with a given id (hashed public key).
+func (fcrMsg *FCRMessage) VerifyByID(id string) error {
+	data := append([]byte{fcrMsg.messageType}, fcrMsg.messageBody...)
+	err := fcrcrypto.VerifyByID(id, fcrMsg.signature, data)
+	if err != nil {
+		return fmt.Errorf("Message fail to verify: %v", err.Error())
+	}
+	return nil
+}
+
 // FCRMsgToBytes converts a FCRMessage to bytes
 func (fcrMsg *FCRMessage) ToBytes() ([]byte, error) {
 	fcrMsgJS := &fcrMessageJson{

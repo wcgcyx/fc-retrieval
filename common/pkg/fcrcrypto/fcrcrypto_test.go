@@ -30,6 +30,7 @@ const (
 	PubKey      = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
 	PubKeyWrong = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62a"
 	ID          = "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe"
+	IDWrong     = "69e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe"
 )
 
 func TestGenerateKey(t *testing.T) {
@@ -90,4 +91,21 @@ func TestGetAddress(t *testing.T) {
 	addr, err := GetWalletAddress(PubKey)
 	assert.Empty(t, err)
 	assert.Equal(t, "t12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", addr)
+}
+
+func TestVerifyByID(t *testing.T) {
+	err := VerifyByID(ID, "006e9654ac82348a7ff3ff5e0bf906a34c799f3841e0119ed32a64d32ba92258f2735c90af4295684485735c63d85514beda21037cdb2b501735cdccec6d3a625301", []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	assert.Empty(t, err)
+
+	err = VerifyByID(ID, "abcdefg", []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	assert.NotEmpty(t, err)
+
+	err = VerifyByID(ID, "106e9654ac82348a7ff3ff5e0bf906a34c799f3841e0119ed32a64d32ba92258f2735c90af4295684485735c63d85514beda21037cdb2b501735cdccec6d3a625301", []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	assert.NotEmpty(t, err)
+
+	err = VerifyByID(ID, "00700654ac82348a7ff3ff5e0bf906a34c799f3841e0119ed32a64d32ba92258f2735c90af4295684485735c63d85514beda21037cdb2b501735cdccec6d3a625301", []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	assert.NotEmpty(t, err)
+
+	err = VerifyByID(IDWrong, "006e9654ac82348a7ff3ff5e0bf906a34c799f3841e0119ed32a64d32ba92258f2735c90af4295684485735c63d85514beda21037cdb2b501735cdccec6d3a625301", []byte{0x00, 0x01, 0x02, 0x03, 0x04})
+	assert.NotEmpty(t, err)
 }
