@@ -30,6 +30,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// Init initialises the logger with a Viper object.
 func Init(conf *viper.Viper) zerolog.Logger {
 	setLogLevel(conf)
 	setTimeFormat(conf)
@@ -40,15 +41,17 @@ func Init(conf *viper.Viper) zerolog.Logger {
 	return logger
 }
 
-// Init1 initialises the logger without a Viper object
-func Init1(logLevel string, logTarget string, logServiceName string) zerolog.Logger {
+// InitWithoutConfig initialises the logger without a Viper object.
+func InitWithoutConfig(logLevel string, logTarget string, logServiceName string, timeFormat string) zerolog.Logger {
 	conf := viper.New()
 	conf.Set("LOG_LEVEL", logLevel)
 	conf.Set("LOG_TARGET", logTarget)
 	conf.Set("LOG_SERVICE_NAME", logServiceName)
+	conf.Set("LOG_TIME_FORMAT", timeFormat)
 	return Init(conf)
 }
 
+// setLogLevel sets the logging level.
 func setLogLevel(conf *viper.Viper) {
 	logLevel := conf.GetString("LOG_LEVEL")
 	level, err := zerolog.ParseLevel(logLevel)
@@ -60,6 +63,17 @@ func setLogLevel(conf *viper.Viper) {
 	zerolog.SetGlobalLevel(level)
 }
 
+// SetLogLevel sets the logging level.
+func SetLogLevel(logLevel string) {
+	level, err := zerolog.ParseLevel(logLevel)
+	if err != nil {
+		log.Error().Err(err).Str("level", logLevel).Msg("can't parse log level")
+	} else {
+		zerolog.SetGlobalLevel(level)
+	}
+}
+
+// setTimeFormat sets the time format.
 func setTimeFormat(conf *viper.Viper) {
 	format := conf.GetString("LOG_TIME_FORMAT")
 	switch format {
@@ -71,11 +85,13 @@ func setTimeFormat(conf *viper.Viper) {
 	}
 }
 
+// getLogServiceName gets the logging service name.
 func getLogServiceName(conf *viper.Viper) string {
 	logLogger := conf.GetString("LOG_SERVICE_NAME")
 	return logLogger
 }
 
+// getLogTarget gets the logging target.
 func getLogTarget(conf *viper.Viper) io.Writer {
 	logTarget := conf.GetString("LOG_TARGET")
 	switch logTarget {
@@ -86,8 +102,9 @@ func getLogTarget(conf *viper.Viper) io.Writer {
 	}
 }
 
-// TODO: Log file not created. We need to fix it
+// newLogTargetFile creates a logging target file.
 func newLogTargetFile(conf *viper.Viper) io.Writer {
+	// TODO: Log file not created. We need to fix it
 	logDir := conf.GetString("LOG_DIR")
 	if err := os.MkdirAll(logDir, 0744); err != nil {
 		log.Error().Err(err).Str("path", logDir).Msg("can't create log directory")
@@ -102,54 +119,37 @@ func newLogTargetFile(conf *viper.Viper) io.Writer {
 	}
 }
 
-func SetLogLevel(logLevel string) {
-	level, err := zerolog.ParseLevel(logLevel)
-	if err != nil {
-		log.Error().Err(err).Str("level", logLevel).Msg("can't parse log level")
-	} else {
-		zerolog.SetGlobalLevel(level)
-	}
-}
-
+// Trace is wrapper over logger's trace.
 func Trace(msg string, args ...interface{}) {
 	log.Trace().Msgf(msg, args...)
 }
 
+// Debug is wrapper over logger's debug.
 func Debug(msg string, args ...interface{}) {
 	log.Debug().Msgf(msg, args...)
 }
 
+// Info is wrapper over logger's info.
 func Info(msg string, args ...interface{}) {
 	log.Info().Msgf(msg, args...)
 }
 
+// Warn is wrapper over logger's warn.
 func Warn(msg string, args ...interface{}) {
 	log.Warn().Msgf(msg, args...)
 }
 
+// Error is wrapper over logger's error.
 func Error(msg string, args ...interface{}) {
 	log.Error().Msgf(msg, args...)
 }
 
+// Fatal is wrapper over logger's fatal.
 func Fatal(msg string, args ...interface{}) {
 	log.Fatal().Msgf(msg, args...)
 }
 
+// Panic is wrapper over logger's panic.
 func Panic(msg string, args ...interface{}) {
 	log.Panic().Msgf(msg, args...)
-}
-
-// ErrorAndPanic is now deprecated. It is equivalent to Panic.
-func ErrorAndPanic(msg string, args ...interface{}) {
-	Panic(msg, args...)
-}
-
-// Error1 prints an Error level log for an error
-func Error1(err error) {
-	Error("Error: %s", err)
-}
-
-// InfoEnabled returns true if Info log level is enabled.
-func InfoEnabled() bool {
-	return log.Info().Enabled()
 }
