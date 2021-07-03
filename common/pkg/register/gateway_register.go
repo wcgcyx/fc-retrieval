@@ -23,34 +23,34 @@ type GatewayRegisteredInfo struct {
 	// RootKey is the gateway's public key,
 	// and can be used to derive the filecoin wallet address for payment.
 	// It is a 65 bytes hex string.
-	RootKey string
+	RootKey string `json:"root_key"`
 
 	// NodeIDD is derived from the root key, it is set by the smart contract.
 	// It is a 32 bytes hex string.
-	NodeID string
+	NodeID string `json:"node_id"`
 
 	// MsgSigningKey is the message signing public key.
 	// It is a 65 bytes hex string.
 	// This can be updated via smart contract.
-	MsgSigningKey string
+	MsgSigningKey string `json:"msg_signing_key"`
 
 	// MsgSigningKeyVer is the message signing public key version.
 	// This can be updated via smart contract.
-	MsgSigningKeyVer byte
+	MsgSigningKeyVer byte `json:"msg_signing_key_ver"`
 
 	// RegionCode is the region code of this gateway.
 	// It is a ISO 3166-1 alpha-2 string.
-	RegionCode string
+	RegionCode string `json:"region_code"`
 
 	// NetworkAddr is the network address of this gateway.
 	// It should be a valid libp2p address.
-	NetworkAddr string
+	NetworkAddr string `json:"network_addr"`
 
 	// Deregistering indicates whether or not this gateway is in the middle of deregistering itself.
 	// It is set by the smart contract.
-	Deregistering bool
+	Deregistering bool `json:"deregistering"`
 
 	// DeregisteringHeight is the height of the block which contains the deregistering transaction.
 	// It is set by the smart contract.
-	DeregisteringHeight uint64
+	DeregisteringHeight uint64 `json:"deregistering_height"`
 }
