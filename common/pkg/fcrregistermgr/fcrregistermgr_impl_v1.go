@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
@@ -36,6 +37,9 @@ type FCRRegisterMgrImplV1 struct {
 }
 
 func NewFCRRegisterMgrImplV1(registerAPI string, client *http.Client) FCRRegisterMgr {
+	if !strings.HasPrefix(registerAPI, "http://") {
+		registerAPI = "http://" + registerAPI
+	}
 	return &FCRRegisterMgrImplV1{registerAPI: registerAPI, client: client, lock: sync.RWMutex{}}
 }
 

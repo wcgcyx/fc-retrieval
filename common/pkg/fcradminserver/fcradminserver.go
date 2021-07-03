@@ -1,7 +1,7 @@
 /*
-Package fcrmessages - stores all the p2p messages.
+Package fcradminserver - provides an interface to do admin networking.
 */
-package fcrmessages
+package fcradminserver
 
 /*
  * Copyright 2020 ConsenSys Software Inc.
@@ -18,16 +18,14 @@ package fcrmessages
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const (
-	StandardOfferDiscoveryRequestType  = 0
-	StandardOfferDiscoveryResponseType = 1
-	DHTOfferDiscoveryRequestType       = 2
-	DHTOfferDiscoveryResponseType      = 3
-	OfferPublishRequestType            = 4
-	DataRetrievalRequestType           = 5 // Placeholder, TBD
-	DataRetrievalResponseType          = 6 // Placeholder, TBD
-	PaymentProxyRequestType            = 8 // Placeholder, TBD
-	PaymentProxyResponseType           = 9 // Placeholder, TBD
-	ACKType                            = 10
-	EstablishmentType                  = 11
-)
+// FCRAdminServer represents a server handling admin requests.
+type FCRAdminServer interface {
+	// Start starts the server.
+	Start() error
+
+	// Shutdown stops the server.
+	Shutdown()
+
+	// AddHandler adds a handler to the server, which handles a given message type (POST).
+	AddHandler(msgType byte, handler func(data []byte) (byte, []byte, error)) FCRAdminServer
+}
