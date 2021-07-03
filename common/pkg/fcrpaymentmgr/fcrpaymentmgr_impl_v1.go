@@ -21,6 +21,7 @@ package fcrpaymentmgr
 import (
 	"errors"
 	"math/big"
+	"strings"
 	"sync"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
@@ -90,6 +91,7 @@ func (mgr *FCRPaymentMgrImplV1) Shutdown() {
 }
 
 func (mgr *FCRPaymentMgrImplV1) Create(recipientAddr string, amt *big.Int) error {
+	recipientAddr = cleanAddress(recipientAddr)
 	mgr.outboundChsLock.RLock()
 	_, ok := mgr.outboundChs[recipientAddr]
 	mgr.outboundChsLock.RUnlock()
@@ -113,6 +115,7 @@ func (mgr *FCRPaymentMgrImplV1) Create(recipientAddr string, amt *big.Int) error
 }
 
 func (mgr *FCRPaymentMgrImplV1) Topup(recipientAddr string, amt *big.Int) error {
+	recipientAddr = cleanAddress(recipientAddr)
 	mgr.outboundChsLock.RLock()
 	defer mgr.outboundChsLock.RUnlock()
 	cs, ok := mgr.outboundChs[recipientAddr]
@@ -131,6 +134,7 @@ func (mgr *FCRPaymentMgrImplV1) Topup(recipientAddr string, amt *big.Int) error 
 }
 
 func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.Int) (string, bool, bool, error) {
+	recipientAddr = cleanAddress(recipientAddr)
 	mgr.outboundChsLock.RLock()
 	defer mgr.outboundChsLock.RUnlock()
 	cs, ok := mgr.outboundChs[recipientAddr]
@@ -172,10 +176,12 @@ func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.
 }
 
 func (mgr *FCRPaymentMgrImplV1) ReceiveRefund(recipientAddr string, voucher string) (*big.Int, error) {
+	recipientAddr = cleanAddress(recipientAddr)
 	senderVAddr, chAddr, lane, nonce, newRedeemed, err := fcrlotusmgr.VerifyVoucher(voucher)
 	if err != nil {
 		return nil, err
 	}
+	senderVAddr = cleanAddress(senderVAddr)
 	if recipientAddr != senderVAddr {
 		return nil, errors.New("Refund sender address mismtach")
 	}
@@ -210,6 +216,7 @@ func (mgr *FCRPaymentMgrImplV1) ReceiveRefund(recipientAddr string, voucher stri
 }
 
 func (mgr *FCRPaymentMgrImplV1) GetOutboundChStatus(recipientAddr string) (string, *big.Int, *big.Int, error) {
+	recipientAddr = cleanAddress(recipientAddr)
 	mgr.outboundChsLock.RLock()
 	defer mgr.outboundChsLock.RUnlock()
 	cs, ok := mgr.outboundChs[recipientAddr]
@@ -222,6 +229,7 @@ func (mgr *FCRPaymentMgrImplV1) GetOutboundChStatus(recipientAddr string) (strin
 }
 
 func (mgr *FCRPaymentMgrImplV1) RemoveOutboundCh(recipientAddr string) error {
+	recipientAddr = cleanAddress(recipientAddr)
 	mgr.outboundChsLock.RLock()
 	_, ok := mgr.outboundChs[recipientAddr]
 	mgr.outboundChsLock.RUnlock()
@@ -235,19 +243,24 @@ func (mgr *FCRPaymentMgrImplV1) RemoveOutboundCh(recipientAddr string) error {
 }
 
 func (mgr *FCRPaymentMgrImplV1) GetCostToCreate(recipientAddr string, amt *big.Int) (*big.Int, error) {
+	recipientAddr = cleanAddress(recipientAddr)
 	return nil, errors.New("No implementation")
 }
 
 func (mgr *FCRPaymentMgrImplV1) CheckRecipientSettlementValidity(recipientAddr string) (bool, error) {
+	recipientAddr = cleanAddress(recipientAddr)
 	return false, errors.New("No implementation")
 }
 
 func (mgr *FCRPaymentMgrImplV1) Settle(senderAddr string) error {
+	senderAddr = cleanAddress(senderAddr)
 	return errors.New("No implementation")
 }
 
 func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big.Int, uint64, error) {
+	senderAddr = cleanAddress(senderAddr)
 	senderVAddr, chAddr, lane, nonce, newRedeemed, err := fcrlotusmgr.VerifyVoucher(voucher)
+	senderVAddr = cleanAddress(senderVAddr)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -263,6 +276,7 @@ func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big
 		if err != nil {
 			return nil, 0, err
 		}
+		recipientAddr = cleanAddress(recipientAddr)
 		if recipientAddr != mgr.addr {
 			return nil, 0, errors.New("Receive receiver address mismatch")
 		}
@@ -327,6 +341,7 @@ func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big
 }
 
 func (mgr *FCRPaymentMgrImplV1) Refund(senderAddr string, lane uint64, amt *big.Int) (string, error) {
+	senderAddr = cleanAddress(senderAddr)
 	mgr.inboundChsLock.RLock()
 	defer mgr.inboundChsLock.RUnlock()
 	cs, ok := mgr.inboundChs[senderAddr]
@@ -359,6 +374,7 @@ func (mgr *FCRPaymentMgrImplV1) Refund(senderAddr string, lane uint64, amt *big.
 }
 
 func (mgr *FCRPaymentMgrImplV1) GetInboundChStatus(senderAddr string) (string, *big.Int, *big.Int, error) {
+	senderAddr = cleanAddress(senderAddr)
 	mgr.inboundChsLock.RLock()
 	defer mgr.inboundChsLock.RUnlock()
 	cs, ok := mgr.inboundChs[senderAddr]
@@ -371,6 +387,7 @@ func (mgr *FCRPaymentMgrImplV1) GetInboundChStatus(senderAddr string) (string, *
 }
 
 func (mgr *FCRPaymentMgrImplV1) RemoveInboundCh(senderAddr string) error {
+	senderAddr = cleanAddress(senderAddr)
 	mgr.inboundChsLock.RLock()
 	_, ok := mgr.inboundChs[senderAddr]
 	mgr.inboundChsLock.RUnlock()
@@ -384,9 +401,19 @@ func (mgr *FCRPaymentMgrImplV1) RemoveInboundCh(senderAddr string) error {
 }
 
 func (mgr *FCRPaymentMgrImplV1) GetCostToSettle(senderAddr string) (*big.Int, error) {
+	senderAddr = cleanAddress(senderAddr)
 	return nil, errors.New("No implementation")
 }
 
 func (mgr *FCRPaymentMgrImplV1) CheckSettlementValidity(senderAddr string) (bool, error) {
+	senderAddr = cleanAddress(senderAddr)
 	return false, errors.New("No implementation")
+}
+
+// cleanAddress enforce the address to start with f
+func cleanAddress(addr string) string {
+	if strings.HasPrefix(addr, "t") {
+		return "f" + addr[1:]
+	}
+	return addr
 }

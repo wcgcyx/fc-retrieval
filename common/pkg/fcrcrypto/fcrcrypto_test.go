@@ -90,7 +90,7 @@ func TestGetAddress(t *testing.T) {
 	assert.NotEmpty(t, err)
 	addr, err := GetWalletAddress(PubKey)
 	assert.Empty(t, err)
-	assert.Equal(t, "t12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", addr)
+	assert.Equal(t, "f12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", addr)
 }
 
 func TestVerifyByID(t *testing.T) {

@@ -72,7 +72,8 @@ func GetWalletAddress(pubKeyStr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return addr.String(), nil
+	// Enforce the address to start with "f"
+	return "f" + addr.String()[1:], nil
 }
 
 // Sign signs given bytes using given private key and given version,
