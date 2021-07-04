@@ -41,6 +41,9 @@ type FCRPeerMgr interface {
 	// GetPVDInfo gets the data of a provider, it queries the local storage rather than the remote register.
 	GetPVDInfo(pvdID string) (*Peer, error)
 
+	// ListGWS lists all the gateways
+	ListGWS() ([]Peer, error)
+
 	// GetGWSNearCID gets 16 gateways that are near given CID. Called only by gateways.
 	GetGWSNearCIDHash(hash string, except string) ([]Peer, error)
 

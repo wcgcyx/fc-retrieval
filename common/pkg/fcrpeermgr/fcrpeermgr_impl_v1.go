@@ -279,6 +279,29 @@ func (mgr *FCRPeerMgrImplV1) GetGWSNearCIDHash(hash string, except string) ([]Pe
 	return res, nil
 }
 
+func (mgr *FCRPeerMgrImplV1) ListGWS() ([]Peer, error) {
+	if !mgr.start {
+		return nil, errors.New("FCRPeerManager has not been started")
+	}
+	mgr.discoveredGWSLock.RLock()
+	defer mgr.discoveredGWSLock.RUnlock()
+	// return copies
+	res := make([]Peer, 0)
+	for _, peer := range mgr.discoveredGWS {
+		res = append(res, Peer{
+			RootKey:             peer.RootKey,
+			NodeID:              peer.NodeID,
+			MsgSigningKey:       peer.MsgSigningKey,
+			MsgSigningKeyVer:    peer.MsgSigningKeyVer,
+			RegionCode:          peer.RegionCode,
+			NetworkAddr:         peer.NetworkAddr,
+			Deregistering:       peer.Deregistering,
+			DeregisteringHeight: peer.DeregisteringHeight,
+		})
+	}
+	return res, nil
+}
+
 func (mgr *FCRPeerMgrImplV1) GetCurrentCIDHashRange() (string, string, error) {
 	if !mgr.start {
 		return "", "", errors.New("FCRPeerManager has not been started")

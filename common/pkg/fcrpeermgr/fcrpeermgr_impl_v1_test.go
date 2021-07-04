@@ -519,4 +519,9 @@ func TestSyncSingle(t *testing.T) {
 	peerMgr.SyncPVD("0000000000000000000000000000000000000000000000000000000000000014")
 	_, err = peerMgr.GetPVDInfo("0000000000000000000000000000000000000000000000000000000000000014")
 	assert.Empty(t, err)
+
+	// Test List GWS
+	peers, err := peerMgr.ListGWS()
+	assert.Empty(t, err)
+	assert.Equal(t, 20, len(peers))
 }

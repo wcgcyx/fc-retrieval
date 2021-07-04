@@ -25,6 +25,7 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
@@ -75,7 +76,16 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Send offer
-	// TODO
+	// TODO, concurrent and memory
+	gws, err := c.PeerMgr.ListGWS()
+	if err != nil {
+		err = fmt.Errorf("Error getting gateways: %v", err.Error())
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
+	}
+	for _, gw := range gws {
+		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, offer)
+	}
 
 	// Succeed
 	ack, _ := fcradminmsg.EncodeACK(true, "Succeed.")
