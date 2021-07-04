@@ -18,8 +18,36 @@ package fcradminmsg
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const (
-	InitialisationRequestType = 0
-	PublishOfferRequestType   = 1
-	ACKType                   = 2
-)
+import "encoding/json"
+
+// ackJson represents the a ack to message.
+type ackJson struct {
+	ACK  bool   `json:"ack"`
+	Data string `json:"data"`
+}
+
+// EncodeACK is used to get the byte array of ackJson
+func EncodeACK(
+	ack bool,
+	data string,
+) ([]byte, error) {
+	return json.Marshal(&ackJson{
+		ACK:  ack,
+		Data: data,
+	})
+}
+
+// DecodeACK is used to get the fields from byte array of ackJson
+// It returns the ack, data and error
+func DecodeACK(data []byte) (
+	bool,
+	string,
+	error,
+) {
+	msg := ackJson{}
+	err := json.Unmarshal(data, &msg)
+	if err != nil {
+		return false, "", err
+	}
+	return msg.ACK, msg.Data, nil
+}

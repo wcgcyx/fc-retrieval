@@ -38,8 +38,8 @@ func TestStandardOfferDiscoveryRequest(t *testing.T) {
 
 	msg, err := EncodeStandardOfferDiscoveryRequest(mockClient, mockNodeID, mockCID, mockNonce, mockMaxOfferRequested, mockAccountAddr, mockVoucher)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(0), msg.messageType)
-	assert.Equal(t, "7b226e6f64655f6964223a226d6f636b4944222c2270696563655f636964223a22516d583552673874397a6832364a6361546b37566e4458717635534848326254364166656f54464c53737034644b222c226e6f6e6365223a34322c226d61785f6f666665725f726571756573746564223a31302c226163636f756e745f61646472223a226d6f636b41646472222c22766f7563686572223a226d6f636b566f7563686572227d", hex.EncodeToString(msg.messageBody))
+	assert.Equal(t, byte(StandardOfferDiscoveryRequestType), msg.messageType)
+	assert.Equal(t, "7b22636c69656e74223a747275652c226e6f64655f6964223a226d6f636b4944222c2270696563655f636964223a22516d583552673874397a6832364a6361546b37566e4458717635534848326254364166656f54464c53737034644b222c226e6f6e6365223a34322c226d61785f6f666665725f726571756573746564223a31302c226163636f756e745f61646472223a226d6f636b41646472222c22766f7563686572223a226d6f636b566f7563686572227d", hex.EncodeToString(msg.messageBody))
 	assert.Equal(t, "", msg.signature)
 
 	resClient, resNodeID, resCID, resNonce, resMaxOfferRequested, resAcountAddr, resVoucher, err := DecodeStandardOfferDiscoveryRequest(msg)

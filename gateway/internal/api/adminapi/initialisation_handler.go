@@ -1,4 +1,22 @@
+/*
+Package adminapi contains the API code for the admin client - gateway communication.
+*/
 package adminapi
+
+/*
+ * Copyright 2020 ConsenSys Software Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 import (
 	"errors"
@@ -19,35 +37,46 @@ import (
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
-func GatewayAdminInitialisationHandler(data []byte) (byte, []byte, error) {
+// InitialisationHandler handles initialisation.
+func InitialisationHandler(data []byte) (byte, []byte, error) {
 	// Get core
 	c := core.GetSingleInstance()
 	if c.Initialised {
 		// Already initialised.
-		return 0, nil, errors.New("Already initialised")
+		err := errors.New("Already initialised")
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Decoding payload
-	p2pPrvKey, p2pPort, networkAddr, rootPrvKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeGatewayAdminInitialisationRequest(data)
+	p2pPrvKey, p2pPort, networkAddr, rootPrvKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
 	if err != nil {
-		return 0, nil, fmt.Errorf("Error in decoding payload: %v", err.Error())
+		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Obtaining the root key
 	rootKey, nodeID, err := fcrcrypto.GetPublicKey(rootPrvKey)
 	if err != nil {
-		return 0, nil, fmt.Errorf("Error in obtaining the public key: %v", err.Error())
+		err = fmt.Errorf("Error in obtaining the public key: %v", err.Error())
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 	c.NodeID = nodeID
 	c.WalletAddr, err = fcrcrypto.GetWalletAddress(rootKey)
 	if err != nil {
-		return 0, nil, fmt.Errorf("Error in obtaining the wallet address: %v", err.Error())
+		err = fmt.Errorf("Error in obtaining the wallet address: %v", err.Error())
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Generating msg signing key
 	msgKey, msgSigningKey, _, err := fcrcrypto.GenerateRetrievalKeyPair()
 	if err != nil {
-		return 0, nil, fmt.Errorf("Error in generating message signing key: %v", err.Error())
+		err = fmt.Errorf("Error in generating message signing key: %v", err.Error())
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 	c.MsgSigningKey = msgKey
 	c.MsgSigningKeyVer = 0
@@ -74,7 +103,9 @@ func GatewayAdminInitialisationHandler(data []byte) (byte, []byte, error) {
 	c.Ready <- true
 	if !<-c.Ready {
 		// Initialisation failed.
-		return 0, nil, errors.New("Initialisation failed")
+		err = errors.New("Initialisation failed")
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Initialisation succeed. Start register this gateway.
@@ -90,11 +121,14 @@ func GatewayAdminInitialisationHandler(data []byte) (byte, []byte, error) {
 	})
 	if err != nil {
 		c.Ready <- false
-		return 0, nil, fmt.Errorf("Error in registering the gateway: %v", err.Error())
+		err = fmt.Errorf("Error in registering the gateway: %v", err.Error())
+		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Succeed.
 	c.Ready <- true
 	c.Initialised = true
-	return 0, nil, nil
+	ack, _ := fcradminmsg.EncodeACK(true, "Succeed.")
+	return fcradminmsg.ACKType, ack, nil
 }

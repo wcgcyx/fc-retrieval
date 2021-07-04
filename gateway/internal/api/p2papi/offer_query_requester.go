@@ -1,11 +1,29 @@
+/*
+Package p2papi contains the API code for the p2p communication.
+*/
 package p2papi
+
+/*
+ * Copyright 2020 ConsenSys Software Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"math/rand"
 
-	"github.com/filecoin-project/go-state-types/big"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
@@ -15,6 +33,7 @@ import (
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
+// OfferQueryRequester sends an offer query request.
 func OfferQueryRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error) {
 	// Get parameters
 	if len(args) != 3 {
@@ -72,7 +91,7 @@ func OfferQueryRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRS
 	if err != nil {
 		return nil, err
 	}
-	expected := big.Zero().Add(c.Settings.SearchPrice, big.Zero().Mul(c.Settings.OfferPrice, big.NewInt(maxOfferRequested).Int))
+	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(maxOfferRequested)))
 	voucher, create, topup, err := c.PaymentMgr.Pay(recipientAddr, 0, expected)
 	if err != nil {
 		return nil, err
@@ -226,7 +245,7 @@ func OfferQueryRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRS
 			c.ReputationMgr.PendGW(nodeID)
 			return nil, err
 		}
-		expectedRefund := big.Zero().Mul(c.Settings.OfferPrice, big.NewInt(needToRefund).Int)
+		expectedRefund := big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(needToRefund))
 		if refunded.Cmp(expectedRefund) < 0 {
 			// Refund is wrong, but we can still respond to client, no need to return error
 			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)

@@ -1,4 +1,4 @@
-module github.com/wcgcyx/fc-retrieval/gateway
+module github.com/wcgcyx/fc-retrieval/provider
 
 go 1.16
 

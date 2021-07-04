@@ -1,9 +1,11 @@
 /*
-Package main - program entry point for a Retrieval Gateway node.
+Package main - program entry point for a Retrieval Provider node.
 
-Retrieval Gateway is a type of nodes in FileCoin blockchain network, which serves purpose of being first point of contact
-for a client, who is trying to find and retrieve their files.
-Retrieval Gateway is responsible for providing the best way for the client to get their files back from the network.
+Retrieval Provider is a type of nodes in FileCoin blockchain network, which serves purpose of being a way to
+communicate with a Storage Miner.
+
+Retrieval Provider is used by Retrieval Gateways in order to get their files back from the particular Storage Miner
+in the network.
 */
 package main
 
@@ -34,13 +36,13 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/api/adminapi"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/api/p2papi"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/config"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
+	"github.com/wcgcyx/fc-retrieval/provider/internal/api/adminapi"
+	"github.com/wcgcyx/fc-retrieval/provider/internal/api/p2papi"
+	"github.com/wcgcyx/fc-retrieval/provider/internal/config"
+	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
-// Start Gateway service
+// Start Provider service
 func main() {
 	// Load config
 	conf := config.NewConfig()
@@ -49,7 +51,7 @@ func main() {
 	// Initialise logging
 	logging.Init(conf)
 
-	// Initialise gateway core instance
+	// Initialise provider core instance
 	c := core.GetSingleInstance(&appSettings)
 
 	// Attempt to load token
@@ -84,20 +86,14 @@ func main() {
 		return
 	}
 
-	// Wait for admin to initialise this gateway
+	// Wait for admin to initialise this provider
 	for !<-c.Ready {
 	}
 
-	// Gateway has been initialised.
+	// Provider has been initialised.
 	c.P2PServer.
-		// Handlers
-		AddHandler(fcrmessages.EstablishmentType, p2papi.EstablishmentHandler).
-		AddHandler(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryHandler).
-		AddHandler(fcrmessages.DHTOfferDiscoveryRequestType, p2papi.DHTOfferQueryHandler).
-		AddHandler(fcrmessages.OfferPublishRequestType, p2papi.OfferPublishHandler).
 		// Requesters
-		AddRequester(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryRequester).
-		AddRequester(fcrmessages.EstablishmentType, p2papi.EstablishmentRequester)
+		AddRequester(fcrmessages.OfferPublishRequestType, p2papi.OfferPublishRequester)
 
 	err = c.P2PServer.Start()
 	if err != nil {
@@ -141,14 +137,14 @@ func main() {
 
 	// Everything has been started.
 	c.Ready <- true
-	// Wait for this gateway to be registered.
+	// Wait for this provider to be registered.
 	if !<-c.Ready {
 		// Register failed.
-		logging.Error("Error in registering this gateway.")
+		logging.Error("Error in registering this provider.")
 		gracefulExit()
 		return
 	}
-	// Register succeed. Run gateway
+	// Register succeed. Run provider
 
 	// Configure what should be called if Control-C is hit.
 	sig := make(chan os.Signal, 1)
@@ -159,7 +155,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	logging.Info("Filecoin Gateway Start-up Complete")
+	logging.Info("Filecoin Provider Start-up Complete")
 
 	// Wait forever
 	// TODO: Start message signing key update routine.
@@ -168,7 +164,7 @@ func main() {
 
 // gracefulExit handles exit
 func gracefulExit() {
-	logging.Info("Filecoin Gateway Shutdown: Start")
+	logging.Info("Filecoin Provider Shutdown: Start")
 	// Delay 3 seconds to let admin knows any error.
 	time.Sleep(3 * time.Second)
 
@@ -192,5 +188,5 @@ func gracefulExit() {
 		c.ReputationMgr.Shutdown()
 	}
 
-	logging.Info("Filecoin Gateway Shutdown: Completed")
+	logging.Info("Filecoin Provider Shutdown: Completed")
 }

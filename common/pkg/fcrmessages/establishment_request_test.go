@@ -30,7 +30,7 @@ func TestEstablishment(t *testing.T) {
 
 	msg, err := EncodeEstablishmentRequest(mockChallenge)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(11), msg.messageType)
+	assert.Equal(t, byte(EstablishmentType), msg.messageType)
 	assert.Equal(t, "7b226368616c6c656e6765223a2274657374206368616c6c656e6765227d", hex.EncodeToString(msg.messageBody))
 	assert.Equal(t, "", msg.signature)
 

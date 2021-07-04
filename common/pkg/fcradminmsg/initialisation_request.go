@@ -20,7 +20,8 @@ package fcradminmsg
 
 import "encoding/json"
 
-type gatewayAdminInitialisationRequestJson struct {
+// initialisationRequestJson represents the request to initialise.
+type initialisationRequestJson struct {
 	P2PPrvKey         string `json:"p2p_private_key"`
 	P2PPort           int    `json:"p2p_port"`
 	NetworkAddr       string `json:"network_addr"`
@@ -33,7 +34,8 @@ type gatewayAdminInitialisationRequestJson struct {
 	RegionCode        string `json:"region_code"`
 }
 
-func EncodeGatewayAdminInitialisationRequest(
+// EncodeInitialisationRequest is used to get the byte array of initialisationRequestJson
+func EncodeInitialisationRequest(
 	p2pPrvKey string,
 	p2pPort int,
 	networkAddr string,
@@ -45,7 +47,7 @@ func EncodeGatewayAdminInitialisationRequest(
 	registerAuthToken string,
 	regionCode string,
 ) ([]byte, error) {
-	return json.Marshal(&gatewayAdminInitialisationRequestJson{
+	return json.Marshal(&initialisationRequestJson{
 		P2PPrvKey:         p2pPrvKey,
 		P2PPort:           p2pPort,
 		NetworkAddr:       networkAddr,
@@ -59,7 +61,10 @@ func EncodeGatewayAdminInitialisationRequest(
 	})
 }
 
-func DecodeGatewayAdminInitialisationRequest(data []byte) (
+// DecodeInitialisationRequest is used to get the fields from byte array of initialisationRequestJson
+// It returns the P2P private key, P2P port, network address, root private key, lotus API Addr, lotus auth token,
+// register private key, register API addr, register auth token, region code and error.
+func DecodeInitialisationRequest(data []byte) (
 	string,
 	int,
 	string,
@@ -72,10 +77,10 @@ func DecodeGatewayAdminInitialisationRequest(data []byte) (
 	string,
 	error,
 ) {
-	msg := gatewayAdminInitialisationRequestJson{}
+	msg := initialisationRequestJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", "", "", err
 	}
-	return msg.P2PPrvKey, msg.P2PPort, msg.NetworkAddr, msg.RootPrvKey, msg.LotusAPIAddr, msg.LotusAPIAddr, msg.RegisterPrvKey, msg.RegisterAPIAddr, msg.RegisterAuthToken, msg.RegionCode, nil
+	return msg.P2PPrvKey, msg.P2PPort, msg.NetworkAddr, msg.RootPrvKey, msg.LotusAPIAddr, msg.LotusAuthToken, msg.RegisterPrvKey, msg.RegisterAPIAddr, msg.RegisterAuthToken, msg.RegionCode, nil
 }

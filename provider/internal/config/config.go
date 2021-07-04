@@ -1,5 +1,5 @@
 /*
-Package config - combines operations used to setup parameters for Gateway node in FileCoin network
+Package config - combines operations used to setup parameters for Provider node in FileCoin network
 */
 package config
 
@@ -20,14 +20,12 @@ package config
 
 import (
 	"flag"
-	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/settings"
+	"github.com/wcgcyx/fc-retrieval/provider/internal/settings"
 )
 
 // NewConfig creates a new configuration
@@ -40,7 +38,7 @@ func NewConfig() *viper.Viper {
 	return conf
 }
 
-// Map sets the config for the Gateway. NB: Gateways start without a private key. Private keys are provided by a gateway admin client.
+// Map sets the config for the Provider. NB: Providers start without a private key. Private keys are provided by a provider admin client.
 func Map(conf *viper.Viper) settings.AppSettings {
 	syncDuration, err := time.ParseDuration(conf.GetString("SYNC_DURATION"))
 	if err != nil {
@@ -59,27 +57,6 @@ func Map(conf *viper.Viper) settings.AppSettings {
 		tcpLongInactivityTimeout = settings.DefaultLongTCPInactivityTimeout
 	}
 
-	defaultSearchPrice := new(big.Int)
-	_, err = fmt.Sscan(conf.GetString("SEARCH_PRICE"), defaultSearchPrice)
-	if err != nil {
-		// defaultSearchPrice is the default search price "0.001".
-		defaultSearchPrice = big.NewInt(1_000_000_000_000_000)
-	}
-
-	defaultOfferPrice := new(big.Int)
-	_, err = fmt.Sscan(conf.GetString("OFFER_PRICE"), defaultOfferPrice)
-	if err != nil {
-		// defaultOfferPrice is the default offer price "0.001".
-		defaultOfferPrice = big.NewInt(1_000_000_000_000_000)
-	}
-
-	defaultTopUpAmount := new(big.Int)
-	_, err = fmt.Sscan(conf.GetString("TOPUP_AMOUNT"), defaultTopUpAmount)
-	if err != nil {
-		// defaultTopUpAmount is the default top up amount "0.1".
-		defaultTopUpAmount = big.NewInt(100_000_000_000_000_000)
-	}
-
 	return settings.AppSettings{
 		LogServiceName: conf.GetString("LOG_SERVICE_NAME"),
 		LogLevel:       conf.GetString("LOG_LEVEL"),
@@ -92,19 +69,14 @@ func Map(conf *viper.Viper) settings.AppSettings {
 		LogCompress:    conf.GetBool("LOG_COMPRESS"),
 		LogTimeFormat:  conf.GetString("LOG_TIME_FORMAT"),
 
-		BindAdminAPI:   conf.GetInt("BIND_ADMIN_API"),
-		AdminKeyFile:   conf.GetString("ADMIN_KEY_FILE"),
-		RetrievalDir:   conf.GetString("RETRIEVAL_DIR"),
-		StoreFullOffer: conf.GetBool("STORE_FULL_OFFER"),
+		BindAdminAPI: conf.GetInt("BIND_ADMIN_API"),
+		AdminKeyFile: conf.GetString("ADMIN_KEY_FILE"),
+		RetrievalDir: conf.GetString("RETRIEVAL_DIR"),
 
 		SyncDuration:             syncDuration,
 		MsgKeyUpdateDuration:     msgKeyUpdateDuration,
 		TCPInactivityTimeout:     tcpInactivityTimeout,
 		TCPLongInactivityTimeout: tcpLongInactivityTimeout,
-
-		SearchPrice: defaultSearchPrice,
-		OfferPrice:  defaultOfferPrice,
-		TopupAmount: defaultTopUpAmount,
 	}
 }
 

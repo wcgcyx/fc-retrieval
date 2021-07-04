@@ -1,7 +1,7 @@
 /*
-Package fcrmessages - stores all the p2p messages.
+Package fcradminmsg - stores all the admin messages.
 */
-package fcrmessages
+package fcradminmsg
 
 /*
  * Copyright 2020 ConsenSys Software Inc.
@@ -27,27 +27,17 @@ import (
 
 func TestACK(t *testing.T) {
 	mockACK := true
-	mockNonce := int64(42)
 	mockData := "testdata"
 
-	msg, err := EncodeACK(mockACK, mockNonce, mockData)
+	data, err := EncodeACK(mockACK, mockData)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(ACKType), msg.messageType)
-	assert.Equal(t, "7b2261636b223a747275652c226e6f6e6365223a34322c2264617461223a227465737464617461227d", hex.EncodeToString(msg.messageBody))
-	assert.Equal(t, "", msg.signature)
+	assert.Equal(t, "7b2261636b223a747275652c2264617461223a227465737464617461227d", hex.EncodeToString(data))
 
-	resACK, resNonce, resData, err := DecodeACK(msg)
+	resACK, resData, err := DecodeACK(data)
 	assert.Empty(t, err)
 	assert.Equal(t, mockACK, resACK)
-	assert.Equal(t, mockNonce, resNonce)
 	assert.Equal(t, mockData, resData)
 
-	msg.messageType = 100
-	_, _, _, err = DecodeACK(msg)
-	assert.NotEmpty(t, err)
-	msg.messageType = 10
-
-	msg.messageBody = []byte{100, 100, 100}
-	_, _, _, err = DecodeACK(msg)
+	_, _, err = DecodeACK([]byte{100, 100, 100})
 	assert.NotEmpty(t, err)
 }

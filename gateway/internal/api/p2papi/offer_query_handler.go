@@ -1,9 +1,28 @@
+/*
+Package p2papi contains the API code for the p2p communication.
+*/
 package p2papi
+
+/*
+ * Copyright 2020 ConsenSys Software Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 import (
 	"fmt"
 
-	"github.com/filecoin-project/go-state-types/big"
+	"math/big"
+
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
@@ -11,6 +30,7 @@ import (
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
+// OfferQueryHandler handles standard offer query.
 func OfferQueryHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, request *fcrmessages.FCRMessage) error {
 	// Get core structure
 	c := core.GetSingleInstance()
@@ -71,10 +91,10 @@ func OfferQueryHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRSer
 	if lane != 0 {
 		logging.Warn("Payment not in correct lane, should be 0 got %v", lane)
 	}
-	expected := big.Zero().Add(c.Settings.SearchPrice, big.Zero().Mul(c.Settings.OfferPrice, big.NewInt(maxOfferRequested).Int))
+	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(maxOfferRequested)))
 	if expected.Cmp(received) < 0 {
 		// Short payment
-		voucher, err := c.PaymentMgr.Refund(accountAddr, lane, big.Zero().Sub(received, c.Settings.SearchPrice))
+		voucher, err := c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, c.Settings.SearchPrice))
 		if err != nil {
 			// This should never happen
 			logging.Error("Error in refunding %v", err.Error())
@@ -111,7 +131,7 @@ func OfferQueryHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRSer
 		toRefund--
 	}
 	if toRefund > 0 {
-		refundVoucher, err = c.PaymentMgr.Refund(accountAddr, lane, big.Zero().Sub(received, big.Zero().Mul(c.Settings.OfferPrice, big.NewInt(toRefund).Int)))
+		refundVoucher, err = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(toRefund))))
 		if err != nil {
 			// This should never happen
 			logging.Error("Error in refunding %v", err.Error())
