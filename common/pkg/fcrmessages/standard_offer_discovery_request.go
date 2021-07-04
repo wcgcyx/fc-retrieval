@@ -27,6 +27,7 @@ import (
 
 // standardOfferDiscoveryRequestJson represents the request to ask for offers.
 type standardOfferDiscoveryRequestJson struct {
+	Client            bool   `json:"client"`
 	NodeID            string `json:"node_id"`
 	PieceCID          string `json:"piece_cid"`
 	Nonce             int64  `json:"nonce"`
@@ -37,6 +38,7 @@ type standardOfferDiscoveryRequestJson struct {
 
 // EncodeStandardOfferDiscoveryRequest is used to get the FCRMessage of standardOfferDiscoveryRequestJson.
 func EncodeStandardOfferDiscoveryRequest(
+	client bool,
 	NodeID string,
 	pieceCID *cid.ContentID,
 	nonce int64,
@@ -45,6 +47,7 @@ func EncodeStandardOfferDiscoveryRequest(
 	voucher string,
 ) (*FCRMessage, error) {
 	body, err := json.Marshal(standardOfferDiscoveryRequestJson{
+		Client:            client,
 		NodeID:            NodeID,
 		PieceCID:          pieceCID.ToString(),
 		Nonce:             nonce,
@@ -61,6 +64,7 @@ func EncodeStandardOfferDiscoveryRequest(
 // DecodeStandardOfferDiscoveryRequest is used to get the fields from FCRMessage of standardOfferDiscoveryRequestJson.
 // It returns the nodeID, pieceCID, nonce, maxOfferRequested, account address and voucher.
 func DecodeStandardOfferDiscoveryRequest(fcrMsg *FCRMessage) (
+	bool,
 	string,
 	*cid.ContentID,
 	int64,
@@ -70,16 +74,16 @@ func DecodeStandardOfferDiscoveryRequest(fcrMsg *FCRMessage) (
 	error,
 ) {
 	if fcrMsg.GetMessageType() != StandardOfferDiscoveryRequestType {
-		return "", nil, 0, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryRequestType, fcrMsg.GetMessageType())
+		return false, "", nil, 0, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryRequestType, fcrMsg.GetMessageType())
 	}
 	msg := standardOfferDiscoveryRequestJson{}
 	err := json.Unmarshal(fcrMsg.GetMessageBody(), &msg)
 	if err != nil {
-		return "", nil, 0, 0, "", "", err
+		return false, "", nil, 0, 0, "", "", err
 	}
 	pieceCID, err := cid.NewContentID(msg.PieceCID)
 	if err != nil {
-		return "", nil, 0, 0, "", "", err
+		return false, "", nil, 0, 0, "", "", err
 	}
-	return msg.NodeID, pieceCID, msg.Nonce, msg.MaxOfferRequested, msg.AccountAddr, msg.Voucher, nil
+	return msg.Client, msg.NodeID, pieceCID, msg.Nonce, msg.MaxOfferRequested, msg.AccountAddr, msg.Voucher, nil
 }

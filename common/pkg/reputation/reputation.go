@@ -58,12 +58,6 @@ var MockBadRecord = Record{
 	violation: true,
 }
 
-var InitialEstablishmentSucceed = Record{
-	reason:    "Succeed in initial establishment",
-	point:     1000,
-	violation: false,
-}
-
 var StandardOfferRetrieved = Record{
 	reason:    "Retrieved one offer from standard discovery",
 	point:     5,
@@ -82,14 +76,26 @@ var ContentRetrieved = Record{
 	violation: false,
 }
 
-var ConnectionTimeout = Record{
-	reason:    "Timeout",
+var NetworkError = Record{
+	reason:    "Network error",
 	point:     -1,
 	violation: false,
 }
 
 var InvalidResponse = Record{
-	reason:    "Received an invalid response after payment",
+	reason:    "Received an invalid response",
+	point:     -2,
+	violation: false,
+}
+
+var NetworkErrorAfterPayment = Record{
+	reason:    "Network error after a payment is made",
+	point:     -10,
+	violation: true,
+}
+
+var InvalidResponseAfterPayment = Record{
+	reason:    "Received an invalid response after a payment is made",
 	point:     -50,
 	violation: true,
 }
