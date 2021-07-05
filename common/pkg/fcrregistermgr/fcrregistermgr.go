@@ -67,6 +67,12 @@ type FCRRegisterMgr interface {
 	// GetRegisteredProviderByID gets the provider's information by a given ID.
 	GetRegisteredProviderByID(id string) (*register.ProviderRegisteredInfo, error)
 
+	// GetGWMaxPageByRegion gets the maximum page of the gateway register at given height with given region.
+	GetGWMaxPageByRegion(height uint64, region string) (uint64, error)
+
+	// GetPVDMaxPageByRegion gets the maximum page of the provider register at given height with given region.
+	GetPVDMaxPageByRegion(height uint64, region string) (uint64, error)
+
 	// GetRegisteredGatewaysByRegion gets the registered gateways' information at given page at a given height with a given region code.
 	GetRegisteredGatewaysByRegion(height uint64, region string, page uint64) ([]register.GatewayRegisteredInfo, error)
 

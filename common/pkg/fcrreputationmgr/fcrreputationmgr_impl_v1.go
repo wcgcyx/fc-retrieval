@@ -85,6 +85,16 @@ func (mgr *FCRReputationMgrImplV1) AddGW(gwID string) {
 	mgr.gwViolations[gwID] = make([]reputation.Record, 0)
 }
 
+func (mgr *FCRReputationMgrImplV1) ListGWS() []string {
+	mgr.gwsLock.RLock()
+	defer mgr.gwsLock.RUnlock()
+	res := make([]string, 0)
+	for id := range mgr.gws {
+		res = append(res, id)
+	}
+	return res
+}
+
 func (mgr *FCRReputationMgrImplV1) RemoveGW(gwID string) {
 	mgr.gwsLock.Lock()
 	defer mgr.gwsLock.Unlock()
@@ -110,6 +120,16 @@ func (mgr *FCRReputationMgrImplV1) AddPVD(pvdID string) {
 	}
 	mgr.pvdHistory[pvdID] = make([]reputation.Record, 0)
 	mgr.pvdViolations[pvdID] = make([]reputation.Record, 0)
+}
+
+func (mgr *FCRReputationMgrImplV1) ListPVDS() []string {
+	mgr.pvdsLock.RLock()
+	defer mgr.pvdsLock.RUnlock()
+	res := make([]string, 0)
+	for id := range mgr.pvds {
+		res = append(res, id)
+	}
+	return res
 }
 
 func (mgr *FCRReputationMgrImplV1) RemovePVD(pvdID string) {

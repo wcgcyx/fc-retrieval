@@ -31,11 +31,17 @@ type FCRReputationMgr interface {
 	// AddGW starts tracking given gateway's reputation.
 	AddGW(gwID string)
 
+	// ListGWS lists all gateways in tracking.
+	ListGWS() []string
+
 	// RemvoeGW stops tracking given gateway's reputation.
 	RemoveGW(gwID string)
 
 	// AddPVD starts tracking given provider's reputation.
 	AddPVD(pvdID string)
+
+	// ListPVDS lists all providers in tracking.
+	ListPVDS() []string
 
 	// RemovePVD stops tracking given provider's reputation.
 	RemovePVD(pvdID string)

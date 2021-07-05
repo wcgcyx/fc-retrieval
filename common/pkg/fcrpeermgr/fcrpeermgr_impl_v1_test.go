@@ -356,6 +356,14 @@ func (m *mockRegisterMgr) GetRegisteredProviderByID(id string) (*register.Provid
 	return nil, errors.New("Not found")
 }
 
+func (m *mockRegisterMgr) GetGWMaxPageByRegion(height uint64, region string) (uint64, error) {
+	return 0, nil
+}
+
+func (m *mockRegisterMgr) GetPVDMaxPageByRegion(height uint64, region string) (uint64, error) {
+	return 0, nil
+}
+
 func (m *mockRegisterMgr) GetRegisteredGatewaysByRegion(height uint64, region string, page uint64) ([]register.GatewayRegisteredInfo, error) {
 	return nil, nil
 }

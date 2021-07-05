@@ -147,6 +147,14 @@ func (mgr *FCRRegisterMgrImplV1) GetRegisteredProviderByID(id string) (*register
 	return &provider, nil
 }
 
+func (mgr *FCRRegisterMgrImplV1) GetGWMaxPageByRegion(height uint64, region string) (uint64, error) {
+	return 0, nil
+}
+
+func (mgr *FCRRegisterMgrImplV1) GetPVDMaxPageByRegion(height uint64, region string) (uint64, error) {
+	return 0, nil
+}
+
 func (mgr *FCRRegisterMgrImplV1) GetRegisteredGatewaysByRegion(height uint64, region string, page uint64) ([]register.GatewayRegisteredInfo, error) {
 	// Not implemented
 	return nil, errors.New("No implementation")
