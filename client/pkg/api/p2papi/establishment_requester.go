@@ -6,6 +6,6 @@ import (
 )
 
 // EstablishmentRequester sends an establishment request.
-func EstablishmentRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error) {
+func EstablishmentRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	return nil, nil
 }

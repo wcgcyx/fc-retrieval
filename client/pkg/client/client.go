@@ -21,6 +21,7 @@ package client
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"net/http"
 	"time"
@@ -113,7 +114,7 @@ func NewFilecoinRetrievalClient(
 	// Initialise components
 	c.P2PServer = fcrserver.NewFCRServerImplV1(hex.EncodeToString(prvKeyBytes), 0, time.Second*60)
 	c.P2PServer.
-		AddRequester(fcrmessages.EstablishmentType, p2papi.EstablishmentRequester).
+		AddRequester(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentRequester).
 		AddRequester(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryRequester).
 		AddRequester(fcrmessages.DHTOfferDiscoveryRequestType, p2papi.DHTOfferQueryRequester)
 	err = c.P2PServer.Start()
@@ -165,35 +166,32 @@ func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 }
 
 // AddActive adds an active gateway ID
-func (c *FilecoinRetrievalClient) AddActive(nodeID string) error {
+func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
 	// Get gw info
-	gw, err := c.PeerMgr.GetGWInfo(nodeID)
-	if err != nil {
-		// Try again
-		c.PeerMgr.SyncGW(nodeID)
-		gw, err = c.PeerMgr.GetGWInfo(nodeID)
-		if err != nil {
-			return err
+	gwInfo := c.PeerMgr.GetGWInfo(targetID)
+	if gwInfo == nil {
+		// Not found, try sync once
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil {
+			return fmt.Errorf("Error in obtaining information for gateway %v", targetID)
 		}
 	}
-	_, err = c.P2PServer.Request(gw.NetworkAddr, fcrmessages.EstablishmentType, gw.NodeID)
+	_, err := c.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
 	}
 	// Create payment channel
-	recipientAddr, err := fcrcrypto.GetWalletAddress(gw.RootKey)
+	recipientAddr, err := fcrcrypto.GetWalletAddress(gwInfo.RootKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, gwInfo.RootKey, err.Error())
 	}
 
 	err = c.PaymentMgr.Create(recipientAddr, c.TopupAmount)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.TopupAmount.String(), err.Error())
 	}
-
 	// Add gateway entry to reputation
-	c.ReputationMgr.AddGW(gw.NodeID)
-
+	c.ReputationMgr.AddGW(gwInfo.NodeID)
 	return nil
 }
 
@@ -204,7 +202,7 @@ func (c *FilecoinRetrievalClient) ListActive() ([]string, error) {
 
 // StandardDiscovery performs a standard discovery.
 func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string) ([]cidoffer.SubCIDOffer, error) {
-	res := make([]cidoffer.SubCIDOffer, 0)
+	// res := make([]cidoffer.SubCIDOffer, 0)
 	return nil, nil
 }
 

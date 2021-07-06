@@ -6,6 +6,6 @@ import (
 )
 
 // DHTOfferQueryRequester sends an offer query request.
-func DHTOfferQueryRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error) {
+func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	return nil, nil
 }
