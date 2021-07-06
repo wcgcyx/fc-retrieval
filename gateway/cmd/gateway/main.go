@@ -91,13 +91,13 @@ func main() {
 	// Gateway has been initialised.
 	c.P2PServer.
 		// Handlers
-		AddHandler(fcrmessages.EstablishmentType, p2papi.EstablishmentHandler).
+		AddHandler(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentHandler).
 		AddHandler(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryHandler).
 		AddHandler(fcrmessages.DHTOfferDiscoveryRequestType, p2papi.DHTOfferQueryHandler).
 		AddHandler(fcrmessages.OfferPublishRequestType, p2papi.OfferPublishHandler).
 		// Requesters
 		AddRequester(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryRequester).
-		AddRequester(fcrmessages.EstablishmentType, p2papi.EstablishmentRequester)
+		AddRequester(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentRequester)
 
 	err = c.P2PServer.Start()
 	if err != nil {
