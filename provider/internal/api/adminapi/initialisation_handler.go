@@ -44,7 +44,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	if c.Initialised {
 		// Already initialised.
 		err := errors.New("Already initialised")
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
@@ -52,7 +52,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	p2pPrvKey, p2pPort, networkAddr, rootPrvKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
@@ -60,14 +60,14 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	rootKey, nodeID, err := fcrcrypto.GetPublicKey(rootPrvKey)
 	if err != nil {
 		err = fmt.Errorf("Error in obtaining the public key: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 	c.NodeID = nodeID
 	c.WalletAddr, err = fcrcrypto.GetWalletAddress(rootKey)
 	if err != nil {
 		err = fmt.Errorf("Error in obtaining the wallet address: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
@@ -75,7 +75,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	msgKey, msgSigningKey, _, err := fcrcrypto.GenerateRetrievalKeyPair()
 	if err != nil {
 		err = fmt.Errorf("Error in generating message signing key: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 	c.MsgSigningKey = msgKey
@@ -84,7 +84,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	offerKey, offerSigningKey, _, err := fcrcrypto.GenerateRetrievalKeyPair()
 	if err != nil {
 		err = fmt.Errorf("Error in generating offer signing key: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 	c.OfferSigningKey = offerKey
@@ -111,7 +111,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	if !<-c.Ready {
 		// Initialisation failed.
 		err = errors.New("Initialisation failed")
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
@@ -130,13 +130,13 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	if err != nil {
 		c.Ready <- false
 		err = fmt.Errorf("Error in registering the provider: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Succeed.
 	c.Ready <- true
 	c.Initialised = true
-	ack, _ := fcradminmsg.EncodeACK(true, "Succeed.")
+	ack := fcradminmsg.EncodeACK(true, "Succeed.")
 	return fcradminmsg.ACKType, ack, nil
 }

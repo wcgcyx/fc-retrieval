@@ -19,24 +19,35 @@ package p2papi
  */
 
 import (
-	"errors"
+	"fmt"
 	"math/rand"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
 // OfferPublishRequester sends an offer publish request.
-func OfferPublishRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error) {
+func OfferPublishRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	// Get parameters
-	if len(args) != 1 {
-		return nil, errors.New("wrong arguments")
+	if len(args) != 2 {
+		err := fmt.Errorf("Wrong arguments, expect length 2, got length %v", len(args))
+		logging.Error(err.Error())
+		return nil, err
 	}
-	offer, ok := args[0].(*cidoffer.CIDOffer)
+	targetID, ok := args[0].(string)
 	if !ok {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect a target ID in string")
+		logging.Error(err.Error())
+		return nil, err
+	}
+	offer, ok := args[1].(*cidoffer.CIDOffer)
+	if !ok {
+		err := fmt.Errorf("Wrong arguments, expect a offer in *cidoffer.CIDOffer")
+		logging.Error(err.Error())
+		return nil, err
 	}
 
 	// Get core structure
@@ -45,24 +56,66 @@ func OfferPublishRequester(reader fcrserver.FCRServerReader, writer fcrserver.FC
 	defer c.MsgSigningKeyLock.RUnlock()
 
 	// Generate random nonce
-	nonce := rand.Int63()
+	nonce := uint64(rand.Int63())
 
-	request, err := fcrmessages.EncodeOfferPublishRequest(c.NodeID, nonce, offer)
+	request, err := fcrmessages.EncodeOfferPublishRequest(nonce, c.NodeID, offer)
 	if err != nil {
-		// Error in encoding
+		err = fmt.Errorf("Internal error in encoding response: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
+
 	err = request.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
 	if err != nil {
 		// Error in signing
 		return nil, err
 	}
 
-	err = writer.Write(request, c.Settings.TCPInactivityTimeout)
+	// Write request
+	err = writer.Write(request, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	if err != nil {
-		// Error in writing
+		err = fmt.Errorf("Error in sending request to %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
-	return reader.Read(c.Settings.TCPInactivityTimeout)
+	// Get a response
+	response, err := reader.Read(c.Settings.TCPInactivityTimeout)
+	if err != nil {
+		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
+		return nil, err
+	}
+
+	// Verify the response
+	gwInfo := c.PeerMgr.GetGWInfo(targetID)
+	if gwInfo == nil {
+		// Not found, try sync once
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil {
+			err = fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			logging.Error(err.Error())
+			return nil, err
+		}
+	}
+	if response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+		// Try update
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil || response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+			err = fmt.Errorf("Error in verifying response from %v: %v", targetID, err.Error())
+			logging.Error(err.Error())
+			return nil, err
+		}
+	}
+
+	// Check response
+	if !response.ACK() {
+		err = fmt.Errorf("Reponse contains an error: %v", response.Error())
+		logging.Error(err.Error())
+		return nil, err
+	} else {
+		logging.Info("Successfully published offer to gateway %v", targetID)
+	}
+
+	return response, nil
 }

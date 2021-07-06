@@ -36,14 +36,14 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	if !c.Initialised {
 		// Not initialised.
 		err := errors.New("Not initialised")
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
 	files, price, expiry, qos, err := fcradminmsg.DecodePublishOfferRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
@@ -53,7 +53,7 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 		cid, err := cid.NewContentID(file)
 		if err != nil {
 			err = fmt.Errorf("Invalid CID: %v", err.Error())
-			ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+			ack := fcradminmsg.EncodeACK(false, err.Error())
 			return fcradminmsg.ACKType, ack, err
 		}
 		cids = append(cids, *cid)
@@ -63,7 +63,7 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	offer, err := cidoffer.NewCIDOffer(c.NodeID, cids, price, expiry, qos)
 	if err != nil {
 		err = fmt.Errorf("Error creating offer: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
@@ -71,23 +71,18 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	err = offer.Sign(c.OfferSigningKey)
 	if err != nil {
 		err = fmt.Errorf("Error signing offer: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
 	// Send offer
 	// TODO, concurrent and memory
-	gws, err := c.PeerMgr.ListGWS()
-	if err != nil {
-		err = fmt.Errorf("Error getting gateways: %v", err.Error())
-		ack, _ := fcradminmsg.EncodeACK(false, err.Error())
-		return fcradminmsg.ACKType, ack, err
-	}
+	gws := c.PeerMgr.ListGWS()
 	for _, gw := range gws {
 		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, offer)
 	}
 
 	// Succeed
-	ack, _ := fcradminmsg.EncodeACK(true, "Succeed.")
+	ack := fcradminmsg.EncodeACK(true, "Succeed")
 	return fcradminmsg.ACKType, ack, nil
 }
