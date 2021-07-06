@@ -134,6 +134,9 @@ func (mgr *FCRPaymentMgrImplV1) Topup(recipientAddr string, amt *big.Int) error 
 }
 
 func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.Int) (string, bool, bool, error) {
+	if amt.Cmp(big.NewInt(0)) < 0 {
+		return "", false, false, errors.New("Can't pay negative amount")
+	}
 	recipientAddr = cleanAddress(recipientAddr)
 	mgr.outboundChsLock.RLock()
 	defer mgr.outboundChsLock.RUnlock()
@@ -169,10 +172,43 @@ func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.
 	// Update lane state
 	ls.nonce++
 	ls.redeemed.Add(&ls.redeemed, amt)
-	ls.vouchers = append(ls.vouchers, voucher)
+	ls.vouchers = append([]string{voucher}, ls.vouchers...)
 	// Update channel state
 	cs.redeemed.Add(&cs.redeemed, amt)
 	return voucher, false, false, nil
+}
+
+func (mgr *FCRPaymentMgrImplV1) RevertPay(recipientAddr string, lane uint64) {
+	recipientAddr = cleanAddress(recipientAddr)
+	mgr.outboundChsLock.RLock()
+	defer mgr.outboundChsLock.RUnlock()
+	cs, ok := mgr.outboundChs[recipientAddr]
+	if !ok {
+		return
+	}
+	cs.lock.Lock()
+	defer cs.lock.Unlock()
+	ls, ok := cs.laneStates[lane]
+	if !ok {
+		return
+	}
+	// Get last voucher
+	if len(ls.vouchers) == 0 {
+		return
+	}
+	_, _, _, _, newRedeemed, _ := fcrlotusmgr.VerifyVoucher(ls.vouchers[0])
+	var oldRedeemed *big.Int
+	if len(ls.vouchers) == 1 {
+		oldRedeemed = big.NewInt(0)
+		delete(cs.laneStates, lane)
+	} else {
+		_, _, _, ls.nonce, oldRedeemed, _ = fcrlotusmgr.VerifyVoucher(ls.vouchers[1])
+		ls.nonce++
+		ls.redeemed = *oldRedeemed
+		ls.vouchers = ls.vouchers[1:]
+	}
+	diff := big.NewInt(0).Sub(newRedeemed, oldRedeemed)
+	cs.redeemed.Sub(&cs.redeemed, diff)
 }
 
 func (mgr *FCRPaymentMgrImplV1) ReceiveRefund(recipientAddr string, voucher string) (*big.Int, error) {

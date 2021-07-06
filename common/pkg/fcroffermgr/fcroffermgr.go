@@ -31,13 +31,24 @@ type FCROfferMgr interface {
 	// Shutdown ends the manager's routine safely.
 	Shutdown()
 
+	/* CID related functions */
+	// AddCIDTag adds a cid to system and its tag.
+	// If cid already existed, it fails silently
+	AddCIDTag(cid *cid.ContentID, tag string)
+
+	// GetTagByCID gets the tag associated by the given cid.
+	GetTagByCID(cid *cid.ContentID) string
+
+	// IncrementCIDAccessCount increments the access count for a given cid.
+	IncrementCIDAccessCount(cid *cid.ContentID)
+
+	// GetAccessCountByCID gets the access count of a given cid.
+	GetAccessCountByCID(cid *cid.ContentID) int
+
 	/* CID Offer related functions */
 	// AddOffer adds an cid offer to the storage.
+	// If calling from provider, needs to first call add cid tag to track tag.
 	AddOffer(offer *cidoffer.CIDOffer)
-
-	// AddOffer adds an offer to the storage with a tag.
-	// Should be called by a provider to link offer with filename.
-	AddOfferWithTag(offer *cidoffer.CIDOffer, tag string)
 
 	// GetOffers gets offers containing given cid.
 	GetOffers(cID *cid.ContentID) []cidoffer.CIDOffer
@@ -48,14 +59,6 @@ type FCROfferMgr interface {
 
 	// ListOffers gets a list of offers from given index to given index.
 	ListOffers(from uint, to uint) []cidoffer.CIDOffer
-
-	// ListOffersWithTag gets a list of offers and their tag from given index to given index.
-	ListOffersWithTag(from uint, to uint) ([]cidoffer.CIDOffer, []string)
-
-	// ListOffersWithAccessCount gets a list of offers and their access count from given index to given index.
-	// From most frequently accessed offer to least frequently accessed offer.
-	// It is used by gateway to list offers.
-	ListOffersWithAccessCount(from uint, to uint) ([]cidoffer.CIDOffer, []int)
 
 	// RemoveOffer removes an offer by digest
 	RemoveOffer(digest string)

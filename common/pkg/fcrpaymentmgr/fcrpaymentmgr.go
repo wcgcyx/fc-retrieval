@@ -42,6 +42,9 @@ type FCRPaymentMgr interface {
 	// error if any.
 	Pay(recipientAddr string, lane uint64, amt *big.Int) (string, bool, bool, error)
 
+	// Revert the recent pay
+	RevertPay(recipientAddr string, lane uint64)
+
 	// ReceiveRefund receives a refund from recipient.
 	// It returns the amount received from the refund.
 	ReceiveRefund(recipientAddr string, voucher string) (*big.Int, error)

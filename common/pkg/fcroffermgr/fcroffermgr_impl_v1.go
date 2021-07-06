@@ -24,52 +24,47 @@ import (
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 )
 
 // FCROfferMgrImplV1 implements FCROfferMgr interface, it is an in-memory version.
 type FCROfferMgrImplV1 struct {
-	// tracking indicates whether to track count
-	tracking bool
 
 	// lock is the lock to offer storage
 	lock sync.RWMutex
 
-	// dMap is the digest offer map, map from digest string -> offer entry
-	dMap map[string]*offerStorageEntry
+	// cidTagMap is a map from cid string -> tag string
+	cidTagMap map[string]string
 
-	// cidMap is a map from cid string -> (map from digest string -> true)
-	cidMap map[string]map[string]bool
+	// cidCountMap is a map from cid -> count
+	cidCountMap map[string]int
 
-	// tagMap is a map from tag string -> (map from digest string -> true)
-	tagMap map[string]map[string]bool
+	// cidDigestMap is a map from cid string -> (map digest string -> true)
+	cidDigestMap map[string]map[string]bool
 
-	// countMap is a map from count -> (map from digest string -> true)
-	countMap map[int]map[string]bool
+	// tagDigestMap is a map from tag string -> (map digest string -> true)
+	tagDigestMap map[string]map[string]bool
 
-	// dsMap is the digest sub offer map, map from digest string -> sub offer
-	dsMap map[string]*cidoffer.SubCIDOffer
+	// digestOfferMap is a map from digest string -> offer
+	digestOfferMap map[string]*cidoffer.CIDOffer
 
-	// cidsMap is a map from cid string -> (map from digest string -> true)
-	cidsMap map[string]map[string]bool
-}
+	// digestOfferMapS is the digest sub offer map, map from digest string -> sub offer
+	digestOfferMapS map[string]*cidoffer.SubCIDOffer
 
-// offerStorageEntry is an entry storing cid offer
-type offerStorageEntry struct {
-	offer *cidoffer.CIDOffer
-	tag   string
-	count int
+	// cidDigestMapS is a map from cid string -> (map from digest string -> true)
+	cidDigestMapS map[string]map[string]bool
 }
 
 func NewFCROfferMgrImplV1(tracking bool) FCROfferMgr {
 	return &FCROfferMgrImplV1{
-		tracking: tracking,
-		lock:     sync.RWMutex{},
-		dMap:     make(map[string]*offerStorageEntry),
-		cidMap:   make(map[string]map[string]bool),
-		tagMap:   make(map[string]map[string]bool),
-		countMap: make(map[int]map[string]bool),
-		dsMap:    make(map[string]*cidoffer.SubCIDOffer),
-		cidsMap:  make(map[string]map[string]bool),
+		lock:            sync.RWMutex{},
+		cidTagMap:       make(map[string]string),
+		cidCountMap:     make(map[string]int),
+		cidDigestMap:    make(map[string]map[string]bool),
+		tagDigestMap:    make(map[string]map[string]bool),
+		digestOfferMap:  make(map[string]*cidoffer.CIDOffer),
+		digestOfferMapS: make(map[string]*cidoffer.SubCIDOffer),
+		cidDigestMapS:   make(map[string]map[string]bool),
 	}
 }
 
@@ -80,14 +75,40 @@ func (mgr *FCROfferMgrImplV1) Start() error {
 func (mgr *FCROfferMgrImplV1) Shutdown() {
 }
 
-func (mgr *FCROfferMgrImplV1) AddOffer(offer *cidoffer.CIDOffer) {
-	mgr.AddOfferWithTag(offer, "")
+func (mgr *FCROfferMgrImplV1) AddCIDTag(cid *cid.ContentID, tag string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	mgr.cidTagMap[cid.ToString()] = tag
 }
 
-func (mgr *FCROfferMgrImplV1) AddOfferWithTag(offer *cidoffer.CIDOffer, tag string) {
+func (mgr *FCROfferMgrImplV1) GetTagByCID(cid *cid.ContentID) string {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
+	return mgr.cidTagMap[cid.ToString()]
+}
+
+func (mgr *FCROfferMgrImplV1) IncrementCIDAccessCount(cid *cid.ContentID) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	_, ok := mgr.cidCountMap[cid.ToString()]
+	if !ok {
+		mgr.cidCountMap[cid.ToString()] = 1
+	} else {
+		mgr.cidCountMap[cid.ToString()]++
+	}
+}
+
+func (mgr *FCROfferMgrImplV1) GetAccessCountByCID(cid *cid.ContentID) int {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
+	return mgr.cidCountMap[cid.ToString()]
+}
+
+func (mgr *FCROfferMgrImplV1) AddOffer(offer *cidoffer.CIDOffer) {
+	// Need to update cid -> digest map, tag -> digest map and digest -> offer map
 	digest := offer.GetMessageDigest()
 	mgr.lock.RLock()
-	_, ok := mgr.dMap[digest]
+	_, ok := mgr.digestOfferMap[digest]
 	mgr.lock.RUnlock()
 	if ok {
 		// Offer existed
@@ -98,82 +119,63 @@ func (mgr *FCROfferMgrImplV1) AddOfferWithTag(offer *cidoffer.CIDOffer, tag stri
 	// Add a copy
 	copy := offer.Copy()
 	if copy == nil {
-		panic("Fail to get an offer copy")
+		logging.Error("Fail to obtain a copy of the offer when adding to storage.")
+		return
 	}
-	mgr.dMap[digest] = &offerStorageEntry{
-		offer: copy,
-		tag:   tag,
-		count: 0,
-	}
+	// Update digest -> offer map
+	mgr.digestOfferMap[digest] = copy
+
 	for _, cid := range copy.GetCIDs() {
-		_, ok = mgr.cidMap[cid.ToString()]
+		cidStr := cid.ToString()
+		// Update cid -> digest map
+		_, ok = mgr.cidDigestMap[cidStr]
 		if !ok {
-			mgr.cidMap[cid.ToString()] = make(map[string]bool)
+			mgr.cidDigestMap[cidStr] = make(map[string]bool)
 		}
-		mgr.cidMap[cid.ToString()][digest] = true
+		mgr.cidDigestMap[cidStr][digest] = true
+		// Update tag -> digest map
+		tag := mgr.cidTagMap[cidStr]
+		_, ok = mgr.tagDigestMap[tag]
+		if !ok {
+			mgr.tagDigestMap[tag] = make(map[string]bool)
+		}
+		mgr.tagDigestMap[tag][digest] = true
 	}
-	_, ok = mgr.tagMap[tag]
-	if !ok {
-		mgr.tagMap[tag] = make(map[string]bool)
-	}
-	mgr.tagMap[tag][digest] = true
-	_, ok = mgr.countMap[0]
-	if !ok {
-		mgr.countMap[0] = map[string]bool{}
-	}
-	mgr.countMap[0][digest] = true
 }
 
-func (mgr *FCROfferMgrImplV1) GetOffers(cID *cid.ContentID) []cidoffer.CIDOffer {
-	res := make([]cidoffer.CIDOffer, 0)
+func (mgr *FCROfferMgrImplV1) GetOffers(cid *cid.ContentID) []cidoffer.CIDOffer {
 	mgr.lock.RLock()
-	digests, ok := mgr.cidMap[cID.ToString()]
+	defer mgr.lock.RUnlock()
+	cidStr := cid.ToString()
+	res := make([]cidoffer.CIDOffer, 0)
+	digests, ok := mgr.cidDigestMap[cidStr]
 	if !ok {
-		mgr.lock.RUnlock()
 		return res
 	}
 	for digest := range digests {
-		copy := mgr.dMap[digest].offer.Copy()
+		copy := mgr.digestOfferMap[digest].Copy()
 		if copy == nil {
-			panic("Fail to get an offer copy")
+			logging.Error("Fail to obtain a copy of the offer when getting offers by cid.")
+			continue
 		}
 		res = append(res, *copy)
-		if mgr.tracking {
-			mgr.lock.RUnlock()
-			mgr.lock.Lock()
-			// Update count
-			prvCount := mgr.dMap[digest].count
-			mgr.dMap[digest].count++
-			delete(mgr.countMap[prvCount], digest)
-			if len(mgr.countMap[prvCount]) == 0 {
-				delete(mgr.countMap, prvCount)
-			}
-			newCount := prvCount + 1
-			_, ok = mgr.countMap[newCount]
-			if !ok {
-				mgr.countMap[newCount] = make(map[string]bool)
-			}
-			mgr.countMap[newCount][digest] = true
-			mgr.lock.Unlock()
-			mgr.lock.RLock()
-		}
 	}
-	mgr.lock.RUnlock()
 	return res
 }
 
 func (mgr *FCROfferMgrImplV1) GetOffersByTag(tag string) []cidoffer.CIDOffer {
-	res := make([]cidoffer.CIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-	digests, ok := mgr.tagMap[tag]
+	res := make([]cidoffer.CIDOffer, 0)
+	digests, ok := mgr.tagDigestMap[tag]
 	if !ok {
 		return res
 	}
 	for digest := range digests {
-		copy := mgr.dMap[digest].offer.Copy()
+		copy := mgr.digestOfferMap[digest].Copy()
 		if copy == nil {
-			panic("Fail to get an offer copy")
+			logging.Error("Fail to obtain a copy of the offer when getting offers by tag.")
+			continue
 		}
 		res = append(res, *copy)
 	}
@@ -184,12 +186,12 @@ func (mgr *FCROfferMgrImplV1) ListOffers(from uint, to uint) []cidoffer.CIDOffer
 	res := make([]cidoffer.CIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-	if from >= to || from >= uint(len(mgr.dMap)) {
+	if from >= to || from >= uint(len(mgr.digestOfferMap)) {
 		return res
 	}
-	keys := make([]string, len(mgr.dMap))
+	keys := make([]string, len(mgr.digestOfferMap))
 	i := 0
-	for key := range mgr.dMap {
+	for key := range mgr.digestOfferMap {
 		keys[i] = key
 		i++
 	}
@@ -199,9 +201,10 @@ func (mgr *FCROfferMgrImplV1) ListOffers(from uint, to uint) []cidoffer.CIDOffer
 	for _, key := range keys {
 		if index >= from {
 			if index < to {
-				copy := mgr.dMap[key].offer.Copy()
+				copy := mgr.digestOfferMap[key].Copy()
 				if copy == nil {
-					panic("Fail to get an offer copy")
+					logging.Error("Fail to obtain a copy of the offer when listing offers.")
+					continue
 				}
 				res = append(res, *copy)
 			} else {
@@ -213,107 +216,10 @@ func (mgr *FCROfferMgrImplV1) ListOffers(from uint, to uint) []cidoffer.CIDOffer
 	return res
 }
 
-func (mgr *FCROfferMgrImplV1) ListOffersWithTag(from uint, to uint) ([]cidoffer.CIDOffer, []string) {
-	res1 := make([]cidoffer.CIDOffer, 0)
-	res2 := make([]string, 0)
-	mgr.lock.RLock()
-	defer mgr.lock.RUnlock()
-	if from >= to || from >= uint(len(mgr.dMap)) {
-		return res1, res2
-	}
-	keys := make([]string, len(mgr.tagMap))
-	i := 0
-	for key := range mgr.tagMap {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-
-	index := uint(0)
-	for _, key := range keys {
-		// Sort digests
-		digests := make([]string, len(mgr.tagMap[key]))
-		i := 0
-		for digest := range mgr.tagMap[key] {
-			digests[i] = digest
-			i++
-		}
-		sort.Strings(digests)
-
-		for _, digest := range digests {
-			if index >= from {
-				if index < to {
-					copy := mgr.dMap[digest].offer.Copy()
-					if copy == nil {
-						panic("Fail to get an offer copy")
-					}
-					if key != mgr.dMap[digest].tag {
-						panic("Offer access count mismatch")
-					}
-					res1 = append(res1, *copy)
-					res2 = append(res2, key)
-				} else {
-					return res1, res2
-				}
-			}
-			index++
-		}
-	}
-	return res1, res2
-}
-
-func (mgr *FCROfferMgrImplV1) ListOffersWithAccessCount(from uint, to uint) ([]cidoffer.CIDOffer, []int) {
-	res1 := make([]cidoffer.CIDOffer, 0)
-	res2 := make([]int, 0)
-	mgr.lock.RLock()
-	defer mgr.lock.RUnlock()
-	if from >= to || from >= uint(len(mgr.dMap)) {
-		return res1, res2
-	}
-	keys := make([]int, len(mgr.countMap))
-	i := 0
-	for key := range mgr.countMap {
-		keys[i] = key
-		i++
-	}
-	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
-
-	index := uint(0)
-	for _, key := range keys {
-		// Sort digests
-		digests := make([]string, len(mgr.countMap[key]))
-		i := 0
-		for digest := range mgr.countMap[key] {
-			digests[i] = digest
-			i++
-		}
-		sort.Strings(digests)
-
-		for _, digest := range digests {
-			if index >= from {
-				if index < to {
-					copy := mgr.dMap[digest].offer.Copy()
-					if copy == nil {
-						panic("Fail to get an offer copy")
-					}
-					if key != mgr.dMap[digest].count {
-						panic("Offer access count mismatch")
-					}
-					res1 = append(res1, *copy)
-					res2 = append(res2, key)
-				} else {
-					return res1, res2
-				}
-			}
-			index++
-		}
-	}
-	return res1, res2
-}
-
 func (mgr *FCROfferMgrImplV1) RemoveOffer(digest string) {
+	// Need to update cid -> digest map, tag -> digest map and digest -> offer map
 	mgr.lock.RLock()
-	_, ok := mgr.dMap[digest]
+	_, ok := mgr.digestOfferMap[digest]
 	mgr.lock.RUnlock()
 	if !ok {
 		// Offer not existed
@@ -321,33 +227,29 @@ func (mgr *FCROfferMgrImplV1) RemoveOffer(digest string) {
 	}
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
-	cids := mgr.dMap[digest].offer.GetCIDs()
-	count := mgr.dMap[digest].count
-	tag := mgr.dMap[digest].tag
-	delete(mgr.dMap, digest)
-	// Update cid map
+	cids := mgr.digestOfferMap[digest].GetCIDs()
+	delete(mgr.digestOfferMap, digest)
+
 	for _, cid := range cids {
-		delete(mgr.cidMap[cid.ToString()], digest)
-		if len(mgr.cidMap[cid.ToString()]) == 0 {
-			delete(mgr.cidMap, cid.ToString())
+		cidStr := cid.ToString()
+		// Update cid map
+		delete(mgr.cidDigestMap[cidStr], digest)
+		if len(mgr.cidDigestMap[cidStr]) == 0 {
+			delete(mgr.cidDigestMap, cidStr)
 		}
-	}
-	// Update count map
-	delete(mgr.countMap[count], digest)
-	if len(mgr.countMap[count]) == 0 {
-		delete(mgr.countMap, count)
-	}
-	// Update tag map
-	delete(mgr.tagMap[tag], digest)
-	if len(mgr.tagMap[tag]) == 0 {
-		delete(mgr.tagMap, tag)
+		// Update tag map
+		tag := mgr.cidTagMap[cidStr]
+		delete(mgr.tagDigestMap, digest)
+		if len(mgr.tagDigestMap[tag]) == 0 {
+			delete(mgr.tagDigestMap, tag)
+		}
 	}
 }
 
 func (mgr *FCROfferMgrImplV1) AddSubOffer(offer *cidoffer.SubCIDOffer) {
 	digest := offer.GetMessageDigest()
 	mgr.lock.RLock()
-	_, ok := mgr.dsMap[digest]
+	_, ok := mgr.digestOfferMapS[digest]
 	mgr.lock.RUnlock()
 	if ok {
 		// Offer existed
@@ -358,29 +260,32 @@ func (mgr *FCROfferMgrImplV1) AddSubOffer(offer *cidoffer.SubCIDOffer) {
 	// Add a copy
 	copy := offer.Copy()
 	if copy == nil {
-		panic("Fail to get an offer copy")
+		logging.Error("Fail to obtain a copy of the sub offer when adding to storage.")
+		return
 	}
-	mgr.dsMap[digest] = copy
-	subCID := offer.GetSubCID().ToString()
-	_, ok = mgr.cidsMap[subCID]
+	mgr.digestOfferMapS[digest] = copy
+
+	subCIDStr := offer.GetSubCID().ToString()
+	_, ok = mgr.cidDigestMapS[subCIDStr]
 	if !ok {
-		mgr.cidsMap[subCID] = map[string]bool{}
+		mgr.cidDigestMapS[subCIDStr] = map[string]bool{}
 	}
-	mgr.cidsMap[subCID][digest] = true
+	mgr.cidDigestMapS[subCIDStr][digest] = true
 }
 
 func (mgr *FCROfferMgrImplV1) GetSubOffers(cID *cid.ContentID) []cidoffer.SubCIDOffer {
 	res := make([]cidoffer.SubCIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-	digests, ok := mgr.cidsMap[cID.ToString()]
+	digests, ok := mgr.cidDigestMapS[cID.ToString()]
 	if !ok {
 		return res
 	}
 	for digest := range digests {
-		copy := mgr.dsMap[digest].Copy()
+		copy := mgr.digestOfferMapS[digest].Copy()
 		if copy == nil {
-			panic("Fail to get an offer copy")
+			logging.Error("Fail to obtain a copy of the offer when getting sub offers by cid.")
+			continue
 		}
 		res = append(res, *copy)
 	}
@@ -391,12 +296,12 @@ func (mgr *FCROfferMgrImplV1) ListSubOffers(from uint, to uint) []cidoffer.SubCI
 	res := make([]cidoffer.SubCIDOffer, 0)
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
-	if from >= to || from >= uint(len(mgr.dsMap)) {
+	if from >= to || from >= uint(len(mgr.digestOfferMapS)) {
 		return res
 	}
-	keys := make([]string, len(mgr.dsMap))
+	keys := make([]string, len(mgr.digestOfferMapS))
 	i := 0
-	for key := range mgr.dsMap {
+	for key := range mgr.digestOfferMapS {
 		keys[i] = key
 		i++
 	}
@@ -406,9 +311,10 @@ func (mgr *FCROfferMgrImplV1) ListSubOffers(from uint, to uint) []cidoffer.SubCI
 	for _, key := range keys {
 		if index >= from {
 			if index < to {
-				copy := mgr.dsMap[key].Copy()
+				copy := mgr.digestOfferMapS[key].Copy()
 				if copy == nil {
-					panic("Fail to get an offer copy")
+					logging.Error("Fail to obtain a copy of the offer when listing sub offers.")
+					continue
 				}
 				res = append(res, *copy)
 			} else {
@@ -422,7 +328,7 @@ func (mgr *FCROfferMgrImplV1) ListSubOffers(from uint, to uint) []cidoffer.SubCI
 
 func (mgr *FCROfferMgrImplV1) RemoveSubOffer(digest string) {
 	mgr.lock.RLock()
-	_, ok := mgr.dsMap[digest]
+	_, ok := mgr.digestOfferMapS[digest]
 	mgr.lock.RUnlock()
 	if !ok {
 		// Offer not existed
@@ -430,11 +336,12 @@ func (mgr *FCROfferMgrImplV1) RemoveSubOffer(digest string) {
 	}
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
-	cid := mgr.dsMap[digest].GetSubCID()
-	delete(mgr.dsMap, digest)
+	subCIDStr := mgr.digestOfferMapS[digest].GetSubCID().ToString()
+	delete(mgr.digestOfferMapS, digest)
+
 	// Update cid map
-	delete(mgr.cidsMap[cid.ToString()], digest)
-	if len(mgr.cidsMap[cid.ToString()]) == 0 {
-		delete(mgr.cidsMap, cid.ToString())
+	delete(mgr.cidDigestMapS[subCIDStr], digest)
+	if len(mgr.cidDigestMapS[subCIDStr]) == 0 {
+		delete(mgr.cidDigestMapS, subCIDStr)
 	}
 }

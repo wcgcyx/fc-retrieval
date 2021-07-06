@@ -115,6 +115,12 @@ func TestPayAndReceive(t *testing.T) {
 	assert.Empty(t, err)
 	defer mgr2.Shutdown()
 
+	_, _, _, err = mgr1.Pay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0, big.NewInt(-50000000))
+	assert.NotEmpty(t, err)
+
+	mgr1.RevertPay("f2wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0)
+	mgr1.RevertPay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0)
+
 	_, create, _, err := mgr1.Pay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0, big.NewInt(50000000))
 	assert.Empty(t, err)
 	assert.True(t, create)
@@ -128,15 +134,24 @@ func TestPayAndReceive(t *testing.T) {
 	err = mgr1.Create("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", big.NewInt(100000000))
 	assert.NotEmpty(t, err)
 
+	_, _, _, err = mgr1.Pay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0, big.NewInt(50000000))
+	assert.Empty(t, err)
+	mgr1.RevertPay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 1)
+	mgr1.RevertPay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0)
 	voucher, _, _, err := mgr1.Pay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0, big.NewInt(50000000))
+	assert.Empty(t, err)
 
 	received, lane, err := mgr2.Receive("f1qsbhbdqnbzjxqmz3fchnodr5vfae2twuwstoxuy", voucher)
 	assert.Empty(t, err)
 	assert.Equal(t, uint64(0), lane)
 	assert.Equal(t, "50000000", received.String())
 
+	_, _, _, err = mgr1.Pay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0, big.NewInt(10000000))
+	assert.Empty(t, err)
+	mgr1.RevertPay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0)
 	voucher, _, _, err = mgr1.Pay("f1wcl5t2jld4iqtthqmj4ef4xvx7jy64eqvyvkchi", 0, big.NewInt(10000000))
 	assert.Empty(t, err)
+
 	received, lane, err = mgr2.Receive("f1qsbhbdqnbzjxqmz3fchnodr5vfae2twuwstoxuy", voucher)
 	assert.Empty(t, err)
 	assert.Equal(t, uint64(0), lane)

@@ -137,9 +137,9 @@ func (mgr *FCRPeerMgrImplV1) Sync() {
 	}
 }
 
-func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) {
+func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) *Peer {
 	if !mgr.start {
-		return
+		return nil
 	}
 	gwReg, err := mgr.registerMgr.GetRegisteredGatewayByID(gwID)
 	mgr.discoveredGWSLock.Lock()
@@ -151,7 +151,7 @@ func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) {
 		if mgr.gatewayDiscv {
 			mgr.closestGatewaysIDs.Remove(gwID)
 		}
-		return
+		return nil
 	}
 	// Check if there is an existing entry
 	gwPeer, ok := mgr.discoveredGWS[gwID]
@@ -170,18 +170,28 @@ func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) {
 	gwPeer.NetworkAddr = gwReg.NetworkAddr
 	gwPeer.Deregistering = gwReg.Deregistering
 	gwPeer.DeregisteringHeight = gwReg.DeregisteringHeight
+	return &Peer{
+		RootKey:             gwPeer.RootKey,
+		NodeID:              gwPeer.NodeID,
+		MsgSigningKey:       gwPeer.MsgSigningKey,
+		MsgSigningKeyVer:    gwPeer.MsgSigningKeyVer,
+		RegionCode:          gwPeer.RegionCode,
+		NetworkAddr:         gwPeer.NetworkAddr,
+		Deregistering:       gwPeer.Deregistering,
+		DeregisteringHeight: gwPeer.DeregisteringHeight,
+	}
 }
 
-func (mgr *FCRPeerMgrImplV1) SyncPVD(pvdID string) {
+func (mgr *FCRPeerMgrImplV1) SyncPVD(pvdID string) *Peer {
 	if !mgr.start {
-		return
+		return nil
 	}
 	pvdReg, err := mgr.registerMgr.GetRegisteredProviderByID(pvdID)
 	mgr.discoveredPVDSLock.Lock()
 	defer mgr.discoveredPVDSLock.Unlock()
 	if err != nil {
 		delete(mgr.discoveredPVDS, pvdID)
-		return
+		return nil
 	}
 	// Check if there is an existing entry
 	pvdPeer, ok := mgr.discoveredPVDS[pvdID]
@@ -200,18 +210,30 @@ func (mgr *FCRPeerMgrImplV1) SyncPVD(pvdID string) {
 	pvdPeer.NetworkAddr = pvdReg.NetworkAddr
 	pvdPeer.Deregistering = pvdReg.Deregistering
 	pvdPeer.DeregisteringHeight = pvdReg.DeregisteringHeight
+	// Return copy
+	return &Peer{
+		RootKey:             pvdPeer.RootKey,
+		NodeID:              pvdPeer.NodeID,
+		MsgSigningKey:       pvdPeer.MsgSigningKey,
+		MsgSigningKeyVer:    pvdPeer.MsgSigningKeyVer,
+		OfferSigningKey:     pvdPeer.OfferSigningKey,
+		RegionCode:          pvdPeer.RegionCode,
+		NetworkAddr:         pvdPeer.NetworkAddr,
+		Deregistering:       pvdPeer.Deregistering,
+		DeregisteringHeight: pvdPeer.DeregisteringHeight,
+	}
 }
 
-func (mgr *FCRPeerMgrImplV1) GetGWInfo(gwID string) (*Peer, error) {
+func (mgr *FCRPeerMgrImplV1) GetGWInfo(gwID string) *Peer {
 	if !mgr.start {
-		return nil, errors.New("FCRPeerManager has not been started")
+		return nil
 	}
 	// Return a copy
 	mgr.discoveredGWSLock.RLock()
 	defer mgr.discoveredGWSLock.RUnlock()
 	peer, ok := mgr.discoveredGWS[gwID]
 	if !ok {
-		return nil, errors.New("Gateway not found locally")
+		return nil
 	}
 	return &Peer{
 		RootKey:             peer.RootKey,
@@ -222,19 +244,19 @@ func (mgr *FCRPeerMgrImplV1) GetGWInfo(gwID string) (*Peer, error) {
 		NetworkAddr:         peer.NetworkAddr,
 		Deregistering:       peer.Deregistering,
 		DeregisteringHeight: peer.DeregisteringHeight,
-	}, nil
+	}
 }
 
-func (mgr *FCRPeerMgrImplV1) GetPVDInfo(pvdID string) (*Peer, error) {
+func (mgr *FCRPeerMgrImplV1) GetPVDInfo(pvdID string) *Peer {
 	if !mgr.start {
-		return nil, errors.New("FCRPeerManager has not been started")
+		return nil
 	}
 	// Return a copy
 	mgr.discoveredPVDSLock.RLock()
 	defer mgr.discoveredPVDSLock.RUnlock()
 	peer, ok := mgr.discoveredPVDS[pvdID]
 	if !ok {
-		return nil, errors.New("Provider not found locally")
+		return nil
 	}
 	return &Peer{
 		RootKey:             peer.RootKey,
@@ -246,23 +268,23 @@ func (mgr *FCRPeerMgrImplV1) GetPVDInfo(pvdID string) (*Peer, error) {
 		NetworkAddr:         peer.NetworkAddr,
 		Deregistering:       peer.Deregistering,
 		DeregisteringHeight: peer.DeregisteringHeight,
-	}, nil
+	}
 }
 
-func (mgr *FCRPeerMgrImplV1) GetGWSNearCIDHash(hash string, except string) ([]Peer, error) {
+func (mgr *FCRPeerMgrImplV1) GetGWSNearCIDHash(hash string, numDHT int, except string) []Peer {
+	res := make([]Peer, 0)
 	if !mgr.start {
-		return nil, errors.New("FCRPeerManager has not been started")
+		return res
 	}
 	if !mgr.gatewayDiscv {
-		return nil, errors.New("FCRPeerManager does not sync gateways")
+		return res
 	}
 	mgr.discoveredGWSLock.RLock()
 	defer mgr.discoveredGWSLock.RUnlock()
 	mgr.closestGatewaysIDsLock.RLock()
 	defer mgr.closestGatewaysIDsLock.RUnlock()
-	ids := mgr.closestGatewaysIDs.GetClosest(hash, 16, except)
+	ids := mgr.closestGatewaysIDs.GetClosest(hash, numDHT, except)
 	// return copies
-	res := make([]Peer, 0)
 	for _, id := range ids {
 		peer := mgr.discoveredGWS[id]
 		res = append(res, Peer{
@@ -276,17 +298,17 @@ func (mgr *FCRPeerMgrImplV1) GetGWSNearCIDHash(hash string, except string) ([]Pe
 			DeregisteringHeight: peer.DeregisteringHeight,
 		})
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRPeerMgrImplV1) ListGWS() ([]Peer, error) {
+func (mgr *FCRPeerMgrImplV1) ListGWS() []Peer {
+	res := make([]Peer, 0)
 	if !mgr.start {
-		return nil, errors.New("FCRPeerManager has not been started")
+		return res
 	}
 	mgr.discoveredGWSLock.RLock()
 	defer mgr.discoveredGWSLock.RUnlock()
 	// return copies
-	res := make([]Peer, 0)
 	for _, peer := range mgr.discoveredGWS {
 		res = append(res, Peer{
 			RootKey:             peer.RootKey,
@@ -299,19 +321,13 @@ func (mgr *FCRPeerMgrImplV1) ListGWS() ([]Peer, error) {
 			DeregisteringHeight: peer.DeregisteringHeight,
 		})
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRPeerMgrImplV1) GetCurrentCIDHashRange() (string, string, error) {
-	if !mgr.start {
-		return "", "", errors.New("FCRPeerManager has not been started")
-	}
-	if !mgr.gatewayDiscv || !mgr.trackCIDRange {
-		return "", "", errors.New("FCRPeerManager does not sync gateways/does not track range")
-	}
+func (mgr *FCRPeerMgrImplV1) GetCurrentCIDHashRange() (string, string) {
 	mgr.rangeLock.RLock()
 	defer mgr.rangeLock.RUnlock()
-	return mgr.hashMin, mgr.hashMax, nil
+	return mgr.hashMin, mgr.hashMax
 }
 
 func (mgr *FCRPeerMgrImplV1) gwSyncRoutine() {

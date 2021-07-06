@@ -30,25 +30,25 @@ type FCRPeerMgr interface {
 	Sync()
 
 	// SyncGW forces the manager to do a quick sync to the register for a specific gateway.
-	SyncGW(gwID string)
+	SyncGW(gwID string) *Peer
 
 	// SyncPVD forces the manager to do a quick sync to the register for a specific provider.
-	SyncPVD(pvdID string)
+	SyncPVD(pvdID string) *Peer
 
 	// GetGWInfo gets the data of a gateway, it queries the local storage, rather than the remote register.
-	GetGWInfo(gwID string) (*Peer, error)
+	GetGWInfo(gwID string) *Peer
 
 	// GetPVDInfo gets the data of a provider, it queries the local storage rather than the remote register.
-	GetPVDInfo(pvdID string) (*Peer, error)
+	GetPVDInfo(pvdID string) *Peer
 
 	// ListGWS lists all the gateways
-	ListGWS() ([]Peer, error)
+	ListGWS() []Peer
 
 	// GetGWSNearCID gets 16 gateways that are near given CID. Called only by gateways.
-	GetGWSNearCIDHash(hash string, except string) ([]Peer, error)
+	GetGWSNearCIDHash(hash string, numDHT int, except string) []Peer
 
 	// GetCurrentCIDHashRange gets the cid min hash and cid max hash that a gateway should store based on current network. Called only by gateways.
-	GetCurrentCIDHashRange() (string, string, error)
+	GetCurrentCIDHashRange() (string, string)
 }
 
 // Peer represents a peer in the system.
