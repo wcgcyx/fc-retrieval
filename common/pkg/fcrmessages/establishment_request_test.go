@@ -26,24 +26,27 @@ import (
 )
 
 func TestEstablishment(t *testing.T) {
+	mockNonce := uint64(100)
 	mockChallenge := "test challenge"
 
-	msg, err := EncodeEstablishmentRequest(mockChallenge)
+	msg, err := EncodeEstablishmentRequest(mockNonce, mockChallenge)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(EstablishmentType), msg.messageType)
+	assert.Equal(t, EstablishmentRequestType, msg.messageType)
+	assert.Equal(t, uint64(100), msg.nonce)
 	assert.Equal(t, "7b226368616c6c656e6765223a2274657374206368616c6c656e6765227d", hex.EncodeToString(msg.messageBody))
 	assert.Equal(t, "", msg.signature)
 
-	resChallenge, err := DecodeEstablishmentRequest(msg)
+	resNonce, resChallenge, err := DecodeEstablishmentRequest(msg)
 	assert.Empty(t, err)
+	assert.Equal(t, mockNonce, resNonce)
 	assert.Equal(t, mockChallenge, resChallenge)
 
 	msg.messageType = 100
-	_, err = DecodeEstablishmentRequest(msg)
+	_, _, err = DecodeEstablishmentRequest(msg)
 	assert.NotEmpty(t, err)
-	msg.messageType = 11
+	msg.messageType = EstablishmentRequestType
 
 	msg.messageBody = []byte{100, 100, 100}
-	_, err = DecodeEstablishmentRequest(msg)
+	_, _, err = DecodeEstablishmentRequest(msg)
 	assert.NotEmpty(t, err)
 }

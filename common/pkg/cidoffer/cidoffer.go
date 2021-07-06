@@ -141,7 +141,7 @@ func (c *CIDOffer) HasExpired() bool {
 }
 
 // Sign is used to sign the offer with a given private key.
-func (c *CIDOffer) Sign(prvKey string) error {
+func (c *CIDOffer) Sign(privKey string) error {
 	// Get msg bytes array
 	data, err := json.Marshal(cidOfferSigning{
 		providerID: c.providerID,
@@ -154,7 +154,7 @@ func (c *CIDOffer) Sign(prvKey string) error {
 		return err
 	}
 	// Sign
-	sig, err := fcrcrypto.Sign(prvKey, 0, data)
+	sig, err := fcrcrypto.Sign(privKey, 0, data)
 	if err != nil {
 		return err
 	}

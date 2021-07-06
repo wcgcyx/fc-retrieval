@@ -25,41 +25,44 @@ import (
 )
 
 const (
-	PrvKey = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
-	PubKey = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
-	ID     = "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe"
+	PrivKey = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
+	PubKey  = "04a66c41de8ad19f109fc4fc504d21ac376ddb32b8f3fcf60354a7a29e97bcb3d96146f992a60e53a511ec44a3bbbf719d524d863233452a7e9238efb271efe62d"
+	ID      = "59e548312e1cc4eeb25dc145ea458996441ad2898b5bf42487174456b80415fe"
 )
 
-func TestGetter(t *testing.T) {
-	msg := CreateFCRMessage(1, []byte{1, 2, 3, 4})
+func TestReqGetter(t *testing.T) {
+	msg := CreateFCRReqMsg(1, 100, []byte{1, 2, 3, 4})
 	msg.signature = "testsignature"
-	assert.Equal(t, byte(1), msg.GetMessageType())
-	assert.Equal(t, []byte{1, 2, 3, 4}, msg.GetMessageBody())
-	assert.Equal(t, "testsignature", msg.GetSignature())
+	assert.Equal(t, byte(1), msg.Type())
+	assert.Equal(t, uint64(100), msg.Nonce())
+	assert.Equal(t, []byte{1, 2, 3, 4}, msg.Body())
+	assert.Equal(t, "testsignature", msg.Signature())
 }
 
-func TestParse(t *testing.T) {
-	msg := CreateFCRMessage(1, []byte{1, 2, 3, 4})
+func TestReqParse(t *testing.T) {
+	msg := CreateFCRReqMsg(1, 100, []byte{1, 2, 3, 4})
 	msg.signature = "testsignature"
 	data, err := msg.ToBytes()
 	assert.Empty(t, err)
-	msg2, err := FromBytes(data)
+	msg2 := FCRReqMsg{}
+	err = msg2.FromBytes(data)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(1), msg2.GetMessageType())
-	assert.Equal(t, []byte{1, 2, 3, 4}, msg2.GetMessageBody())
-	assert.Equal(t, "testsignature", msg2.GetSignature())
+	assert.Equal(t, byte(1), msg2.Type())
+	assert.Equal(t, uint64(100), msg2.Nonce())
+	assert.Equal(t, []byte{1, 2, 3, 4}, msg2.Body())
+	assert.Equal(t, "testsignature", msg2.Signature())
 
-	_, err = FromBytes([]byte{111, 111, 111})
+	err = msg2.FromBytes([]byte{111, 111, 111})
 	assert.NotEmpty(t, err)
 }
 
-func TestSigning(t *testing.T) {
-	msg := CreateFCRMessage(1, []byte{1, 2, 3, 4})
+func TestReqSigning(t *testing.T) {
+	msg := CreateFCRReqMsg(1, 100, []byte{1, 2, 3, 4})
 	err := msg.Sign("wrongkey", 0)
 	assert.NotEmpty(t, err)
-	err = msg.Sign(PrvKey, 0)
+	err = msg.Sign(PrivKey, 0)
 	assert.Empty(t, err)
-	assert.Equal(t, "0090213197d56bb206bb9dfdc415561ae98f901515249e558768cd2ae73070e5304617ebc56b78f35413b9c8890a558cab884152694144e9ae6c28748d628416c800", msg.GetSignature())
+	assert.Equal(t, "00c224806c95a99cd31bce68f0d502c5abc23da173debea0cef3f61d25a6d0649b2dd1940131468b971992be78d51907cb9454cb05b23b42f5fc861255c12b24fb00", msg.Signature())
 
 	err = msg.Verify("wrongkey", 0)
 	assert.NotEmpty(t, err)

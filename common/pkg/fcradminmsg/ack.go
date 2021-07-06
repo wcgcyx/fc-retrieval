@@ -30,11 +30,12 @@ type ackJson struct {
 func EncodeACK(
 	ack bool,
 	data string,
-) ([]byte, error) {
-	return json.Marshal(&ackJson{
+) []byte {
+	res, _ := json.Marshal(&ackJson{
 		ACK:  ack,
 		Data: data,
 	})
+	return res
 }
 
 // DecodeACK is used to get the fields from byte array of ackJson

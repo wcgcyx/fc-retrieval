@@ -30,7 +30,6 @@ type standardOfferDiscoveryRequestJson struct {
 	Client            bool   `json:"client"`
 	NodeID            string `json:"node_id"`
 	PieceCID          string `json:"piece_cid"`
-	Nonce             int64  `json:"nonce"`
 	MaxOfferRequested int64  `json:"max_offer_requested"`
 	AccountAddr       string `json:"account_addr"`
 	Voucher           string `json:"voucher"`
@@ -38,19 +37,18 @@ type standardOfferDiscoveryRequestJson struct {
 
 // EncodeStandardOfferDiscoveryRequest is used to get the FCRMessage of standardOfferDiscoveryRequestJson.
 func EncodeStandardOfferDiscoveryRequest(
+	nonce uint64,
 	client bool,
 	NodeID string,
 	pieceCID *cid.ContentID,
-	nonce int64,
 	maxOfferRequested int64,
 	accountAddr string,
 	voucher string,
-) (*FCRMessage, error) {
+) (*FCRReqMsg, error) {
 	body, err := json.Marshal(standardOfferDiscoveryRequestJson{
 		Client:            client,
 		NodeID:            NodeID,
 		PieceCID:          pieceCID.ToString(),
-		Nonce:             nonce,
 		MaxOfferRequested: maxOfferRequested,
 		AccountAddr:       accountAddr,
 		Voucher:           voucher,
@@ -58,32 +56,32 @@ func EncodeStandardOfferDiscoveryRequest(
 	if err != nil {
 		return nil, err
 	}
-	return CreateFCRMessage(StandardOfferDiscoveryRequestType, body), nil
+	return CreateFCRReqMsg(StandardOfferDiscoveryRequestType, nonce, body), nil
 }
 
 // DecodeStandardOfferDiscoveryRequest is used to get the fields from FCRMessage of standardOfferDiscoveryRequestJson.
-// It returns the nodeID, pieceCID, nonce, maxOfferRequested, account address and voucher.
-func DecodeStandardOfferDiscoveryRequest(fcrMsg *FCRMessage) (
+// It returns the nonce, nodeID, pieceCID, maxOfferRequested, account address and voucher.
+func DecodeStandardOfferDiscoveryRequest(fcrMsg *FCRReqMsg) (
+	uint64,
 	bool,
 	string,
 	*cid.ContentID,
-	int64,
 	int64,
 	string,
 	string,
 	error,
 ) {
-	if fcrMsg.GetMessageType() != StandardOfferDiscoveryRequestType {
-		return false, "", nil, 0, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryRequestType, fcrMsg.GetMessageType())
+	if fcrMsg.Type() != StandardOfferDiscoveryRequestType {
+		return 0, false, "", nil, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryRequestType, fcrMsg.Type())
 	}
 	msg := standardOfferDiscoveryRequestJson{}
-	err := json.Unmarshal(fcrMsg.GetMessageBody(), &msg)
+	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return false, "", nil, 0, 0, "", "", err
+		return 0, false, "", nil, 0, "", "", err
 	}
 	pieceCID, err := cid.NewContentID(msg.PieceCID)
 	if err != nil {
-		return false, "", nil, 0, 0, "", "", err
+		return 0, false, "", nil, 0, "", "", err
 	}
-	return msg.Client, msg.NodeID, pieceCID, msg.Nonce, msg.MaxOfferRequested, msg.AccountAddr, msg.Voucher, nil
+	return fcrMsg.Nonce(), msg.Client, msg.NodeID, pieceCID, msg.MaxOfferRequested, msg.AccountAddr, msg.Voucher, nil
 }

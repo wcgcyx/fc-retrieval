@@ -19,15 +19,10 @@ package fcrmessages
  */
 
 const (
-	StandardOfferDiscoveryRequestType  = 0
-	StandardOfferDiscoveryResponseType = 1
-	DHTOfferDiscoveryRequestType       = 2
-	DHTOfferDiscoveryResponseType      = 3
-	OfferPublishRequestType            = 4
-	DataRetrievalRequestType           = 5 // Placeholder, TBD
-	DataRetrievalResponseType          = 6 // Placeholder, TBD
-	PaymentProxyRequestType            = 8 // Placeholder, TBD
-	PaymentProxyResponseType           = 9 // Placeholder, TBD
-	ACKType                            = 10
-	EstablishmentType                  = 11
+	StandardOfferDiscoveryRequestType = byte(0)
+	DHTOfferDiscoveryRequestType      = byte(1)
+	OfferPublishRequestType           = byte(2)
+	DataRetrievalRequestType          = byte(3) // Placeholder, TBD
+	PaymentProxyRequestType           = byte(4) // Placeholder, TBD
+	EstablishmentRequestType          = byte(5)
 )

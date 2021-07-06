@@ -30,8 +30,8 @@ import (
 
 // FCRPaymentMgrImplV1 implements FCRPaymentMgr, it is an in-memory version.
 type FCRPaymentMgrImplV1 struct {
-	prvKey string
-	addr   string
+	privKey string
+	addr    string
 
 	lotusMgr fcrlotusmgr.FCRLotusMgr
 
@@ -63,9 +63,9 @@ type laneState struct {
 	vouchers []string
 }
 
-func NewFCRPaymentMgrImplV1(prvKey string, lotusMgr fcrlotusmgr.FCRLotusMgr) FCRPaymentMgr {
+func NewFCRPaymentMgrImplV1(privKey string, lotusMgr fcrlotusmgr.FCRLotusMgr) FCRPaymentMgr {
 	return &FCRPaymentMgrImplV1{
-		prvKey:          prvKey,
+		privKey:         privKey,
 		lotusMgr:        lotusMgr,
 		outboundChs:     make(map[string]*channelState),
 		outboundChsLock: sync.RWMutex{},
@@ -75,7 +75,7 @@ func NewFCRPaymentMgrImplV1(prvKey string, lotusMgr fcrlotusmgr.FCRLotusMgr) FCR
 }
 
 func (mgr *FCRPaymentMgrImplV1) Start() error {
-	pubKey, _, err := fcrcrypto.GetPublicKey(mgr.prvKey)
+	pubKey, _, err := fcrcrypto.GetPublicKey(mgr.privKey)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (mgr *FCRPaymentMgrImplV1) Create(recipientAddr string, amt *big.Int) error
 	if ok {
 		return errors.New("There is an existing channel for given recipient")
 	}
-	chAddr, err := mgr.lotusMgr.CreatePaymentChannel(mgr.prvKey, recipientAddr, amt)
+	chAddr, err := mgr.lotusMgr.CreatePaymentChannel(mgr.privKey, recipientAddr, amt)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (mgr *FCRPaymentMgrImplV1) Topup(recipientAddr string, amt *big.Int) error 
 	}
 	cs.lock.Lock()
 	defer cs.lock.Unlock()
-	err := mgr.lotusMgr.TopupPaymentChannel(mgr.prvKey, cs.addr, amt)
+	err := mgr.lotusMgr.TopupPaymentChannel(mgr.privKey, cs.addr, amt)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (mgr *FCRPaymentMgrImplV1) Pay(recipientAddr string, lane uint64, amt *big.
 	}
 	// Create a voucher
 	lNewRedeemed := big.NewInt(0).Add(&ls.redeemed, amt)
-	voucher, err := fcrlotusmgr.GenerateVoucher(mgr.prvKey, cs.addr, lane, ls.nonce, lNewRedeemed)
+	voucher, err := fcrlotusmgr.GenerateVoucher(mgr.privKey, cs.addr, lane, ls.nonce, lNewRedeemed)
 	if err != nil {
 		return "", false, false, err
 	}
@@ -397,7 +397,7 @@ func (mgr *FCRPaymentMgrImplV1) Refund(senderAddr string, lane uint64, amt *big.
 		return "", errors.New("Refund too much")
 	}
 	// Create a voucher
-	voucher, err := fcrlotusmgr.GenerateVoucher(mgr.prvKey, cs.addr, lane, ls.nonce, lNewRedeemed)
+	voucher, err := fcrlotusmgr.GenerateVoucher(mgr.privKey, cs.addr, lane, ls.nonce, lNewRedeemed)
 	if err != nil {
 		return "", err
 	}

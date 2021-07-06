@@ -26,33 +26,34 @@ import (
 )
 
 func TestDHTOfferDiscoveryResponse(t *testing.T) {
-	mockContacted := make(map[string]*FCRMessage)
-	mockContacted["01"] = CreateFCRMessage(1, []byte{1, 2, 3})
-	mockContacted["02"] = CreateFCRMessage(1, []byte{2, 3, 4})
-	mockNonce := int64(42)
+	mockNonce := uint64(100)
+	mockContacted := make(map[string]*FCRACKMsg)
+	mockContacted["01"] = CreateFCRACKMsg(1, []byte{1, 2, 3})
+	mockContacted["02"] = CreateFCRACKMsg(1, []byte{2, 3, 4})
 	mockVoucher := "mockVoucher"
 
-	msg, err := EncodeDHTOfferDiscoveryResponse(mockContacted, mockNonce, mockVoucher)
+	msg, err := EncodeDHTOfferDiscoveryResponse(mockNonce, mockContacted, mockVoucher)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(DHTOfferDiscoveryResponseType), msg.messageType)
-	assert.Equal(t, "7b22636f6e746163746564223a5b223031222c223032225d2c22726573706f6e736573223a5b2237623232366436353733373336313637363535663734373937303635323233613232333033313232326332323664363537333733363136373635356636323666363437393232336132323330333133303332333033333232326332323664363537333733363136373635356637333639363736653631373437353732363532323361323232323764222c2237623232366436353733373336313637363535663734373937303635323233613232333033313232326332323664363537333733363136373635356636323666363437393232336132323330333233303333333033343232326332323664363537333733363136373635356637333639363736653631373437353732363532323361323232323764225d2c226e6f6e6365223a34322c22726566756e645f766f7563686572223a226d6f636b566f7563686572227d", hex.EncodeToString(msg.messageBody))
+	assert.Equal(t, true, msg.ack)
+	assert.Equal(t, uint64(100), mockNonce)
+	assert.Equal(t, "7b22636f6e746163746564223a5b223031222c223032225d2c22726573706f6e736573223a5b223762323236313633366232323361373437323735363532633232373536393665373433363334323233613331326332323664363537333733363136373635356636323666363437393232336132323330333133303332333033333232326332323664363537333733363136373635356637333639363736653631373437353732363532323361323232323764222c223762323236313633366232323361373437323735363532633232373536393665373433363334323233613331326332323664363537333733363136373635356636323666363437393232336132323330333233303333333033343232326332323664363537333733363136373635356637333639363736653631373437353732363532323361323232323764225d2c22726566756e645f766f7563686572223a226d6f636b566f7563686572227d", hex.EncodeToString(msg.messageBody))
 	assert.Equal(t, "", msg.signature)
 
-	resContacted, resNonce, resVoucher, err := DecodeDHTOfferDiscoveryResponse(msg)
+	resNonce, resContacted, resVoucher, err := DecodeDHTOfferDiscoveryResponse(msg)
 	assert.Empty(t, err)
 	assert.Equal(t, 2, len(resContacted))
 	for key, val := range resContacted {
-		assert.Equal(t, mockContacted[key].messageType, val.messageType)
-		assert.Equal(t, mockContacted[key].messageBody, val.messageBody)
-		assert.Equal(t, mockContacted[key].signature, val.signature)
+		assert.Equal(t, mockContacted[key].ACK(), val.ACK())
+		assert.Equal(t, mockContacted[key].Body(), val.Body())
+		assert.Equal(t, mockContacted[key].Signature(), val.Signature())
 	}
 	assert.Equal(t, mockNonce, resNonce)
 	assert.Equal(t, mockVoucher, resVoucher)
 
-	msg.messageType = 100
+	msg.ack = false
 	_, _, _, err = DecodeDHTOfferDiscoveryResponse(msg)
 	assert.NotEmpty(t, err)
-	msg.messageType = 3
+	msg.ack = true
 
 	msg.messageBody = []byte{100, 100, 100}
 	_, _, _, err = DecodeDHTOfferDiscoveryResponse(msg)

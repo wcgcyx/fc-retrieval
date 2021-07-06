@@ -29,8 +29,7 @@ func TestACK(t *testing.T) {
 	mockACK := true
 	mockData := "testdata"
 
-	data, err := EncodeACK(mockACK, mockData)
-	assert.Empty(t, err)
+	data := EncodeACK(mockACK, mockData)
 	assert.Equal(t, "7b2261636b223a747275652c2264617461223a227465737464617461227d", hex.EncodeToString(data))
 
 	resACK, resData, err := DecodeACK(data)

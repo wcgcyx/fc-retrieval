@@ -31,25 +31,25 @@ import (
 // GenerateRetrievalKeyPair generates a new key,
 // returns the private key, its associated public key, node id and error.
 func GenerateRetrievalKeyPair() (string, string, string, error) {
-	prvKey, err := crypto.GenerateKey()
+	privKey, err := crypto.GenerateKey()
 	if err != nil {
 		return "", "", "", err
 	}
-	prvKeyStr := hex.EncodeToString(prvKey)
-	pubKeyStr, id, err := GetPublicKey(prvKeyStr)
+	privKeyStr := hex.EncodeToString(privKey)
+	pubKeyStr, id, err := GetPublicKey(privKeyStr)
 	if err != nil {
 		return "", "", "", err
 	}
-	return prvKeyStr, pubKeyStr, id, nil
+	return privKeyStr, pubKeyStr, id, nil
 }
 
 // GetPublicKey gets the public key, node id and error of giving private key
-func GetPublicKey(prvKeyStr string) (string, string, error) {
-	prvKey, err := hex.DecodeString(prvKeyStr)
+func GetPublicKey(privKeyStr string) (string, string, error) {
+	privKey, err := hex.DecodeString(privKeyStr)
 	if err != nil {
 		return "", "", err
 	}
-	pubKey := crypto.PublicKey(prvKey)
+	pubKey := crypto.PublicKey(privKey)
 	pubKeyStr := hex.EncodeToString(pubKey)
 	h := sha256.New()
 	if _, err := h.Write([]byte(pubKeyStr)); err != nil {
@@ -78,13 +78,13 @@ func GetWalletAddress(pubKeyStr string) (string, error) {
 
 // Sign signs given bytes using given private key and given version,
 // returns the signature in bytes and error.
-func Sign(prvKeyStr string, ver byte, data []byte) (string, error) {
-	prvKey, err := hex.DecodeString(prvKeyStr)
+func Sign(privKeyStr string, ver byte, data []byte) (string, error) {
+	privKey, err := hex.DecodeString(privKeyStr)
 	if err != nil {
 		return "", err
 	}
 	b2sum := blake2b.Sum256(data)
-	sig, err := crypto.Sign(prvKey, b2sum[:])
+	sig, err := crypto.Sign(privKey, b2sum[:])
 	if err != nil {
 		return "", err
 	}

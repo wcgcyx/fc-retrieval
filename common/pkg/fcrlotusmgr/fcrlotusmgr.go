@@ -35,26 +35,26 @@ import (
 // FCRLotusMgr represents the manager that interacts with the lotus.
 type FCRLotusMgr interface {
 	// CreatePaymentChannel creates a payment channel using the given private key, recipient address and a given amount.
-	CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error)
+	CreatePaymentChannel(privKey string, recipientAddr string, amt *big.Int) (string, error)
 
 	// TopupPaymentChannel topups a payment channel using the given private key, channel address and a given amount.
-	TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error
+	TopupPaymentChannel(privKey string, chAddr string, amt *big.Int) error
 
 	// SettlePaymentChannel settles a payment channel using the given private key, channel address and a final voucher.
-	SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error
+	SettlePaymentChannel(privKey string, chAddr string, vouchers []string) error
 
 	// CollectPaymentChannel collects a payment channel using the given private key, channel address.
-	CollectPaymentChannel(prvKey string, chAddr string) error
+	CollectPaymentChannel(privKey string, chAddr string) error
 
 	// CheckPaymentChannel checks the state of a channel.
 	// It returns a boolean indicating if the channel is settling/settled, the channel balance, the recipient address and error.
 	CheckPaymentChannel(chAddr string) (bool, *big.Int, string, error)
 
 	// GetCostToCreate gets the current cost to create a payment channel.
-	GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error)
+	GetCostToCreate(privKey string, recipientAddr string, amt *big.Int) (*big.Int, error)
 
 	// GetCostToSettle gets the current cost to settle a payment channel + updating voucher.
-	GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error)
+	GetCostToSettle(privKey string, chAddr string, vouchers []string) (*big.Int, error)
 
 	// GetPaymentChannelCreationBlock gets the block number at which given payment channel is created.
 	GetPaymentChannelCreationBlock(chAddr string) (*big.Int, error)
@@ -85,7 +85,7 @@ type LotusAPI interface {
 }
 
 // GenerateVoucher generates a voucher by given private key, channel address, lane number and amount.
-func GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error) {
+func GenerateVoucher(privKey string, chAddr string, lane uint64, nonce uint64, newRedeemed *big.Int) (string, error) {
 	addr, err := address.NewFromString(chAddr)
 	if err != nil {
 		return "", err
@@ -100,7 +100,7 @@ func GenerateVoucher(prvKey string, chAddr string, lane uint64, nonce uint64, ne
 	if err != nil {
 		return "", err
 	}
-	pk, err := hex.DecodeString(prvKey)
+	pk, err := hex.DecodeString(privKey)
 	if err != nil {
 		return "", err
 	}

@@ -23,36 +23,35 @@ import (
 	"fmt"
 )
 
-// establishmentRequestJson represents an establishment.
-type establishmentRequestJson struct {
+type establishmentResponseJson struct {
 	Challenge string `json:"challenge"`
 }
 
-// EncodeEstablishmentRequest is used to get the FCRMessage of establishmentRequestJson
-func EncodeEstablishmentRequest(
+// EncodeEstablishmentResponse is used to get the FCRMessage of establishmentResponseJson
+func EncodeEstablishmentResponse(
 	nonce uint64,
 	challenge string,
-) (*FCRReqMsg, error) {
+) (*FCRACKMsg, error) {
 	body, err := json.Marshal(establishmentRequestJson{
 		Challenge: challenge,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return CreateFCRReqMsg(EstablishmentRequestType, nonce, body), nil
+	return CreateFCRACKMsg(nonce, body), nil
 }
 
-// DecodeEstablishmentRequest is used to get the fields from FCRMessage of establishmentRequestJson
+// DecodeEstablishmentResponse is used to get the fields from FCRMessage of establishmentResponseJson
 // It returns the nonce and challenge string in this establishment request.
-func DecodeEstablishmentRequest(fcrMsg *FCRReqMsg) (
+func DecodeEstablishmentResponse(fcrMsg *FCRACKMsg) (
 	uint64,
 	string,
 	error,
 ) {
-	if fcrMsg.Type() != EstablishmentRequestType {
-		return 0, "", fmt.Errorf("Message type mismatch, expect %v, got %v", EstablishmentRequestType, fcrMsg.Type())
+	if !fcrMsg.ACK() {
+		return 0, "", fmt.Errorf("ACK is false")
 	}
-	msg := establishmentRequestJson{}
+	msg := establishmentResponseJson{}
 	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
 		return 0, "", err

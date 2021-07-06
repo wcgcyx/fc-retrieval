@@ -26,51 +26,51 @@ import (
 )
 
 type mockLotusMgr struct {
-	createPaymentChannel func(prvKey string, recipientAddr string, amt *big.Int) (string, error)
+	createPaymentChannel func(privKey string, recipientAddr string, amt *big.Int) (string, error)
 
-	topupPaymentChannel func(prvKey string, chAddr string, amt *big.Int) error
+	topupPaymentChannel func(privKey string, chAddr string, amt *big.Int) error
 
-	settlePaymentChannel func(prvKey string, chAddr string, vouchers []string) error
+	settlePaymentChannel func(privKey string, chAddr string, vouchers []string) error
 
-	collectPaymentChannel func(prvKey string, chAddr string) error
+	collectPaymentChannel func(privKey string, chAddr string) error
 
 	checkPaymentChannel func(chAddr string) (bool, *big.Int, string, error)
 
-	getCostToCreate func(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error)
+	getCostToCreate func(privKey string, recipientAddr string, amt *big.Int) (*big.Int, error)
 
-	getCostToSettle func(prvKey string, chAddr string, vouchers []string) (*big.Int, error)
+	getCostToSettle func(privKey string, chAddr string, vouchers []string) (*big.Int, error)
 
 	getPaymentChannelCreationBlock func(chAddr string) (*big.Int, error)
 
 	getPaymentChannelSettlementBlock func(chAddr string) (*big.Int, error)
 }
 
-func (m *mockLotusMgr) CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error) {
-	return m.createPaymentChannel(prvKey, recipientAddr, amt)
+func (m *mockLotusMgr) CreatePaymentChannel(privKey string, recipientAddr string, amt *big.Int) (string, error) {
+	return m.createPaymentChannel(privKey, recipientAddr, amt)
 }
 
-func (m *mockLotusMgr) TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error {
-	return m.topupPaymentChannel(prvKey, chAddr, amt)
+func (m *mockLotusMgr) TopupPaymentChannel(privKey string, chAddr string, amt *big.Int) error {
+	return m.topupPaymentChannel(privKey, chAddr, amt)
 }
 
-func (m *mockLotusMgr) SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error {
-	return m.settlePaymentChannel(prvKey, chAddr, vouchers)
+func (m *mockLotusMgr) SettlePaymentChannel(privKey string, chAddr string, vouchers []string) error {
+	return m.settlePaymentChannel(privKey, chAddr, vouchers)
 }
 
-func (m *mockLotusMgr) CollectPaymentChannel(prvKey string, chAddr string) error {
-	return m.collectPaymentChannel(prvKey, chAddr)
+func (m *mockLotusMgr) CollectPaymentChannel(privKey string, chAddr string) error {
+	return m.collectPaymentChannel(privKey, chAddr)
 }
 
 func (m *mockLotusMgr) CheckPaymentChannel(chAddr string) (bool, *big.Int, string, error) {
 	return m.checkPaymentChannel(chAddr)
 }
 
-func (m *mockLotusMgr) GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
-	return m.getCostToCreate(prvKey, recipientAddr, amt)
+func (m *mockLotusMgr) GetCostToCreate(privKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
+	return m.getCostToCreate(privKey, recipientAddr, amt)
 }
 
-func (m *mockLotusMgr) GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error) {
-	return m.getCostToSettle(prvKey, chAddr, vouchers)
+func (m *mockLotusMgr) GetCostToSettle(privKey string, chAddr string, vouchers []string) (*big.Int, error) {
+	return m.getCostToSettle(privKey, chAddr, vouchers)
 }
 
 func (m *mockLotusMgr) GetPaymentChannelCreationBlock(chAddr string) (*big.Int, error) {
@@ -96,10 +96,10 @@ func TestNewPaymentMgr(t *testing.T) {
 
 func TestPayAndReceive(t *testing.T) {
 	mockLotusMgr := mockLotusMgr{
-		createPaymentChannel: func(prvKey string, recipientAddr string, amt *big.Int) (string, error) {
+		createPaymentChannel: func(privKey string, recipientAddr string, amt *big.Int) (string, error) {
 			return "f12yybez3cfe2yb2nsartagpwkk23q5hmmiluqafi", nil
 		},
-		topupPaymentChannel: func(prvKey string, chAddr string, amt *big.Int) error {
+		topupPaymentChannel: func(privKey string, chAddr string, amt *big.Int) error {
 			return nil
 		},
 		checkPaymentChannel: func(chAddr string) (bool, *big.Int, string, error) {

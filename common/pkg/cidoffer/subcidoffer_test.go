@@ -119,7 +119,7 @@ func TestSubOfferVerify(t *testing.T) {
 	expiry := time.Now().Add(12 * time.Hour).Unix()
 	qos := uint64(5)
 	offer, err := NewCIDOffer("testprovider", cids, price, expiry, qos)
-	err = offer.Sign(PrvKey)
+	err = offer.Sign(PrivKey)
 	assert.Empty(t, err)
 
 	subOffer, err := offer.GenerateSubCIDOffer(aCid1)

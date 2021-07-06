@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	PrvKey       = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
+	PrivKey      = "d54193a9668ae59befa59498cdee16b78cdc8228d43814442a64588fd1648a29"
 	LotusAPIAddr = "http://127.0.0.1:1234/rpc/v0"
 	LotusToken   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.lYpknouVX5M_BJOEbHZrdcHdxHkfu0ih1W0NCTFlJz0"
 )
@@ -122,7 +122,7 @@ func TestCreate(t *testing.T) {
 		return &mock, nil, nil
 	})
 
-	address, err := mgr.CreatePaymentChannel(PrvKey, "t1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", big.NewInt(1000000))
+	address, err := mgr.CreatePaymentChannel(PrivKey, "t1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", big.NewInt(1000000))
 	assert.Empty(t, err)
 	assert.Equal(t, "f2n6prop4c3wmayti7d26hdwjitfu6ttkp5qhu6ni", address)
 }
@@ -156,7 +156,7 @@ func TestTopup(t *testing.T) {
 	mgr := NewFCRLotusMgrImplV1(LotusAPIAddr, LotusToken, func(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
 		return &mock, nil, nil
 	})
-	err := mgr.TopupPaymentChannel(PrvKey, "f2n6prop4c3wmayti7d26hdwjitfu6ttkp5qhu6ni", big.NewInt(1000000))
+	err := mgr.TopupPaymentChannel(PrivKey, "f2n6prop4c3wmayti7d26hdwjitfu6ttkp5qhu6ni", big.NewInt(1000000))
 	assert.Empty(t, err)
 }
 
@@ -197,7 +197,7 @@ func TestCheck(t *testing.T) {
 }
 
 func TestVoucher(t *testing.T) {
-	voucher, err := GenerateVoucher(PrvKey, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", 0, 12, big.NewInt(1000000))
+	voucher, err := GenerateVoucher(PrivKey, "f1hn3o5excejl2uyea7efs3licozuycghzpdiikjy", 0, 12, big.NewInt(1000000))
 	assert.Empty(t, err)
 	assert.Equal(t, "i1UBO3bukuIiV6pggPkLLa0CdmmBGPkAAED2AAxEAA9CQACAWEIBzTRDsIzaryn3q-JGV-OnvzUDG3ejzq8MdK2HQVRCP993QVCNDPVYFQQe0MsXkqjN3UBNWCF3guS7GRWjBMsTDwA", voucher)
 

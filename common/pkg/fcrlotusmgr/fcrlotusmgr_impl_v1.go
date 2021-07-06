@@ -58,8 +58,8 @@ func NewFCRLotusMgrImplV1(lotusAPIAddr string, authToken string, getLotusAPI fun
 	return &FCRLotusMgrImplV1{lotusAPIAddr: lotusAPIAddr, authToken: authToken, getLotusAPI: getLotusAPI}
 }
 
-func (mgr *FCRLotusMgrImplV1) CreatePaymentChannel(prvKey string, recipientAddr string, amt *big.Int) (string, error) {
-	pubKey, _, err := fcrcrypto.GetPublicKey(prvKey)
+func (mgr *FCRLotusMgrImplV1) CreatePaymentChannel(privKey string, recipientAddr string, amt *big.Int) (string, error) {
+	pubKey, _, err := fcrcrypto.GetPublicKey(privKey)
 	if err != nil {
 		return "", err
 	}
@@ -90,7 +90,7 @@ func (mgr *FCRLotusMgrImplV1) CreatePaymentChannel(prvKey string, recipientAddr 
 		return "", err
 	}
 	// Get signed message
-	signedMsg, err := fillMsg(prvKey, api, msg)
+	signedMsg, err := fillMsg(privKey, api, msg)
 	if err != nil {
 		return "", err
 	}
@@ -113,8 +113,8 @@ func (mgr *FCRLotusMgrImplV1) CreatePaymentChannel(prvKey string, recipientAddr 
 	return decodedReturn.RobustAddress.String(), nil
 }
 
-func (mgr *FCRLotusMgrImplV1) TopupPaymentChannel(prvKey string, chAddr string, amt *big.Int) error {
-	pubKey, _, err := fcrcrypto.GetPublicKey(prvKey)
+func (mgr *FCRLotusMgrImplV1) TopupPaymentChannel(privKey string, chAddr string, amt *big.Int) error {
+	pubKey, _, err := fcrcrypto.GetPublicKey(privKey)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (mgr *FCRLotusMgrImplV1) TopupPaymentChannel(prvKey string, chAddr string, 
 		Method: 0,
 	}
 	// Get signed message
-	signedMsg, err := fillMsg(prvKey, api, msg)
+	signedMsg, err := fillMsg(privKey, api, msg)
 	if err != nil {
 		return err
 	}
@@ -163,11 +163,11 @@ func (mgr *FCRLotusMgrImplV1) TopupPaymentChannel(prvKey string, chAddr string, 
 	return nil
 }
 
-func (mgr *FCRLotusMgrImplV1) SettlePaymentChannel(prvKey string, chAddr string, vouchers []string) error {
+func (mgr *FCRLotusMgrImplV1) SettlePaymentChannel(privKey string, chAddr string, vouchers []string) error {
 	return errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImplV1) CollectPaymentChannel(prvKey string, chAddr string) error {
+func (mgr *FCRLotusMgrImplV1) CollectPaymentChannel(privKey string, chAddr string) error {
 	return errors.New("No implementation")
 }
 
@@ -206,11 +206,11 @@ func (mgr *FCRLotusMgrImplV1) CheckPaymentChannel(chAddr string) (bool, *big.Int
 	return state.SettlingAt != 0, actor.Balance.Int, recipient.String(), nil
 }
 
-func (mgr *FCRLotusMgrImplV1) GetCostToCreate(prvKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
+func (mgr *FCRLotusMgrImplV1) GetCostToCreate(privKey string, recipientAddr string, amt *big.Int) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
-func (mgr *FCRLotusMgrImplV1) GetCostToSettle(prvKey string, chAddr string, vouchers []string) (*big.Int, error) {
+func (mgr *FCRLotusMgrImplV1) GetCostToSettle(privKey string, chAddr string, vouchers []string) (*big.Int, error) {
 	return nil, errors.New("No implementation")
 }
 
@@ -223,8 +223,8 @@ func (mgr *FCRLotusMgrImplV1) GetPaymentChannelSettlementBlock(chAddr string) (*
 }
 
 // fillMsg will fill the gas and sign a given message
-func fillMsg(prvKeyStr string, api LotusAPI, msg *types.Message) (*types.SignedMessage, error) {
-	prvKey, err := hex.DecodeString(prvKeyStr)
+func fillMsg(privKeyStr string, api LotusAPI, msg *types.Message) (*types.SignedMessage, error) {
+	privKey, err := hex.DecodeString(privKeyStr)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func fillMsg(prvKeyStr string, api LotusAPI, msg *types.Message) (*types.SignedM
 	msg.GasFeeCap = feeCap
 
 	// Sign message
-	sig, err := Sign(prvKey, msg.Cid().Bytes())
+	sig, err := Sign(privKey, msg.Cid().Bytes())
 	if err != nil {
 		return nil, err
 	}

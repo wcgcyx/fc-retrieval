@@ -19,6 +19,7 @@ package fcrmessages
  */
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -27,47 +28,58 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 )
 
-// FCRMessage is the message used in communication between filecoin retrieval entities.
-type FCRMessage struct {
+// FCRReqMsg is the request used in communication between filecoin retrieval entities.
+type FCRReqMsg struct {
 	messageType byte
+	nonce       uint64
 	messageBody []byte
 	signature   string
 }
 
 // fcrMessageJson is used to parse to and from json.
-type fcrMessageJson struct {
+type fcrReqMsgJson struct {
 	MessageType string `json:"message_type"`
+	Nonce       uint64 `json:"nonce"`
 	MessageBody string `json:"message_body"`
 	Signature   string `json:"message_signature"`
 }
 
-// CreateFCRMessage is used to create an unsigned message
-func CreateFCRMessage(msgType byte, msgBody []byte) *FCRMessage {
-	return &FCRMessage{
+// CreateFCRReqMsg is used to create an unsigned message
+func CreateFCRReqMsg(msgType byte, nonce uint64, msgBody []byte) *FCRReqMsg {
+	return &FCRReqMsg{
 		messageType: msgType,
 		messageBody: msgBody,
+		nonce:       nonce,
 		signature:   "",
 	}
 }
 
-// GetMessageType is used to get the message type of the message.
-func (fcrMsg *FCRMessage) GetMessageType() byte {
+// Type is used to get the message type of the message.
+func (fcrMsg *FCRReqMsg) Type() byte {
 	return fcrMsg.messageType
 }
 
-// GetMessageBody is used to get the message body.
-func (fcrMsg *FCRMessage) GetMessageBody() []byte {
+// Nonce is used to get the nonce of the message.
+func (fcrMsg *FCRReqMsg) Nonce() uint64 {
+	return fcrMsg.nonce
+}
+
+// Body is used to get the message body.
+func (fcrMsg *FCRReqMsg) Body() []byte {
 	return fcrMsg.messageBody
 }
 
-// GetSignature is used to get the signature.
-func (fcrMsg *FCRMessage) GetSignature() string {
+// Signature is used to get the signature.
+func (fcrMsg *FCRReqMsg) Signature() string {
 	return fcrMsg.signature
 }
 
 // Sign is used to sign the message with a given private key and a key version.
-func (fcrMsg *FCRMessage) Sign(privKey string, keyVer byte) error {
-	data := append([]byte{fcrMsg.messageType}, fcrMsg.messageBody...)
+func (fcrMsg *FCRReqMsg) Sign(privKey string, keyVer byte) error {
+	nonce := make([]byte, 8)
+	binary.BigEndian.PutUint64(nonce, fcrMsg.nonce)
+	data := append([]byte{fcrMsg.messageType}, nonce...)
+	data = append(data, fcrMsg.messageBody...)
 	sig, err := fcrcrypto.Sign(privKey, keyVer, data)
 	if err != nil {
 		return err
@@ -77,8 +89,11 @@ func (fcrMsg *FCRMessage) Sign(privKey string, keyVer byte) error {
 }
 
 // Verify is used to verify the offer with a given public key.
-func (fcrMsg *FCRMessage) Verify(pubKey string, keyVer byte) error {
-	data := append([]byte{fcrMsg.messageType}, fcrMsg.messageBody...)
+func (fcrMsg *FCRReqMsg) Verify(pubKey string, keyVer byte) error {
+	nonce := make([]byte, 8)
+	binary.BigEndian.PutUint64(nonce, fcrMsg.nonce)
+	data := append([]byte{fcrMsg.messageType}, nonce...)
+	data = append(data, fcrMsg.messageBody...)
 	err := fcrcrypto.Verify(pubKey, keyVer, fcrMsg.signature, data)
 	if err != nil {
 		return fmt.Errorf("Message fail to verify: %v", err.Error())
@@ -87,8 +102,11 @@ func (fcrMsg *FCRMessage) Verify(pubKey string, keyVer byte) error {
 }
 
 // VerifyByID is used to verify the offer with a given id (hashed public key).
-func (fcrMsg *FCRMessage) VerifyByID(id string) error {
-	data := append([]byte{fcrMsg.messageType}, fcrMsg.messageBody...)
+func (fcrMsg *FCRReqMsg) VerifyByID(id string) error {
+	nonce := make([]byte, 8)
+	binary.BigEndian.PutUint64(nonce, fcrMsg.nonce)
+	data := append([]byte{fcrMsg.messageType}, nonce...)
+	data = append(data, fcrMsg.messageBody...)
 	err := fcrcrypto.VerifyByID(id, fcrMsg.signature, data)
 	if err != nil {
 		return fmt.Errorf("Message fail to verify: %v", err.Error())
@@ -97,9 +115,10 @@ func (fcrMsg *FCRMessage) VerifyByID(id string) error {
 }
 
 // FCRMsgToBytes converts a FCRMessage to bytes
-func (fcrMsg *FCRMessage) ToBytes() ([]byte, error) {
-	fcrMsgJS := &fcrMessageJson{
+func (fcrMsg *FCRReqMsg) ToBytes() ([]byte, error) {
+	fcrMsgJS := &fcrReqMsgJson{
 		MessageType: hex.EncodeToString([]byte{fcrMsg.messageType}),
+		Nonce:       fcrMsg.nonce,
 		MessageBody: hex.EncodeToString(fcrMsg.messageBody),
 		Signature:   fcrMsg.signature,
 	}
@@ -107,26 +126,26 @@ func (fcrMsg *FCRMessage) ToBytes() ([]byte, error) {
 }
 
 // FCRMsgFromBytes converts a bytes to FCRMessage
-func FromBytes(data []byte) (*FCRMessage, error) {
-	res := fcrMessageJson{}
+func (fcrMsg *FCRReqMsg) FromBytes(data []byte) error {
+	res := fcrReqMsgJson{}
 	err := json.Unmarshal(data, &res)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	msgType, err := hex.DecodeString(res.MessageType)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(msgType) != 1 {
-		return nil, errors.New("Invalid message type length")
+		return errors.New("Invalid message type length")
 	}
 	msgBody, err := hex.DecodeString(res.MessageBody)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &FCRMessage{
-		messageType: msgType[0],
-		messageBody: msgBody,
-		signature:   res.Signature,
-	}, nil
+	fcrMsg.messageType = msgType[0]
+	fcrMsg.nonce = res.Nonce
+	fcrMsg.messageBody = msgBody
+	fcrMsg.signature = res.Signature
+	return nil
 }

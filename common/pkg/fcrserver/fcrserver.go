@@ -33,25 +33,39 @@ type FCRServer interface {
 	Shutdown()
 
 	// AddHandler adds a handler to the server, which handles a given message type.
-	AddHandler(msgType byte, handler func(reader FCRServerReader, writer FCRServerWriter, request *fcrmessages.FCRMessage) error) FCRServer
+	AddHandler(msgType byte, handler func(reader FCRServerRequestReader, writer FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error) FCRServer
 
 	// AddRequester adds a requester to the server, which is used to send a request for a given message type.
-	AddRequester(msgType byte, requester func(reader FCRServerReader, writer FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) FCRServer
+	AddRequester(msgType byte, requester func(reader FCRServerResponseReader, writer FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error)) FCRServer
 
 	// Request uses a requester corresponding to the given message type to send a request to given multiaddr.
-	Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, error)
+	Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRACKMsg, error)
 }
 
-// FCRServerReader is a reader for reading message.
-type FCRServerReader interface {
+// FCRServerRequestReader is a reader for reading message.
+type FCRServerRequestReader interface {
 	// Read reads a message for a given timeout.
 	// It returns the message, and error.
-	Read(timeout time.Duration) (*fcrmessages.FCRMessage, error)
+	Read(timeout time.Duration) (*fcrmessages.FCRReqMsg, error)
 }
 
-// FCRServerWriter is a reader for writer message.
-type FCRServerWriter interface {
+// FCRServerResponseReader is a reader for reading message.
+type FCRServerResponseReader interface {
+	// Read reads a message for a given timeout.
+	// It returns the message, and error.
+	Read(timeout time.Duration) (*fcrmessages.FCRACKMsg, error)
+}
+
+// FCRServerRequesterWriter is a writer for writer request.
+type FCRServerRequestWriter interface {
 	// Write writes a message for a given timeout.
 	// It returns error.
-	Write(msg *fcrmessages.FCRMessage, timeout time.Duration) error
+	Write(msg *fcrmessages.FCRReqMsg, privKey string, keyVer byte, timeout time.Duration) error
+}
+
+// FCRServerResponseWriter is a writer for writer response.
+type FCRServerResponseWriter interface {
+	// Write writes a message for a given timeout.
+	// It returns error.
+	Write(msg *fcrmessages.FCRACKMsg, privKey string, keyVer byte, timeout time.Duration) error
 }

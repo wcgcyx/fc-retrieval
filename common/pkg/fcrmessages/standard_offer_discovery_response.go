@@ -29,16 +29,15 @@ import (
 // standardOfferDiscoveryResponseJson represents the response to a request of asking for offers.
 type standardOfferDiscoveryResponseJson struct {
 	Offers        []string `json:"offers"`
-	Nonce         int64    `json:"nonce"`
 	RefundVoucher string   `json:"refund_voucher"`
 }
 
 // EncodeStandardOfferDiscoveryResponse is used to get the FCRMessage of standardOfferDiscoveryResponseJson.
 func EncodeStandardOfferDiscoveryResponse(
+	nonce uint64,
 	offers []cidoffer.SubCIDOffer,
-	nonce int64,
 	refundVoucher string,
-) (*FCRMessage, error) {
+) (*FCRACKMsg, error) {
 	offersStr := make([]string, 0)
 	for _, offer := range offers {
 		data, err := offer.ToBytes()
@@ -49,44 +48,43 @@ func EncodeStandardOfferDiscoveryResponse(
 	}
 	body, err := json.Marshal(standardOfferDiscoveryResponseJson{
 		Offers:        offersStr,
-		Nonce:         nonce,
 		RefundVoucher: refundVoucher,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return CreateFCRMessage(StandardOfferDiscoveryResponseType, body), nil
+	return CreateFCRACKMsg(nonce, body), nil
 }
 
 // DecodeStandardOfferDiscoveryResponse is used to get the fields from FCRMessage of standardOfferDiscoveryResponseJson.
-// It returns a list of offers, nonce, refund account address and voucher.
-func DecodeStandardOfferDiscoveryResponse(fcrMsg *FCRMessage) (
+// It returns nonce, a list of offers, refund account address and voucher.
+func DecodeStandardOfferDiscoveryResponse(fcrMsg *FCRACKMsg) (
+	uint64,
 	[]cidoffer.SubCIDOffer,
-	int64,
 	string,
 	error,
 ) {
-	if fcrMsg.GetMessageType() != StandardOfferDiscoveryResponseType {
-		return nil, 0, "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryResponseType, fcrMsg.GetMessageType())
+	if !fcrMsg.ACK() {
+		return 0, nil, "", fmt.Errorf("ACK is false")
 	}
 	msg := standardOfferDiscoveryResponseJson{}
-	err := json.Unmarshal(fcrMsg.GetMessageBody(), &msg)
+	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return nil, 0, "", err
+		return 0, nil, "", err
 	}
 	offers := make([]cidoffer.SubCIDOffer, 0)
 	offersStr := msg.Offers
 	for _, offerStr := range offersStr {
 		data, err := hex.DecodeString(offerStr)
 		if err != nil {
-			return nil, 0, "", err
+			return 0, nil, "", err
 		}
 		offer := cidoffer.SubCIDOffer{}
 		err = offer.FromBytes(data)
 		if err != nil {
-			return nil, 0, "", err
+			return 0, nil, "", err
 		}
 		offers = append(offers, offer)
 	}
-	return offers, msg.Nonce, msg.RefundVoucher, nil
+	return fcrMsg.Nonce(), offers, msg.RefundVoucher, nil
 }

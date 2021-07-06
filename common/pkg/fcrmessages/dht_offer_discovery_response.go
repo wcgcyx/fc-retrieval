@@ -29,16 +29,15 @@ import (
 type dhtOfferDiscoveryResponseJson struct {
 	Contacted     []string `json:"contacted"`
 	Responses     []string `json:"responses"`
-	Nonce         int64    `json:"nonce"`
 	RefundVoucher string   `json:"refund_voucher"`
 }
 
 // EncodeDHTOfferDiscoveryResponse is used to get the FCRMessage of dhtOfferDiscoveryResponseJson.
 func EncodeDHTOfferDiscoveryResponse(
-	contacted map[string]*FCRMessage,
-	nonce int64,
+	nonce uint64,
+	contacted map[string]*FCRACKMsg,
 	refundVoucher string,
-) (*FCRMessage, error) {
+) (*FCRACKMsg, error) {
 	keys := make([]string, len(contacted))
 	i := 0
 	for k := range contacted {
@@ -59,49 +58,49 @@ func EncodeDHTOfferDiscoveryResponse(
 	body, err := json.Marshal(dhtOfferDiscoveryResponseJson{
 		Contacted:     contactedStr,
 		Responses:     responsesStr,
-		Nonce:         nonce,
 		RefundVoucher: refundVoucher,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return CreateFCRMessage(DHTOfferDiscoveryResponseType, body), nil
+	return CreateFCRACKMsg(nonce, body), nil
 }
 
 // DecodeDHTOfferDiscoveryResponse is used to get the fields from FCRMessage of dhtOfferDiscoveryResponseJson.
-// It returns a map of contacted nodes -> contacted messages, nonce, refund account address and voucher.
-func DecodeDHTOfferDiscoveryResponse(fcrMsg *FCRMessage) (
-	map[string]FCRMessage,
-	int64,
+// It returns nonce, a map of contacted nodes -> contacted messages, refund account address and voucher.
+func DecodeDHTOfferDiscoveryResponse(fcrMsg *FCRACKMsg) (
+	uint64,
+	map[string]FCRACKMsg,
 	string,
 	error,
 ) {
-	if fcrMsg.GetMessageType() != DHTOfferDiscoveryResponseType {
-		return nil, 0, "", fmt.Errorf("Message type mismatch, expect %v, got %v", DHTOfferDiscoveryResponseType, fcrMsg.GetMessageType())
+	if !fcrMsg.ACK() {
+		return 0, nil, "", fmt.Errorf("ACK is false")
 	}
 	msg := dhtOfferDiscoveryResponseJson{}
-	err := json.Unmarshal(fcrMsg.GetMessageBody(), &msg)
+	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return nil, 0, "", err
+		return 0, nil, "", err
 	}
 	if len(msg.Contacted) != len(msg.Responses) {
-		return nil, 0, "", fmt.Errorf("Contacted length %v mismatches response length %v", len(msg.Contacted), len(msg.Responses))
+		return 0, nil, "", fmt.Errorf("Contacted length %v mismatches response length %v", len(msg.Contacted), len(msg.Responses))
 	}
-	contacted := make(map[string]FCRMessage)
+	contacted := make(map[string]FCRACKMsg)
 	for i := 0; i < len(msg.Contacted); i++ {
 		data, err := hex.DecodeString(msg.Responses[i])
 		if err != nil {
-			return nil, 0, "", err
+			return 0, nil, "", err
 		}
-		resp, err := FromBytes(data)
+		resp := &FCRACKMsg{}
+		err = resp.FromBytes(data)
 		if err != nil {
-			return nil, 0, "", err
+			return 0, nil, "", err
 		}
 		_, ok := contacted[msg.Contacted[i]]
 		if ok {
-			return nil, 0, "", fmt.Errorf("Node %v appears at least twice in the response", msg.Contacted[i])
+			return 0, nil, "", fmt.Errorf("Node %v appears at least twice in the response", msg.Contacted[i])
 		}
 		contacted[msg.Contacted[i]] = *resp
 	}
-	return contacted, msg.Nonce, msg.RefundVoucher, nil
+	return fcrMsg.Nonce(), contacted, msg.RefundVoucher, nil
 }

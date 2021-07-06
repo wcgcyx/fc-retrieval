@@ -49,27 +49,27 @@ const (
 
 // FCRServerImplV1 implements FCRServer, it is built on top of libp2p.
 type FCRServerImplV1 struct {
-	prvKeyStr string
-	port      uint
-	start     bool
-	timeout   time.Duration
+	privKeyStr string
+	port       uint
+	start      bool
+	timeout    time.Duration
 
-	handlers   map[byte]func(reader FCRServerReader, writer FCRServerWriter, request *fcrmessages.FCRMessage) error
-	requesters map[byte]func(reader FCRServerReader, writer FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)
+	handlers   map[byte]func(reader FCRServerRequestReader, writer FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error
+	requesters map[byte]func(reader FCRServerResponseReader, writer FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error)
 
 	shutdown chan bool
 	host     host.Host
 	cancel   context.CancelFunc
 }
 
-func NewFCRServerImplV1(prvKeyStr string, port uint, timeout time.Duration) FCRServer {
+func NewFCRServerImplV1(privKeyStr string, port uint, timeout time.Duration) FCRServer {
 	return &FCRServerImplV1{
-		prvKeyStr:  prvKeyStr,
+		privKeyStr: privKeyStr,
 		port:       port,
 		start:      false,
 		timeout:    timeout,
-		handlers:   make(map[byte]func(reader FCRServerReader, writer FCRServerWriter, request *fcrmessages.FCRMessage) error),
-		requesters: make(map[byte]func(reader FCRServerReader, writer FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)),
+		handlers:   make(map[byte]func(reader FCRServerRequestReader, writer FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error),
+		requesters: make(map[byte]func(reader FCRServerResponseReader, writer FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error)),
 		shutdown:   make(chan bool),
 	}
 }
@@ -79,11 +79,11 @@ func (s *FCRServerImplV1) Start() error {
 	if s.start {
 		return errors.New("Server already started")
 	}
-	prvKeyBytes, err := hex.DecodeString(s.prvKeyStr)
+	privKeyBytes, err := hex.DecodeString(s.privKeyStr)
 	if err != nil {
 		return err
 	}
-	prvKey, err := crypto.UnmarshalRsaPrivateKey(prvKeyBytes)
+	privKey, err := crypto.UnmarshalRsaPrivateKey(privKeyBytes)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (s *FCRServerImplV1) Start() error {
 	h, err := libp2p.New(
 		ctx,
 		libp2p.ListenAddrs(sourceMultiAddr),
-		libp2p.Identity(prvKey),
+		libp2p.Identity(privKey),
 		libp2p.ConnectionManager(connmgr.NewConnManager(
 			Lowwater,
 			Highwater,
@@ -134,7 +134,7 @@ func (s *FCRServerImplV1) Shutdown() {
 	<-s.shutdown
 }
 
-func (s *FCRServerImplV1) AddHandler(msgType byte, handler func(reader FCRServerReader, writer FCRServerWriter, request *fcrmessages.FCRMessage) error) FCRServer {
+func (s *FCRServerImplV1) AddHandler(msgType byte, handler func(reader FCRServerRequestReader, writer FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error) FCRServer {
 	if s.start {
 		return s
 	}
@@ -142,7 +142,7 @@ func (s *FCRServerImplV1) AddHandler(msgType byte, handler func(reader FCRServer
 	return s
 }
 
-func (s *FCRServerImplV1) AddRequester(msgType byte, requester func(reader FCRServerReader, writer FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error)) FCRServer {
+func (s *FCRServerImplV1) AddRequester(msgType byte, requester func(reader FCRServerResponseReader, writer FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error)) FCRServer {
 	if s.start {
 		return s
 	}
@@ -150,7 +150,7 @@ func (s *FCRServerImplV1) AddRequester(msgType byte, requester func(reader FCRSe
 	return s
 }
 
-func (s *FCRServerImplV1) Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRMessage, error) {
+func (s *FCRServerImplV1) Request(multiaddrStr string, msgType byte, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	if !s.start {
 		return nil, errors.New("Server not started")
 	}
@@ -177,8 +177,8 @@ func (s *FCRServerImplV1) Request(multiaddrStr string, msgType byte, args ...int
 	defer conn.Close()
 	logging.Info("Established connection to %v", info.ID)
 
-	writer := &FCRServerWriterImplV1{conn: conn}
-	reader := &FCRServerReaderImplV1{conn: conn}
+	writer := &FCRServerRequestWriterImplV1{conn: conn}
+	reader := &FCRServerResponseReaderImplV1{conn: conn}
 	response, err := requester(reader, writer, args...)
 	return response, nil
 }
@@ -190,18 +190,18 @@ func (s *FCRServerImplV1) handleIncomingConnection(conn network.Stream) {
 	// Close connection on exit.
 	defer conn.Close()
 
-	message, err := readFCRMessage(conn, time.Second)
+	reader := &FCRServerRequestReaderImplV1{conn}
+	request, err := reader.Read(s.timeout)
 	if err != nil {
 		// Error in tcp communication, drop the connection.
 		logging.Error("P2P Server has error reading message from %s: %s - Connection dropped", conn.ID(), err.Error())
 		return
 	}
-	handler := s.handlers[message.GetMessageType()]
+	handler := s.handlers[request.Type()]
 	if handler != nil {
 		// Call handler to handle the request
-		writer := &FCRServerWriterImplV1{conn: conn}
-		reader := &FCRServerReaderImplV1{conn: conn}
-		err = handler(reader, writer, message)
+		writer := &FCRServerResponseWriterImplV1{conn: conn}
+		err = handler(reader, writer, request)
 		if err != nil {
 			// Error that couldn't ignore, drop the connection.
 			logging.Error("P2P Server has error handling message from %s: %s - Connection dropped", conn.ID(), err.Error())
@@ -209,13 +209,13 @@ func (s *FCRServerImplV1) handleIncomingConnection(conn network.Stream) {
 		}
 	} else {
 		// Message is invalid, drop the connection.
-		logging.Error("P2P Server received unsupported message type %v from %s - Connection dropped", message.GetMessageType(), conn.ID())
+		logging.Error("P2P Server received unsupported message type %v from %s - Connection dropped", request.Type(), conn.ID())
 		return
 	}
 }
 
-// readFCRMessage read a fcr message from a given connection.
-func readFCRMessage(conn network.Stream, timeout time.Duration) (*fcrmessages.FCRMessage, error) {
+// read read a message bytes from a given connection.
+func read(conn network.Stream, timeout time.Duration) ([]byte, error) {
 	// Initialise a reader
 	reader := bufio.NewReader(conn)
 	// Read the length
@@ -238,16 +238,12 @@ func readFCRMessage(conn network.Stream, timeout time.Duration) (*fcrmessages.FC
 	if err != nil {
 		return nil, err
 	}
-	return fcrmessages.FromBytes(data)
+	return data, err
 }
 
-// sendFCRMessage sends a fcr message to a given connection.
-func sendFCRMessage(conn network.Stream, fcrMsg *fcrmessages.FCRMessage, timeout time.Duration) error {
+// write writes a message bytes array to a given connection.
+func write(conn network.Stream, data []byte, timeout time.Duration) error {
 	// Get data
-	data, err := fcrMsg.ToBytes()
-	if err != nil {
-		return err
-	}
 	// Initialise a writer
 	writer := bufio.NewWriter(conn)
 	length := make([]byte, 4)
@@ -256,7 +252,7 @@ func sendFCRMessage(conn network.Stream, fcrMsg *fcrmessages.FCRMessage, timeout
 	if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
 		panic(err)
 	}
-	_, err = writer.Write(append(length, data...))
+	_, err := writer.Write(append(length, data...))
 	if err != nil {
 		return err
 	}
@@ -267,22 +263,64 @@ func sendFCRMessage(conn network.Stream, fcrMsg *fcrmessages.FCRMessage, timeout
 	return writer.Flush()
 }
 
-// FCRServerReaderImplV1 implements FCRServerReader.
-type FCRServerReaderImplV1 struct {
+// FCRServerRequestReaderImplV1 implements FCRServerRequestReader.
+type FCRServerRequestReaderImplV1 struct {
 	conn network.Stream
 }
 
-func (r *FCRServerReaderImplV1) Read(timeout time.Duration) (*fcrmessages.FCRMessage, error) {
-	return readFCRMessage(r.conn, timeout)
+func (r *FCRServerRequestReaderImplV1) Read(timeout time.Duration) (*fcrmessages.FCRReqMsg, error) {
+	res := &fcrmessages.FCRReqMsg{}
+	data, err := read(r.conn, timeout)
+	if err == nil {
+		err = res.FromBytes(data)
+	}
+	return res, err
 }
 
-// FCRServerWriterImplV1 implements FCRServerWriter.
-type FCRServerWriterImplV1 struct {
+// FCRServerResponseReaderImplV1 implements FCRServerResponseReader.
+type FCRServerResponseReaderImplV1 struct {
 	conn network.Stream
 }
 
-func (w *FCRServerWriterImplV1) Write(msg *fcrmessages.FCRMessage, timeout time.Duration) error {
-	return sendFCRMessage(w.conn, msg, timeout)
+func (r *FCRServerResponseReaderImplV1) Read(timeout time.Duration) (*fcrmessages.FCRACKMsg, error) {
+	res := &fcrmessages.FCRACKMsg{}
+	data, err := read(r.conn, timeout)
+	if err == nil {
+		err = res.FromBytes(data)
+	}
+	return res, err
+}
+
+// FCRServerRequestWriterImplV1 implements FCRServerRequestWriter.
+type FCRServerRequestWriterImplV1 struct {
+	conn network.Stream
+}
+
+func (w *FCRServerRequestWriterImplV1) Write(msg *fcrmessages.FCRReqMsg, privKey string, keyVer byte, timeout time.Duration) error {
+	err := msg.Sign(privKey, keyVer)
+	if err == nil {
+		data, err := msg.ToBytes()
+		if err == nil {
+			err = write(w.conn, data, timeout)
+		}
+	}
+	return err
+}
+
+// FCRServerResponseWriterImplV1 implements FCRServerResponseWriter.
+type FCRServerResponseWriterImplV1 struct {
+	conn network.Stream
+}
+
+func (w *FCRServerResponseWriterImplV1) Write(msg *fcrmessages.FCRACKMsg, privKey string, keyVer byte, timeout time.Duration) error {
+	err := msg.Sign(privKey, keyVer)
+	if err == nil {
+		data, err := msg.ToBytes()
+		if err == nil {
+			err = write(w.conn, data, timeout)
+		}
+	}
+	return err
 }
 
 // IsTimeoutError checks if the given error is a timeout error
@@ -292,16 +330,16 @@ func IsTimeoutError(err error) bool {
 }
 
 // GetMultiAddr returns the supposed multiaddr string from given private key, ip address and port.
-func GetMultiAddr(prvKeyStr string, ip string, port uint) (string, error) {
-	prvKeyBytes, err := hex.DecodeString(prvKeyStr)
+func GetMultiAddr(privKeyStr string, ip string, port uint) (string, error) {
+	privKeyBytes, err := hex.DecodeString(privKeyStr)
 	if err != nil {
 		return "", err
 	}
-	prvKey, err := crypto.UnmarshalRsaPrivateKey(prvKeyBytes)
+	privKey, err := crypto.UnmarshalRsaPrivateKey(privKeyBytes)
 	if err != nil {
 		return "", err
 	}
-	pid, err := peer.IDFromPublicKey(prvKey.GetPublic())
+	pid, err := peer.IDFromPublicKey(privKey.GetPublic())
 	if err != nil {
 		return "", err
 	}

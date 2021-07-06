@@ -25,29 +25,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestACK(t *testing.T) {
-	mockACK := true
-	mockNonce := int64(42)
-	mockData := "testdata"
+func TestEstablishmentResponse(t *testing.T) {
+	mockNonce := uint64(100)
+	mockChallenge := "test challenge"
 
-	msg, err := EncodeACK(mockACK, mockNonce, mockData)
+	msg, err := EncodeEstablishmentResponse(mockNonce, mockChallenge)
 	assert.Empty(t, err)
-	assert.Equal(t, byte(ACKType), msg.messageType)
-	assert.Equal(t, "7b2261636b223a747275652c226e6f6e6365223a34322c2264617461223a227465737464617461227d", hex.EncodeToString(msg.messageBody))
+	assert.Equal(t, true, msg.ack)
+	assert.Equal(t, uint64(100), msg.nonce)
+	assert.Equal(t, "7b226368616c6c656e6765223a2274657374206368616c6c656e6765227d", hex.EncodeToString(msg.messageBody))
 	assert.Equal(t, "", msg.signature)
 
-	resACK, resNonce, resData, err := DecodeACK(msg)
+	resNonce, resChallenge, err := DecodeEstablishmentResponse(msg)
 	assert.Empty(t, err)
-	assert.Equal(t, mockACK, resACK)
 	assert.Equal(t, mockNonce, resNonce)
-	assert.Equal(t, mockData, resData)
+	assert.Equal(t, mockChallenge, resChallenge)
 
-	msg.messageType = 100
-	_, _, _, err = DecodeACK(msg)
+	msg.ack = false
+	_, _, err = DecodeEstablishmentResponse(msg)
 	assert.NotEmpty(t, err)
-	msg.messageType = 10
+	msg.ack = true
 
 	msg.messageBody = []byte{100, 100, 100}
-	_, _, _, err = DecodeACK(msg)
+	_, _, err = DecodeEstablishmentResponse(msg)
 	assert.NotEmpty(t, err)
 }

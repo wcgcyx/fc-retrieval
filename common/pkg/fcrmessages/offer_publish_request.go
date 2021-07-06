@@ -29,16 +29,15 @@ import (
 // offerPublishRequestJson represents the request to publish an offer.
 type offerPublishRequestJson struct {
 	NodeID string `json:"node_id"`
-	Nonce  int64  `json:"nonce"`
 	Offer  string `json:"offer"`
 }
 
 // EncodeOfferPublishRequest is used to get the FCRMessage of offerPublishRequestJson.
 func EncodeOfferPublishRequest(
+	nonce uint64,
 	nodeID string,
-	nonce int64,
 	offer *cidoffer.CIDOffer,
-) (*FCRMessage, error) {
+) (*FCRReqMsg, error) {
 	data, err := offer.ToBytes()
 	if err != nil {
 		return nil, err
@@ -46,39 +45,38 @@ func EncodeOfferPublishRequest(
 	offerStr := hex.EncodeToString(data)
 	body, err := json.Marshal(offerPublishRequestJson{
 		NodeID: nodeID,
-		Nonce:  nonce,
 		Offer:  offerStr,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return CreateFCRMessage(OfferPublishRequestType, body), nil
+	return CreateFCRReqMsg(OfferPublishRequestType, nonce, body), nil
 }
 
 // DecodeOfferPublishRequest is used to get the fields from FCRMessage of offerPublishRequestJson.
-// It returns the nodeID, nonce and the offer.
-func DecodeOfferPublishRequest(fcrMsg *FCRMessage) (
+// It returns the nonce, nodeID and the offer.
+func DecodeOfferPublishRequest(fcrMsg *FCRReqMsg) (
+	uint64,
 	string,
-	int64,
 	*cidoffer.CIDOffer,
 	error,
 ) {
-	if fcrMsg.GetMessageType() != OfferPublishRequestType {
-		return "", 0, nil, fmt.Errorf("Message type mismatch, expect %v, got %v", OfferPublishRequestType, fcrMsg.GetMessageType())
+	if fcrMsg.Type() != OfferPublishRequestType {
+		return 0, "", nil, fmt.Errorf("Message type mismatch, expect %v, got %v", OfferPublishRequestType, fcrMsg.Type())
 	}
 	msg := offerPublishRequestJson{}
-	err := json.Unmarshal(fcrMsg.GetMessageBody(), &msg)
+	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return "", 0, nil, err
+		return 0, "", nil, err
 	}
 	data, err := hex.DecodeString(msg.Offer)
 	if err != nil {
-		return "", 0, nil, err
+		return 0, "", nil, err
 	}
 	offer := cidoffer.CIDOffer{}
 	err = offer.FromBytes(data)
 	if err != nil {
-		return "", 0, nil, err
+		return 0, "", nil, err
 	}
-	return msg.NodeID, msg.Nonce, &offer, nil
+	return fcrMsg.Nonce(), msg.NodeID, &offer, nil
 }

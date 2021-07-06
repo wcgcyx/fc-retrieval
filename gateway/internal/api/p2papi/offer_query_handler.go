@@ -53,17 +53,19 @@ func OfferQueryHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRSer
 		verify = request.VerifyByID(nodeID) == nil
 	} else {
 		// Get GW Info
-		gwInfo, err := c.PeerMgr.GetGWInfo(nodeID)
-		if err != nil {
+		gwInfo := c.PeerMgr.GetGWInfo(nodeID)
+		if gwInfo == nil {
 			// Not found, try again
-			c.PeerMgr.SyncGW(nodeID)
-			gwInfo, err = c.PeerMgr.GetGWInfo(nodeID)
+			gwInfo = c.PeerMgr.SyncGW(nodeID)
 			if err != nil {
 				// Not found, return error
 				response, _ = fcrmessages.EncodeACK(false, nonce, "Error in finding gateway infomation")
 				response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
 				return writer.Write(response, c.Settings.TCPInactivityTimeout)
 			}
+		}
+		if gwInfo == nil {
+			
 		}
 		verify = request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) == nil
 		if !verify {

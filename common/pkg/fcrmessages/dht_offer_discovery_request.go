@@ -29,7 +29,6 @@ import (
 type dhtOfferDiscoveryRequestJson struct {
 	NodeID                  string `json:"node_id"`
 	PieceCID                string `json:"piece_cid"`
-	Nonce                   int64  `json:"nonce"`
 	NumDHT                  int64  `json:"num_dht"`
 	MaxOfferRequestedPerDHT int64  `json:"max_offer_requested_per_dht"`
 	AccountAddr             string `json:"account_addr"`
@@ -38,18 +37,17 @@ type dhtOfferDiscoveryRequestJson struct {
 
 // EncodeDHTOfferDiscoveryRequest is used to get the FCRMessage of dhtOfferDiscoveryRequestJson
 func EncodeDHTOfferDiscoveryRequest(
+	nonce uint64,
 	NodeID string,
 	pieceCID *cid.ContentID,
-	nonce int64,
 	numDHT int64,
 	maxOfferRequestedPerDHT int64,
 	accountAddr string,
 	voucher string,
-) (*FCRMessage, error) {
+) (*FCRReqMsg, error) {
 	body, err := json.Marshal(dhtOfferDiscoveryRequestJson{
 		NodeID:                  NodeID,
 		PieceCID:                pieceCID.ToString(),
-		Nonce:                   nonce,
 		NumDHT:                  numDHT,
 		MaxOfferRequestedPerDHT: maxOfferRequestedPerDHT,
 		AccountAddr:             accountAddr,
@@ -58,32 +56,32 @@ func EncodeDHTOfferDiscoveryRequest(
 	if err != nil {
 		return nil, err
 	}
-	return CreateFCRMessage(DHTOfferDiscoveryRequestType, body), nil
+	return CreateFCRReqMsg(DHTOfferDiscoveryRequestType, nonce, body), nil
 }
 
 // DecodeDHTOfferDiscoveryRequest is used to get the fields from FCRMessage of dhtOfferDiscoveryRequestJson
-// It returns the nodeID, pieceCID, nonce, numDHT, maxOfferRequestedPerDHT, account address and voucher.
-func DecodeDHTOfferDiscoveryRequest(fcrMsg *FCRMessage) (
+// It returns the nonce, nodeID, pieceCID, numDHT, maxOfferRequestedPerDHT, account address and voucher.
+func DecodeDHTOfferDiscoveryRequest(fcrMsg *FCRReqMsg) (
+	uint64,
 	string,
 	*cid.ContentID,
-	int64,
 	int64,
 	int64,
 	string,
 	string,
 	error,
 ) {
-	if fcrMsg.GetMessageType() != DHTOfferDiscoveryRequestType {
-		return "", nil, 0, 0, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", DHTOfferDiscoveryRequestType, fcrMsg.GetMessageType())
+	if fcrMsg.Type() != DHTOfferDiscoveryRequestType {
+		return 0, "", nil, 0, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", DHTOfferDiscoveryRequestType, fcrMsg.Type())
 	}
 	msg := dhtOfferDiscoveryRequestJson{}
-	err := json.Unmarshal(fcrMsg.GetMessageBody(), &msg)
+	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return "", nil, 0, 0, 0, "", "", err
+		return 0, "", nil, 0, 0, "", "", err
 	}
 	pieceCID, err := cid.NewContentID(msg.PieceCID)
 	if err != nil {
-		return "", nil, 0, 0, 0, "", "", err
+		return 0, "", nil, 0, 0, "", "", err
 	}
-	return msg.NodeID, pieceCID, msg.Nonce, msg.NumDHT, msg.MaxOfferRequestedPerDHT, msg.AccountAddr, msg.Voucher, nil
+	return fcrMsg.Nonce(), msg.NodeID, pieceCID, msg.NumDHT, msg.MaxOfferRequestedPerDHT, msg.AccountAddr, msg.Voucher, nil
 }

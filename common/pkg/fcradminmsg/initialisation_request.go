@@ -22,13 +22,13 @@ import "encoding/json"
 
 // initialisationRequestJson represents the request to initialise.
 type initialisationRequestJson struct {
-	P2PPrvKey         string `json:"p2p_private_key"`
+	P2PPrivKey        string `json:"p2p_private_key"`
 	P2PPort           int    `json:"p2p_port"`
 	NetworkAddr       string `json:"network_addr"`
-	RootPrvKey        string `json:"root_private_key"`
+	RootPrivKey       string `json:"root_private_key"`
 	LotusAPIAddr      string `json:"lotus_api_addr"`
 	LotusAuthToken    string `json:"lotus_auth_token"`
-	RegisterPrvKey    string `json:"register_private_key"`
+	RegisterPrivKey   string `json:"register_private_key"`
 	RegisterAPIAddr   string `json:"register_api_addr"`
 	RegisterAuthToken string `json:"register_auth_token"`
 	RegionCode        string `json:"region_code"`
@@ -36,25 +36,25 @@ type initialisationRequestJson struct {
 
 // EncodeInitialisationRequest is used to get the byte array of initialisationRequestJson
 func EncodeInitialisationRequest(
-	p2pPrvKey string,
+	p2pPrivKey string,
 	p2pPort int,
 	networkAddr string,
-	rootPrvKey string,
+	rootPrivKey string,
 	lotusAPIAddr string,
 	lotusAuthToken string,
-	registerPrvKey string,
+	registerPrivKey string,
 	registerAPIAddr string,
 	registerAuthToken string,
 	regionCode string,
 ) ([]byte, error) {
 	return json.Marshal(&initialisationRequestJson{
-		P2PPrvKey:         p2pPrvKey,
+		P2PPrivKey:        p2pPrivKey,
 		P2PPort:           p2pPort,
 		NetworkAddr:       networkAddr,
-		RootPrvKey:        rootPrvKey,
+		RootPrivKey:       rootPrivKey,
 		LotusAPIAddr:      lotusAPIAddr,
 		LotusAuthToken:    lotusAuthToken,
-		RegisterPrvKey:    registerPrvKey,
+		RegisterPrivKey:   registerPrivKey,
 		RegisterAPIAddr:   registerAPIAddr,
 		RegisterAuthToken: registerAuthToken,
 		RegionCode:        regionCode,
@@ -82,5 +82,5 @@ func DecodeInitialisationRequest(data []byte) (
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", "", "", err
 	}
-	return msg.P2PPrvKey, msg.P2PPort, msg.NetworkAddr, msg.RootPrvKey, msg.LotusAPIAddr, msg.LotusAuthToken, msg.RegisterPrvKey, msg.RegisterAPIAddr, msg.RegisterAuthToken, msg.RegionCode, nil
+	return msg.P2PPrivKey, msg.P2PPort, msg.NetworkAddr, msg.RootPrivKey, msg.LotusAPIAddr, msg.LotusAuthToken, msg.RegisterPrivKey, msg.RegisterAPIAddr, msg.RegisterAuthToken, msg.RegionCode, nil
 }
