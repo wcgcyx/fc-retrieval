@@ -25,15 +25,18 @@ import (
 
 // establishmentRequestJson represents an establishment.
 type establishmentRequestJson struct {
+	NodeID    string `json:"node_id"`
 	Challenge string `json:"challenge"`
 }
 
 // EncodeEstablishmentRequest is used to get the FCRMessage of establishmentRequestJson
 func EncodeEstablishmentRequest(
 	nonce uint64,
+	nodeID string,
 	challenge string,
 ) (*FCRReqMsg, error) {
 	body, err := json.Marshal(establishmentRequestJson{
+		NodeID:    nodeID,
 		Challenge: challenge,
 	})
 	if err != nil {
@@ -47,15 +50,16 @@ func EncodeEstablishmentRequest(
 func DecodeEstablishmentRequest(fcrMsg *FCRReqMsg) (
 	uint64,
 	string,
+	string,
 	error,
 ) {
 	if fcrMsg.Type() != EstablishmentRequestType {
-		return 0, "", fmt.Errorf("Message type mismatch, expect %v, got %v", EstablishmentRequestType, fcrMsg.Type())
+		return 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", EstablishmentRequestType, fcrMsg.Type())
 	}
 	msg := establishmentRequestJson{}
 	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return 0, "", err
+		return 0, "", "", err
 	}
-	return fcrMsg.Nonce(), msg.Challenge, nil
+	return fcrMsg.Nonce(), msg.NodeID, msg.Challenge, nil
 }

@@ -27,10 +27,9 @@ import (
 
 // standardOfferDiscoveryRequestJson represents the request to ask for offers.
 type standardOfferDiscoveryRequestJson struct {
-	Client            bool   `json:"client"`
 	NodeID            string `json:"node_id"`
 	PieceCID          string `json:"piece_cid"`
-	MaxOfferRequested int64  `json:"max_offer_requested"`
+	MaxOfferRequested uint32 `json:"max_offer_requested"`
 	AccountAddr       string `json:"account_addr"`
 	Voucher           string `json:"voucher"`
 }
@@ -38,15 +37,13 @@ type standardOfferDiscoveryRequestJson struct {
 // EncodeStandardOfferDiscoveryRequest is used to get the FCRMessage of standardOfferDiscoveryRequestJson.
 func EncodeStandardOfferDiscoveryRequest(
 	nonce uint64,
-	client bool,
 	NodeID string,
 	pieceCID *cid.ContentID,
-	maxOfferRequested int64,
+	maxOfferRequested uint32,
 	accountAddr string,
 	voucher string,
 ) (*FCRReqMsg, error) {
 	body, err := json.Marshal(standardOfferDiscoveryRequestJson{
-		Client:            client,
 		NodeID:            NodeID,
 		PieceCID:          pieceCID.ToString(),
 		MaxOfferRequested: maxOfferRequested,
@@ -63,25 +60,24 @@ func EncodeStandardOfferDiscoveryRequest(
 // It returns the nonce, nodeID, pieceCID, maxOfferRequested, account address and voucher.
 func DecodeStandardOfferDiscoveryRequest(fcrMsg *FCRReqMsg) (
 	uint64,
-	bool,
 	string,
 	*cid.ContentID,
-	int64,
+	uint32,
 	string,
 	string,
 	error,
 ) {
 	if fcrMsg.Type() != StandardOfferDiscoveryRequestType {
-		return 0, false, "", nil, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryRequestType, fcrMsg.Type())
+		return 0, "", nil, 0, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", StandardOfferDiscoveryRequestType, fcrMsg.Type())
 	}
 	msg := standardOfferDiscoveryRequestJson{}
 	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return 0, false, "", nil, 0, "", "", err
+		return 0, "", nil, 0, "", "", err
 	}
 	pieceCID, err := cid.NewContentID(msg.PieceCID)
 	if err != nil {
-		return 0, false, "", nil, 0, "", "", err
+		return 0, "", nil, 0, "", "", err
 	}
-	return fcrMsg.Nonce(), msg.Client, msg.NodeID, pieceCID, msg.MaxOfferRequested, msg.AccountAddr, msg.Voucher, nil
+	return fcrMsg.Nonce(), msg.NodeID, pieceCID, msg.MaxOfferRequested, msg.AccountAddr, msg.Voucher, nil
 }

@@ -19,7 +19,6 @@ package p2papi
  */
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -34,22 +33,30 @@ import (
 )
 
 // OfferQueryRequester sends an offer query request.
-func OfferQueryRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error) {
+func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	// Get parameters
 	if len(args) != 3 {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect length 3, got length %v", len(args))
+		logging.Error(err.Error())
+		return nil, err
 	}
-	nodeID, ok := args[0].(string)
+	targetID, ok := args[0].(string)
 	if !ok {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect a target ID in string")
+		logging.Error(err.Error())
+		return nil, err
 	}
 	pieceCID, ok := args[1].(*cid.ContentID)
 	if !ok {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect a piece CID in string")
+		logging.Error(err.Error())
+		return nil, err
 	}
-	maxOfferRequested, ok := args[2].(int64)
+	maxOfferRequested, ok := args[2].(uint32)
 	if !ok {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect a max offer requested in uint32")
+		logging.Error(err.Error())
+		return nil, err
 	}
 
 	// Get core structure
@@ -58,198 +65,233 @@ func OfferQueryRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRS
 	defer c.MsgSigningKeyLock.RUnlock()
 
 	// Generate random nonce
-	nonce := rand.Int63()
+	nonce := uint64(rand.Int63())
 
-	// Get GW Info
-	gwInfo, err := c.PeerMgr.GetGWInfo(nodeID)
-	if err != nil {
-		// Not found, try again
-		c.PeerMgr.SyncGW(nodeID)
-		gwInfo, err = c.PeerMgr.GetGWInfo(nodeID)
-		if err != nil {
-			// Not found, return error
-			return nil, err
-		}
+	// Check if the gateway is blocked/pending
+	rep := c.ReputationMgr.GetGWReputation(targetID)
+	if rep == nil {
+		c.ReputationMgr.AddGW(targetID)
+		rep = c.ReputationMgr.GetGWReputation(targetID)
 	}
-
-	// Check if this gw is blocked/pending
-	rep, err := c.ReputationMgr.GetGWReputation(nodeID)
-	if err != nil {
-		c.ReputationMgr.AddGW(nodeID)
-		rep, err = c.ReputationMgr.GetGWReputation(nodeID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if rep.Pending || rep.Blocked {
-		return nil, errors.New("This gateway is in pending/blocked")
+		err := fmt.Errorf("Gateway %v is in pending %v, blocked %v", targetID, rep.Pending, rep.Blocked)
+		logging.Error(err.Error())
+		return nil, err
+	}
+
+	// Get gateway information
+	gwInfo := c.PeerMgr.GetGWInfo(targetID)
+	if gwInfo == nil {
+		// Not found, try sync once
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil {
+			err := fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			logging.Error(err.Error())
+			return nil, err
+		}
 	}
 
 	// Pay the recipient
 	recipientAddr, err := fcrcrypto.GetWalletAddress(gwInfo.RootKey)
 	if err != nil {
+		err = fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, gwInfo.RootKey, err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
-	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(maxOfferRequested)))
+	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(int64(maxOfferRequested))))
 	voucher, create, topup, err := c.PaymentMgr.Pay(recipientAddr, 0, expected)
 	if err != nil {
+		err = fmt.Errorf("Error in paying gateway %v with expected amount of %v: %v", targetID, expected.String(), err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 	if create {
 		// Need to create
 		// First do an establishment to see if the target is alive.
-		_, err := c.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentType, nodeID)
+		_, err := c.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
 		if err != nil {
+			err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
+			logging.Error(err.Error())
 			return nil, err
 		}
 		err = c.PaymentMgr.Create(recipientAddr, c.Settings.TopupAmount)
 		if err != nil {
+			err = fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.Settings.TopupAmount.String(), err.Error())
+			logging.Error(err.Error())
 			return nil, err
 		}
 		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 0, expected)
 		if create || topup {
 			// This should never happen
-			return nil, errors.New("Error, needs to create/topup channel after just creation")
+			err = fmt.Errorf("Error in paying gateway %v, needs to create/topup after just creation", targetID)
+			logging.Error(err.Error())
+			return nil, err
 		}
 		if err != nil {
+			err = fmt.Errorf("Error in paying gateway %v with expected amount of %v: %v after just creation", targetID, expected.String(), err.Error())
+			logging.Error(err.Error())
 			return nil, err
 		}
 	} else if topup {
 		// Need to topup
 		err = c.PaymentMgr.Topup(recipientAddr, c.Settings.TopupAmount)
 		if err != nil {
+			err = fmt.Errorf("Error in topup a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.Settings.TopupAmount.String(), err.Error())
+			logging.Error(err.Error())
 			return nil, err
 		}
 		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 0, expected)
 		if create || topup {
 			// This should never happen
-			return nil, errors.New("Error, needs to create/topup channel after just topup")
+			err = fmt.Errorf("Error in paying gateway %v, needs to create/topup after just topup", targetID)
+			logging.Error(err.Error())
+			return nil, err
 		}
 		if err != nil {
+			err = fmt.Errorf("Error in paying gateway %v with expected amount of %v: %v after just topup", targetID, expected.String(), err.Error())
+			logging.Error(err.Error())
 			return nil, err
 		}
 	}
+
 	// Now we have got a voucher
 	// Encode request
-	request, err := fcrmessages.EncodeStandardOfferDiscoveryRequest(false, c.NodeID, pieceCID, nonce, maxOfferRequested, c.WalletAddr, voucher)
+	request, err := fcrmessages.EncodeStandardOfferDiscoveryRequest(nonce, c.NodeID, pieceCID, maxOfferRequested, c.WalletAddr, voucher)
 	if err != nil {
-		// This should never happen.
-		logging.Error("Error in encoding request with voucher created.")
-		return nil, err
-	}
-
-	// Sign request
-	err = request.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-	if err != nil {
-		// This should never happen.
-		logging.Error("Error in signing request with voucher created.")
+		c.PaymentMgr.RevertPay(recipientAddr, 0)
+		err = fmt.Errorf("Internal error in encoding response: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
 	// Write request
-	err = writer.Write(request, c.Settings.TCPInactivityTimeout)
+	err = writer.Write(request, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	if err != nil {
-		// Has error.
-		c.ReputationMgr.UpdateGWRecord(nodeID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(nodeID)
+		err = fmt.Errorf("Error in sending request to %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
+		// Pend GW
+		c.ReputationMgr.UpdateGWRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendGW(targetID)
 		return nil, err
 	}
 
 	// Get a response
 	response, err := reader.Read(c.Settings.TCPInactivityTimeout)
 	if err != nil {
-		// Has error.
-		c.ReputationMgr.UpdateGWRecord(nodeID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(nodeID)
+		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
+		// Pend GW
+		c.ReputationMgr.UpdateGWRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendGW(targetID)
 		return nil, err
 	}
 
 	// Verify the response
 	if response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
-		c.PeerMgr.SyncGW(nodeID)
-		gwInfo, err = c.PeerMgr.GetGWInfo(nodeID)
-		if err != nil {
-			logging.Error("Error in getting gateway information")
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
+		// Try update
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil || response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+			err = fmt.Errorf("Error in verifying response from %v: %v", targetID, err.Error())
+			logging.Error(err.Error())
+			// Pend GW
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
 			return nil, err
-		}
-		if response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
-			// Violation
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
-			return nil, errors.New("Message fail to verify")
 		}
 	}
 
-	// Decode the response
-	offers, nonceRecv, refundVoucher, err := fcrmessages.DecodeStandardOfferDiscoveryResponse(response)
-	if err != nil {
-		// Violation
-		c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(nodeID)
+	// Check response
+	if !response.ACK() {
+		err = fmt.Errorf("Reponse contains an error: %v", response.Error())
+		logging.Error(err.Error())
+		// Pend GW
+		c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendGW(targetID)
 		return nil, err
 	}
-	if nonceRecv != nonce {
-		// Nonce mismatch
-		// TODO: Warning?
-		c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponse.Copy(), 0)
+
+	// Decode response
+	nonceRecv, offers, refundVoucher, err := fcrmessages.DecodeStandardOfferDiscoveryResponse(response)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding response from %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
+		// Pend GW
+		c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendGW(targetID)
+		return nil, err
 	}
-	needToRefund := maxOfferRequested
+
+	if nonceRecv != nonce {
+		err = fmt.Errorf("Nonce mismatch: expected %v got %v", nonce, nonceRecv)
+		logging.Error(err.Error())
+		// Pend GW
+		c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendGW(targetID)
+		return nil, err
+	}
+
+	// Check payment and offer
+	remain := int64(maxOfferRequested)
 	for _, offer := range offers {
 		// Verify offer one by one
 		// Get offer signing key
 		pvdID := offer.GetProviderID()
-		pvdInfo, err := c.PeerMgr.GetPVDInfo(pvdID)
-		if err != nil {
+		pvdInfo := c.PeerMgr.GetPVDInfo(pvdID)
+		if err == nil {
 			// Not found, try again
-			c.PeerMgr.SyncPVD(nodeID)
-			pvdInfo, err = c.PeerMgr.GetPVDInfo(nodeID)
-			if err != nil {
+			pvdInfo = c.PeerMgr.SyncPVD(pvdID)
+			if pvdInfo == nil {
 				// Not found, return error
-				c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-				c.ReputationMgr.PendGW(nodeID)
+				err = fmt.Errorf("Error in obtaining information for provider %v", pvdID)
+				logging.Error(err.Error())
+				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+				c.ReputationMgr.PendGW(targetID)
 				return nil, err
 			}
 		}
 		// Verify sub cid.
 		if offer.GetSubCID().ToString() != pieceCID.ToString() {
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
-			return nil, fmt.Errorf("Offer does not contain correct cid, expect: %v, got: %v", pieceCID.ToString(), offer.GetSubCID().ToString())
+			err = fmt.Errorf("Received offer that doesn't contain requested cid, expect: %v, got: %v", pieceCID.ToString(), offer.GetSubCID().ToString())
+			logging.Error(err.Error())
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
+			return nil, err
 		}
 		// Verify offer signature
-		err = offer.Verify(pvdInfo.OfferSigningKey)
-		if err != nil {
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
+		if offer.Verify(pvdInfo.OfferSigningKey) != nil {
+			err = fmt.Errorf("Received offer fails to verify against signature of provider %v", pvdID)
+			logging.Error(err.Error())
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
 			return nil, err
 		}
 		// Verify offer merkle proof
-		err = offer.VerifyMerkleProof()
-		if err != nil {
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
+		if offer.VerifyMerkleProof() != nil {
+			err = fmt.Errorf("Received offer fails to verify merkle proof")
+			logging.Error(err.Error())
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
 			return nil, err
 		}
+
 		// Offer verified
-		needToRefund--
+		remain--
+		c.ReputationMgr.UpdateGWRecord(targetID, reputation.StandardOfferRetrieved.Copy(), 0)
 	}
 
-	if needToRefund > 0 {
+	if remain > 0 {
 		// Check refund
 		refunded, err := c.PaymentMgr.ReceiveRefund(recipientAddr, refundVoucher)
 		if err != nil {
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidRefund.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
 			return nil, err
 		}
-		expectedRefund := big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(needToRefund))
+		expectedRefund := big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(remain))
 		if refunded.Cmp(expectedRefund) < 0 {
 			// Refund is wrong, but we can still respond to client, no need to return error
-			c.ReputationMgr.UpdateGWRecord(nodeID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(nodeID)
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidRefund.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
 		}
 	}
 

@@ -99,3 +99,9 @@ var InvalidResponseAfterPayment = Record{
 	point:     -50,
 	violation: true,
 }
+
+var InvalidRefund = Record{
+	reason:    "Received an invalid refund",
+	point:     -50,
+	violation: true,
+}

@@ -31,8 +31,8 @@ func TestDHTOfferDiscoveryRequest(t *testing.T) {
 	mockNodeID := "mockID"
 	mockCID, err := cid.NewContentID("QmX5Rg8t9zh26JcaTk7VnDXqv5SHH2bT6AfeoTFLSsp4dK")
 	assert.Empty(t, err)
-	mockNumDHT := int64(10)
-	mockMaxOfferRequestedPerDHT := int64(10)
+	mockNumDHT := uint32(10)
+	mockMaxOfferRequestedPerDHT := uint32(10)
 	mockAccountAddr := "mockAddr"
 	mockVoucher := "mockVoucher"
 

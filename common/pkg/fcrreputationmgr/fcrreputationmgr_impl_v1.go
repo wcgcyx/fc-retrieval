@@ -19,7 +19,6 @@ package fcrreputationmgr
  */
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
@@ -142,44 +141,44 @@ func (mgr *FCRReputationMgrImplV1) RemovePVD(pvdID string) {
 	delete(mgr.blockedPVDS, pvdID)
 }
 
-func (mgr *FCRReputationMgrImplV1) GetGWReputation(gwID string) (*Reputation, error) {
+func (mgr *FCRReputationMgrImplV1) GetGWReputation(gwID string) *Reputation {
 	// Return a copy
 	mgr.gwsLock.RLock()
 	defer mgr.gwsLock.RUnlock()
 	rep, ok := mgr.gws[gwID]
 	if !ok {
-		return nil, errors.New("Not found")
+		return nil
 	}
 	return &Reputation{
 		NodeID:  rep.NodeID,
 		Score:   rep.Score,
 		Pending: rep.Pending,
 		Blocked: rep.Blocked,
-	}, nil
+	}
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPVDReputation(pvdID string) (*Reputation, error) {
+func (mgr *FCRReputationMgrImplV1) GetPVDReputation(pvdID string) *Reputation {
 	// Return a copy
 	mgr.pvdsLock.RLock()
 	defer mgr.pvdsLock.RUnlock()
 	rep, ok := mgr.pvds[pvdID]
 	if !ok {
-		return nil, errors.New("Not found")
+		return nil
 	}
 	return &Reputation{
 		NodeID:  rep.NodeID,
 		Score:   rep.Score,
 		Pending: rep.Pending,
 		Blocked: rep.Blocked,
-	}, nil
+	}
 }
 
-func (mgr *FCRReputationMgrImplV1) UpdateGWRecord(gwID string, record *reputation.Record, replica uint) error {
+func (mgr *FCRReputationMgrImplV1) UpdateGWRecord(gwID string, record *reputation.Record, replica uint) {
 	mgr.gwsLock.Lock()
 	defer mgr.gwsLock.Unlock()
 	rep, ok := mgr.gws[gwID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	for i := uint(0); i < replica+1; i++ {
 		rep.Score += record.Point()
@@ -188,15 +187,14 @@ func (mgr *FCRReputationMgrImplV1) UpdateGWRecord(gwID string, record *reputatio
 			mgr.gwViolations[gwID] = append([]reputation.Record{*record.Copy()}, mgr.gwViolations[gwID]...)
 		}
 	}
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) UpdatePVDRecord(pvdID string, record *reputation.Record, replica uint) error {
+func (mgr *FCRReputationMgrImplV1) UpdatePVDRecord(pvdID string, record *reputation.Record, replica uint) {
 	mgr.pvdsLock.Lock()
 	defer mgr.pvdsLock.Unlock()
 	rep, ok := mgr.pvds[pvdID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	for i := uint(0); i < replica+1; i++ {
 		rep.Score += record.Point()
@@ -205,221 +203,188 @@ func (mgr *FCRReputationMgrImplV1) UpdatePVDRecord(pvdID string, record *reputat
 			mgr.pvdViolations[pvdID] = append([]reputation.Record{*record.Copy()}, mgr.pvdViolations[pvdID]...)
 		}
 	}
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) PendGW(gwID string) error {
+func (mgr *FCRReputationMgrImplV1) PendGW(gwID string) {
 	mgr.gwsLock.Lock()
 	defer mgr.gwsLock.Unlock()
 	rep, ok := mgr.gws[gwID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Pending = true
 	mgr.pendingGWS[gwID] = true
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) PendPVD(pvdID string) error {
+func (mgr *FCRReputationMgrImplV1) PendPVD(pvdID string) {
 	mgr.pvdsLock.Lock()
 	defer mgr.pvdsLock.Unlock()
 	rep, ok := mgr.pvds[pvdID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Pending = true
 	mgr.pendingPVDS[pvdID] = true
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) ResumeGW(gwID string) error {
+func (mgr *FCRReputationMgrImplV1) ResumeGW(gwID string) {
 	mgr.gwsLock.Lock()
 	defer mgr.gwsLock.Unlock()
 	rep, ok := mgr.gws[gwID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Pending = false
 	delete(mgr.pendingGWS, gwID)
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) ResumePVD(pvdID string) error {
+func (mgr *FCRReputationMgrImplV1) ResumePVD(pvdID string) {
 	mgr.pvdsLock.Lock()
 	defer mgr.pvdsLock.Unlock()
 	rep, ok := mgr.pvds[pvdID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Pending = false
 	delete(mgr.pendingPVDS, pvdID)
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPendingGWS() ([]string, error) {
+func (mgr *FCRReputationMgrImplV1) GetPendingGWS() []string {
 	mgr.gwsLock.RLock()
 	defer mgr.gwsLock.RUnlock()
 	res := make([]string, 0)
 	for key := range mgr.pendingGWS {
 		res = append(res, key)
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPendingPVDS() ([]string, error) {
+func (mgr *FCRReputationMgrImplV1) GetPendingPVDS() []string {
 	mgr.pvdsLock.RLock()
 	defer mgr.pvdsLock.RUnlock()
 	res := make([]string, 0)
 	for key := range mgr.pendingPVDS {
 		res = append(res, key)
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) BlockGW(gwID string) error {
+func (mgr *FCRReputationMgrImplV1) BlockGW(gwID string) {
 	mgr.gwsLock.Lock()
 	defer mgr.gwsLock.Unlock()
 	rep, ok := mgr.gws[gwID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Blocked = true
 	mgr.blockedGWS[gwID] = true
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) BlockPVD(pvdID string) error {
+func (mgr *FCRReputationMgrImplV1) BlockPVD(pvdID string) {
 	mgr.pvdsLock.Lock()
 	defer mgr.pvdsLock.Unlock()
 	rep, ok := mgr.pvds[pvdID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Blocked = true
 	mgr.blockedPVDS[pvdID] = true
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) UnBlockGW(gwID string) error {
+func (mgr *FCRReputationMgrImplV1) UnBlockGW(gwID string) {
 	mgr.gwsLock.Lock()
 	defer mgr.gwsLock.Unlock()
 	rep, ok := mgr.gws[gwID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Blocked = false
 	delete(mgr.blockedGWS, gwID)
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) UnBlockPVD(pvdID string) error {
+func (mgr *FCRReputationMgrImplV1) UnBlockPVD(pvdID string) {
 	mgr.pvdsLock.Lock()
 	defer mgr.pvdsLock.Unlock()
 	rep, ok := mgr.pvds[pvdID]
 	if !ok {
-		return errors.New("Not found")
+		return
 	}
 	rep.Blocked = false
 	delete(mgr.blockedPVDS, pvdID)
-	return nil
 }
 
-func (mgr *FCRReputationMgrImplV1) GetBlockedGWS() ([]string, error) {
+func (mgr *FCRReputationMgrImplV1) GetBlockedGWS() []string {
 	mgr.gwsLock.RLock()
 	defer mgr.gwsLock.RUnlock()
 	res := make([]string, 0)
 	for key := range mgr.blockedGWS {
 		res = append(res, key)
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetBlockedPVDS() ([]string, error) {
+func (mgr *FCRReputationMgrImplV1) GetBlockedPVDS() []string {
 	mgr.pvdsLock.RLock()
 	defer mgr.pvdsLock.RUnlock()
 	res := make([]string, 0)
 	for key := range mgr.blockedPVDS {
 		res = append(res, key)
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetGWViolations(gwID string, from uint, to uint) ([]reputation.Record, error) {
+func (mgr *FCRReputationMgrImplV1) GetGWViolations(gwID string, from uint, to uint) []reputation.Record {
 	mgr.gwsLock.RLock()
 	defer mgr.gwsLock.RUnlock()
+	res := make([]reputation.Record, 0)
 	violations, ok := mgr.gwViolations[gwID]
-	if !ok {
-		return nil, errors.New("Not found")
-	}
-	if from > to {
-		return nil, errors.New("Invalid input from > to")
-	}
-	res := make([]reputation.Record, 0)
-	if from >= uint(len(violations)) {
-		return res, nil
+	if !ok || from > to || from > uint(len(violations)) {
+		return res
 	}
 	for i := from; i < to && i < uint(len(violations)); i++ {
 		res = append(res, *violations[i].Copy())
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPVDViolations(pvdID string, from uint, to uint) ([]reputation.Record, error) {
+func (mgr *FCRReputationMgrImplV1) GetPVDViolations(pvdID string, from uint, to uint) []reputation.Record {
 	mgr.pvdsLock.RLock()
 	defer mgr.pvdsLock.RUnlock()
-	violations, ok := mgr.pvdViolations[pvdID]
-	if !ok {
-		return nil, errors.New("Not found")
-	}
-	if from > to {
-		return nil, errors.New("Invalid input from > to")
-	}
 	res := make([]reputation.Record, 0)
-	if from >= uint(len(violations)) {
-		return res, nil
+	violations, ok := mgr.pvdViolations[pvdID]
+	if !ok || from > to || from > uint(len(violations)) {
+		return res
 	}
 	for i := from; i < to && i < uint(len(violations)); i++ {
 		res = append(res, *violations[i].Copy())
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetGWHistory(gwID string, from uint, to uint) ([]reputation.Record, error) {
+func (mgr *FCRReputationMgrImplV1) GetGWHistory(gwID string, from uint, to uint) []reputation.Record {
 	mgr.gwsLock.RLock()
 	defer mgr.gwsLock.RUnlock()
-	history, ok := mgr.gwHistory[gwID]
-	if !ok {
-		return nil, errors.New("Not found")
-	}
-	if from > to {
-		return nil, errors.New("Invalid input from > to")
-	}
 	res := make([]reputation.Record, 0)
-	if from >= uint(len(history)) {
-		return res, nil
+	history, ok := mgr.gwHistory[gwID]
+	if !ok || from > to || from > uint(len(history)) {
+		return res
 	}
 	for i := from; i < to && i < uint(len(history)); i++ {
 		res = append(res, *history[i].Copy())
 	}
-	return res, nil
+	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPVDHistory(pvdID string, from uint, to uint) ([]reputation.Record, error) {
+func (mgr *FCRReputationMgrImplV1) GetPVDHistory(pvdID string, from uint, to uint) []reputation.Record {
 	mgr.pvdsLock.RLock()
 	defer mgr.pvdsLock.RUnlock()
-	history, ok := mgr.pvdHistory[pvdID]
-	if !ok {
-		return nil, errors.New("Not found")
-	}
-	if from > to {
-		return nil, errors.New("Invalid input from > to")
-	}
 	res := make([]reputation.Record, 0)
-	if from >= uint(len(history)) {
-		return res, nil
+	history, ok := mgr.pvdHistory[pvdID]
+	if !ok || from > to || from > uint(len(history)) {
+		return res
 	}
 	for i := from; i < to && i < uint(len(history)); i++ {
 		res = append(res, *history[i].Copy())
 	}
-	return res, nil
+	return res
 }

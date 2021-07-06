@@ -47,64 +47,64 @@ type FCRReputationMgr interface {
 	RemovePVD(pvdID string)
 
 	// GetGWReputation gets the reputation of a given gateway.
-	GetGWReputation(gwID string) (*Reputation, error)
+	GetGWReputation(gwID string) *Reputation
 
 	// GetPVDReputation gets the reputation of a given provider.
-	GetPVDReputation(pvdID string) (*Reputation, error)
+	GetPVDReputation(pvdID string) *Reputation
 
 	// UpdateGWRecord updates the gateway's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
-	UpdateGWRecord(gwID string, record *reputation.Record, replica uint) error
+	UpdateGWRecord(gwID string, record *reputation.Record, replica uint)
 
 	// UpdatePVDRecord updates the provider's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
-	UpdatePVDRecord(pvdID string, record *reputation.Record, replica uint) error
+	UpdatePVDRecord(pvdID string, record *reputation.Record, replica uint)
 
 	// PendGW puts a given gateway into pending.
-	PendGW(gwID string) error
+	PendGW(gwID string)
 
 	// PendPVD puts a given provider into pending.
-	PendPVD(pvdID string) error
+	PendPVD(pvdID string)
 
 	// ResumeGW puts a given gateway out of pending.
-	ResumeGW(gwID string) error
+	ResumeGW(gwID string)
 
 	// ResumePVD puts a provider out of pending.
-	ResumePVD(pvdID string) error
+	ResumePVD(pvdID string)
 
 	// GetPendingGWS gets a list of gateways currently in pending.
-	GetPendingGWS() ([]string, error)
+	GetPendingGWS() []string
 
 	// GetPendingPVDS gets a list of providers currently in pending.
-	GetPendingPVDS() ([]string, error)
+	GetPendingPVDS() []string
 
 	// BlockGW blocks a gateway.
-	BlockGW(gwID string) error
+	BlockGW(gwID string)
 
 	// BlockPVD blocks a provider.
-	BlockPVD(pvdID string) error
+	BlockPVD(pvdID string)
 
 	// UnBlockGW unblocks a gateway.
-	UnBlockGW(gwID string) error
+	UnBlockGW(gwID string)
 
 	// UnBlockPVD unblocks a provider.
-	UnBlockPVD(pvdID string) error
+	UnBlockPVD(pvdID string)
 
 	// GetBlockedGWS gets a list of blocked gateways.
-	GetBlockedGWS() ([]string, error)
+	GetBlockedGWS() []string
 
 	// GetBlockedPVDS gets a list of blocked providers.
-	GetBlockedPVDS() ([]string, error)
+	GetBlockedPVDS() []string
 
 	// GetGWViolations gets a list of violations from given index to given index for a given gateway.
-	GetGWViolations(gwID string, from uint, to uint) ([]reputation.Record, error)
+	GetGWViolations(gwID string, from uint, to uint) []reputation.Record
 
 	// GetPVDViolations gets a list of violations from given index to given index for a given provider.
-	GetPVDViolations(pvdID string, from uint, to uint) ([]reputation.Record, error)
+	GetPVDViolations(pvdID string, from uint, to uint) []reputation.Record
 
 	// GetGWHistory gets a list of history from given index to given index for a given gateway.
-	GetGWHistory(gwID string, from uint, to uint) ([]reputation.Record, error)
+	GetGWHistory(gwID string, from uint, to uint) []reputation.Record
 
 	// GetPVDHistory gets a list of history from given index to given index for a given provider.
-	GetPVDHistory(pvdID string, from uint, to uint) ([]reputation.Record, error)
+	GetPVDHistory(pvdID string, from uint, to uint) []reputation.Record
 }
 
 // Reputation represents the reputation of a peer in the system.

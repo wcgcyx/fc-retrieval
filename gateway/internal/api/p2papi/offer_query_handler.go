@@ -31,129 +31,125 @@ import (
 )
 
 // OfferQueryHandler handles standard offer query.
-func OfferQueryHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, request *fcrmessages.FCRMessage) error {
+func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()
 	defer c.MsgSigningKeyLock.RUnlock()
 
-	// Response
-	var response *fcrmessages.FCRMessage
-
 	// Message decoding
-	client, nodeID, pieceCID, nonce, maxOfferRequested, accountAddr, voucher, err := fcrmessages.DecodeStandardOfferDiscoveryRequest(request)
+	nonce, senderID, pieceCID, maxOfferRequested, accountAddr, voucher, err := fcrmessages.DecodeStandardOfferDiscoveryRequest(request)
 	if err != nil {
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in decoding payload: %v", err.Error()))
-		response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
+		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
-	var verify bool
-	if client {
-		verify = request.VerifyByID(nodeID) == nil
-	} else {
-		// Get GW Info
-		gwInfo := c.PeerMgr.GetGWInfo(nodeID)
+	// Verify signature
+	if request.VerifyByID(senderID) != nil {
+		// Verify by signing key
+		gwInfo := c.PeerMgr.GetGWInfo(senderID)
 		if gwInfo == nil {
-			// Not found, try again
-			gwInfo = c.PeerMgr.SyncGW(nodeID)
-			if err != nil {
-				// Not found, return error
-				response, _ = fcrmessages.EncodeACK(false, nonce, "Error in finding gateway infomation")
-				response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-				return writer.Write(response, c.Settings.TCPInactivityTimeout)
+			// Not found, try sync once
+			gwInfo = c.PeerMgr.SyncGW(senderID)
+			if gwInfo == nil {
+				err = fmt.Errorf("Error in obtaining information for gateway %v", senderID)
+				logging.Error(err.Error())
+				return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 			}
 		}
-		if gwInfo == nil {
-			
-		}
-		verify = request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) == nil
-		if !verify {
-			// Try again
-			c.PeerMgr.SyncGW(nodeID)
-			gwInfo, err = c.PeerMgr.GetGWInfo(nodeID)
-			if err != nil {
-				// Not found, return error
-				response, _ = fcrmessages.EncodeACK(false, nonce, "Error in finding gateway infomation")
-				response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-				return writer.Write(response, c.Settings.TCPInactivityTimeout)
+		if request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+			// Try update
+			gwInfo = c.PeerMgr.SyncGW(senderID)
+			if gwInfo == nil || request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+				err = fmt.Errorf("Error in verifying request from gateway %v: %v", senderID, err.Error())
+				logging.Error(err.Error())
+				return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 			}
-			verify = request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) == nil
 		}
-	}
-	if !verify {
-		// Message fails to verify
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in verifying msg"))
-		response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
 	}
 
 	// Check payment
+	refundVoucher := ""
 	received, lane, err := c.PaymentMgr.Receive(accountAddr, voucher)
-	if lane != 0 {
-		logging.Warn("Payment not in correct lane, should be 0 got %v", lane)
+	if err != nil {
+		err = fmt.Errorf("Error in receiving voucher %v:", err.Error())
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
-	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(maxOfferRequested)))
+	if lane != 0 {
+		err = fmt.Errorf("Not correct lane received expect 0 got %v:", lane)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+	}
+	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(int64(maxOfferRequested))))
 	if expected.Cmp(received) < 0 {
 		// Short payment
-		voucher, err := c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, c.Settings.SearchPrice))
-		if err != nil {
-			// This should never happen
-			logging.Error("Error in refunding %v", err.Error())
+		// Refund money
+		if received.Cmp(c.Settings.SearchPrice) <= 0 {
+			// No refund
+		} else {
+			var ierr error
+			refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, c.Settings.SearchPrice))
+			if ierr != nil {
+				// This should never happen
+				logging.Error("Error in refunding: %v", ierr.Error())
+			}
 		}
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Short payment received: %v, expected: %v, refund voucher: %v", received.String(), expected.String(), voucher))
-		response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
+		err = fmt.Errorf("Short payment received, expect %v got %v, refund voucher %v", expected.String(), received.String(), refundVoucher)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
 	// Payment is fine, search.
-	refundVoucher := ""
 	offers := c.OfferMgr.GetOffers(pieceCID)
 
 	// Generating sub CID offers
 	res := make([]cidoffer.SubCIDOffer, 0)
-	toRefund := maxOfferRequested
+	remain := int64(maxOfferRequested)
 	for _, offer := range offers {
-		if toRefund == 0 {
+		if remain == 0 {
 			break
 		}
 		subOffer, err := offer.GenerateSubCIDOffer(pieceCID)
 		if err != nil {
 			// Internal error in generating sub offers
-			refundVoucher, err = c.PaymentMgr.Refund(accountAddr, lane, received)
-			if err != nil {
+			var ierr error
+			refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, received)
+			if ierr != nil {
 				// This should never happen
-				logging.Error("Error in refunding %v", err.Error())
+				logging.Error("Error in refunding: %v", ierr.Error())
 			}
-			response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Internal error, refund voucher: %v", refundVoucher))
-			response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-			return writer.Write(response, c.Settings.TCPInactivityTimeout)
+			err = fmt.Errorf("Internal error in generating sub cid offer: %v, refund voucher %v", err.Error(), refundVoucher)
+			logging.Error(err.Error())
+			return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 		}
 		res = append(res, *subOffer)
-		toRefund--
+		remain--
 	}
-	if toRefund > 0 {
-		refundVoucher, err = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(toRefund))))
-		if err != nil {
+	if remain > 0 {
+		var ierr error
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(remain))))
+		if ierr != nil {
 			// This should never happen
-			logging.Error("Error in refunding %v", err.Error())
+			logging.Error("Error in refunding %v", ierr.Error())
 		}
 	}
 
-	response, err = fcrmessages.EncodeStandardOfferDiscoveryResponse(res, nonce, refundVoucher)
+	// Respond
+	response, err := fcrmessages.EncodeStandardOfferDiscoveryResponse(nonce, res, refundVoucher)
 	if err != nil {
 		// Internal error in encoding
-		refundVoucher, err = c.PaymentMgr.Refund(accountAddr, lane, received)
-		if err != nil {
+		var ierr error
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, received)
+		if ierr != nil {
 			// This should never happen
-			logging.Error("Error in refunding %v", err.Error())
+			logging.Error("Error in refunding %v", ierr.Error())
 		}
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Internal error, refund voucher: %v", refundVoucher))
-	}
-	err = response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-	if err != nil {
-		logging.Error("Error in signing response: %v", err.Error())
+		err = fmt.Errorf("Internal error in encoding response: %v, refund voucher %v", err.Error(), refundVoucher)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
-	return writer.Write(response, c.Settings.TCPInactivityTimeout)
+	return writer.Write(response, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 }

@@ -20,7 +20,7 @@ package p2papi
 
 import (
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"math/rand"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
@@ -30,14 +30,18 @@ import (
 )
 
 // EstablishmentRequester sends an establishment request.
-func EstablishmentRequester(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, args ...interface{}) (*fcrmessages.FCRMessage, error) {
+func EstablishmentRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	// Get parameters
 	if len(args) != 1 {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect length 1, got length %v", len(args))
+		logging.Error(err.Error())
+		return nil, err
 	}
-	nodeID, ok := args[0].(string)
+	targetID, ok := args[0].(string)
 	if !ok {
-		return nil, errors.New("wrong arguments")
+		err := fmt.Errorf("Wrong arguments, expect a target ID in string")
+		logging.Error(err.Error())
+		return nil, err
 	}
 
 	// Get core structure
@@ -45,67 +49,82 @@ func EstablishmentRequester(reader fcrserver.FCRServerReader, writer fcrserver.F
 	c.MsgSigningKeyLock.RLock()
 	defer c.MsgSigningKeyLock.RUnlock()
 
+	// Generate random nonce
+	nonce := uint64(rand.Int63())
+
 	challengeBytes := make([]byte, 32)
 	rand.Read(challengeBytes)
 	challenge := hex.EncodeToString(challengeBytes)
-	request, err := fcrmessages.EncodeEstablishmentRequest(challenge)
+	request, err := fcrmessages.EncodeEstablishmentRequest(nonce, c.NodeID, challenge)
 	if err != nil {
-		return nil, err
-	}
-
-	// Sign request
-	err = request.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-	if err != nil {
-		// This should never happen.
-		logging.Error("Error in signing request.")
+		err = fmt.Errorf("Internal error in encoding response: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
 	// Write request
-	err = writer.Write(request, c.Settings.TCPInactivityTimeout)
+	err = writer.Write(request, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	if err != nil {
-		logging.Error("Error in sending request.")
+		err = fmt.Errorf("Error in sending request to %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
 	// Get a response
 	response, err := reader.Read(c.Settings.TCPInactivityTimeout)
 	if err != nil {
-		logging.Error("Error in reading response.")
+		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
 	// Verify the response
-	gwInfo, err := c.PeerMgr.GetGWInfo(nodeID)
-	if err != nil {
+	gwInfo := c.PeerMgr.GetGWInfo(targetID)
+	if gwInfo == nil {
 		// Not found, try sync once
-		c.PeerMgr.SyncGW(nodeID)
-		gwInfo, err = c.PeerMgr.GetGWInfo(nodeID)
-		if err != nil {
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil {
+			err = fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			logging.Error(err.Error())
 			return nil, err
 		}
 	}
-	verify := request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) == nil
-	if !verify {
-		// Sync the pvd once
-		c.PeerMgr.SyncGW(nodeID)
-		gwInfo, err = c.PeerMgr.GetGWInfo(nodeID)
-		if err != nil {
+	if response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+		// Try update
+		gwInfo = c.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil || response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+			err = fmt.Errorf("Error in verifying response from %v: %v", targetID, err.Error())
+			logging.Error(err.Error())
 			return nil, err
 		}
-		verify = request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) == nil
-	}
-	if !verify {
-		return nil, errors.New("Fail to verify")
 	}
 
-	ack, _, challengeRecv, err := fcrmessages.DecodeACK(response)
-	if err != nil {
+	// Check response
+	if !response.ACK() {
+		err = fmt.Errorf("Reponse contains an error: %v", response.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
-	if !ack || challenge != challengeRecv {
-		return nil, errors.New("Fail to verify")
+
+	// Decode response
+	nonceRecv, challengeRecv, err := fcrmessages.DecodeEstablishmentResponse(response)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding response from %v: %v", targetID, err.Error())
+		logging.Error(err.Error())
+		return nil, err
 	}
 
-	return nil, nil
+	if nonceRecv != nonce {
+		err = fmt.Errorf("Nonce mismatch: expected %v got %v", nonce, nonceRecv)
+		logging.Error(err.Error())
+		return nil, err
+	}
+
+	if challengeRecv != challenge {
+		err = fmt.Errorf("Challenge mismatch: expected %v got %v", challenge, challengeRecv)
+		logging.Error(err.Error())
+		return nil, err
+	}
+
+	return response, nil
 }

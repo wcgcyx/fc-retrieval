@@ -28,33 +28,51 @@ import (
 )
 
 // EstablishmentHandler handles dht offer establishment.
-func EstablishmentHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, request *fcrmessages.FCRMessage) error {
+func EstablishmentHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()
 	defer c.MsgSigningKeyLock.RUnlock()
 
-	// Response
-	var response *fcrmessages.FCRMessage
-
 	// Message decoding
-	challenge, err := fcrmessages.DecodeEstablishmentRequest(request)
+	nonce, senderID, challenge, err := fcrmessages.DecodeEstablishmentRequest(request)
 	if err != nil {
-		response, _ = fcrmessages.EncodeACK(false, 0, fmt.Sprintf("Error in decoding payload: %v", err.Error()))
-		response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
+		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+	}
+
+	// Verify signature
+	if request.VerifyByID(senderID) != nil {
+		// Verify by signing key
+		gwInfo := c.PeerMgr.GetGWInfo(senderID)
+		if gwInfo == nil {
+			// Not found, try sync once
+			gwInfo = c.PeerMgr.SyncGW(senderID)
+			if gwInfo == nil {
+				err = fmt.Errorf("Error in obtaining information for gateway %v", senderID)
+				logging.Error(err.Error())
+				return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+			}
+		}
+		if request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+			// Try update
+			gwInfo = c.PeerMgr.SyncGW(senderID)
+			if gwInfo == nil || request.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+				err = fmt.Errorf("Error in verifying request from gateway %v: %v", senderID, err.Error())
+				logging.Error(err.Error())
+				return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+			}
+		}
 	}
 
 	// Respond
-	response, err = fcrmessages.EncodeACK(false, 0, challenge)
+	response, err := fcrmessages.EncodeEstablishmentResponse(nonce, challenge)
 	if err != nil {
-		response, _ = fcrmessages.EncodeACK(false, 0, fmt.Sprintf("Internal error in encoding response: %v", err.Error()))
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
-	}
-	err = response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-	if err != nil {
-		logging.Error("Error in signing response: %v", err.Error())
+		err = fmt.Errorf("Internal error in encoding response: %v", err.Error())
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
-	return writer.Write(response, c.Settings.TCPInactivityTimeout)
+	return writer.Write(response, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 }

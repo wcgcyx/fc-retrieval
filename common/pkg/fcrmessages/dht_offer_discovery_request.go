@@ -29,8 +29,8 @@ import (
 type dhtOfferDiscoveryRequestJson struct {
 	NodeID                  string `json:"node_id"`
 	PieceCID                string `json:"piece_cid"`
-	NumDHT                  int64  `json:"num_dht"`
-	MaxOfferRequestedPerDHT int64  `json:"max_offer_requested_per_dht"`
+	NumDHT                  uint32 `json:"num_dht"`
+	MaxOfferRequestedPerDHT uint32 `json:"max_offer_requested_per_dht"`
 	AccountAddr             string `json:"account_addr"`
 	Voucher                 string `json:"voucher"`
 }
@@ -40,8 +40,8 @@ func EncodeDHTOfferDiscoveryRequest(
 	nonce uint64,
 	NodeID string,
 	pieceCID *cid.ContentID,
-	numDHT int64,
-	maxOfferRequestedPerDHT int64,
+	numDHT uint32,
+	maxOfferRequestedPerDHT uint32,
 	accountAddr string,
 	voucher string,
 ) (*FCRReqMsg, error) {
@@ -65,8 +65,8 @@ func DecodeDHTOfferDiscoveryRequest(fcrMsg *FCRReqMsg) (
 	uint64,
 	string,
 	*cid.ContentID,
-	int64,
-	int64,
+	uint32,
+	uint32,
 	string,
 	string,
 	error,

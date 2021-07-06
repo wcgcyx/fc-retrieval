@@ -23,64 +23,55 @@ import (
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // OfferPublishHandler handles offer publication.
-func OfferPublishHandler(reader fcrserver.FCRServerReader, writer fcrserver.FCRServerWriter, request *fcrmessages.FCRMessage) error {
+func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
 	// Get core response
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()
 	defer c.MsgSigningKeyLock.RUnlock()
 
-	// Response
-	var response *fcrmessages.FCRMessage
-
-	nodeID, nonce, offer, err := fcrmessages.DecodeOfferPublishRequest(request)
+	// Message decoding
+	nonce, senderID, offer, err := fcrmessages.DecodeOfferPublishRequest(request)
 	if err != nil {
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in decoding payload: %v", err.Error()))
-		response.Sign(c.MsgSigningKey, c.MsgSigningKeyVer)
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
+		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
-	// First verify the message
-	pvdInfo, err := c.PeerMgr.GetPVDInfo(nodeID)
-	if err != nil {
+	// Verify the signature
+	pvdInfo := c.PeerMgr.GetPVDInfo(senderID)
+	if pvdInfo == nil {
 		// Not found, try sync once
-		c.PeerMgr.SyncPVD(nodeID)
-		pvdInfo, err = c.PeerMgr.GetPVDInfo(nodeID)
-		if err != nil {
-			response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in getting provider info: %v", err.Error()))
-			return writer.Write(response, c.Settings.TCPInactivityTimeout)
+		pvdInfo = c.PeerMgr.SyncPVD(senderID)
+		if pvdInfo == nil {
+			err = fmt.Errorf("Error in obtaining information for provider %v", senderID)
+			logging.Error(err.Error())
+			return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 		}
 	}
-	verify := request.Verify(pvdInfo.MsgSigningKey, pvdInfo.MsgSigningKeyVer) == nil
-	if !verify {
-		// Sync the pvd once
-		c.PeerMgr.SyncPVD(nodeID)
-		pvdInfo, err = c.PeerMgr.GetPVDInfo(nodeID)
-		if err != nil {
-			response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in getting provider information: %v", err.Error()))
-			return writer.Write(response, c.Settings.TCPInactivityTimeout)
+	if request.Verify(pvdInfo.MsgSigningKey, pvdInfo.MsgSigningKeyVer) != nil {
+		// Try update
+		pvdInfo = c.PeerMgr.SyncGW(senderID)
+		if pvdInfo == nil || request.Verify(pvdInfo.MsgSigningKey, pvdInfo.MsgSigningKeyVer) != nil {
+			err = fmt.Errorf("Error in verifying request from provider %v: %v", senderID, err.Error())
+			logging.Error(err.Error())
+			return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 		}
-		verify = request.Verify(pvdInfo.MsgSigningKey, pvdInfo.MsgSigningKeyVer) == nil
-	}
-	if !verify {
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in verifying msg: %v", err.Error()))
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
 	}
 
 	// Check offer signature
-	verify = offer.Verify(pvdInfo.OfferSigningKey) == nil
-	if !verify {
-		response, _ = fcrmessages.EncodeACK(false, nonce, fmt.Sprintf("Error in verifying offer: %v", err.Error()))
-		return writer.Write(response, c.Settings.TCPInactivityTimeout)
+	if offer.Verify(pvdInfo.OfferSigningKey) != nil {
+		err = fmt.Errorf("Received offer fails to verify against signature of provider %v", senderID)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
 	// Offer verified, add to storage
 	// TODO: c.StoreFullOffer
 	c.OfferMgr.AddOffer(offer)
-
-	response, _ = fcrmessages.EncodeACK(true, nonce, "Offer added")
-	return writer.Write(response, c.Settings.TCPInactivityTimeout)
+	return writer.Write(fcrmessages.CreateFCRACKMsg(nonce, []byte{0}), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 }
