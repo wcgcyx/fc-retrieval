@@ -122,7 +122,7 @@ func DHTOfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrser
 		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
-	// TODO: Cuncurrently
+	// TODO: Concurrency
 	supposed := big.NewInt(0).Set(c.Settings.SearchPrice)
 	contacted := make(map[string]*fcrmessages.FCRACKMsg)
 	for _, gw := range gws {

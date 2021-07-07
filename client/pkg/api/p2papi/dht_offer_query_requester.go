@@ -143,7 +143,7 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Get a response
-	response, err := reader.Read(c.TCPInactivityTimeout)
+	response, err := reader.Read(c.LongTCPInactivityTimeout)
 	if err != nil {
 		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
@@ -235,7 +235,7 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 			return nil, err
 		}
 		// Decode response
-		_, offers, _, err := fcrmessages.DecodeStandardOfferDiscoveryResponse(response)
+		_, offers, _, err := fcrmessages.DecodeStandardOfferDiscoveryResponse(&resp)
 		if err != nil {
 			err = fmt.Errorf("Error in decoding sub response from %v: %v", subID, err.Error())
 			logging.Error(err.Error())

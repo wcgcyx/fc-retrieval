@@ -76,7 +76,7 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Send offer
-	// TODO, concurrent and memory
+	// TODO, concurrency and memory
 	gws := c.PeerMgr.ListGWS()
 	for _, gw := range gws {
 		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, offer)

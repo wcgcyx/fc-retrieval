@@ -28,6 +28,7 @@ import (
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/wcgcyx/fc-retrieval/client/pkg/api/p2papi"
 	"github.com/wcgcyx/fc-retrieval/client/pkg/core"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrlotusmgr"
@@ -178,10 +179,78 @@ func (c *FilecoinRetrievalClient) ListActive() ([]string, error) {
 
 // StandardDiscovery performs a standard discovery.
 func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string, toContact map[string]uint32) ([]cidoffer.SubCIDOffer, error) {
-	return nil, nil
+	pieceCID, err := cid.NewContentID(cidStr)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding cid: %v: %v", cidStr, err.Error())
+		logging.Error(err.Error())
+		return nil, err
+	}
+	temp := make(map[string]*cidoffer.SubCIDOffer, 0)
+	// TODO, Concurrency
+	for targetID, maxOfferRequested := range toContact {
+		// Get gw info
+		gwInfo := c.core.PeerMgr.GetGWInfo(targetID)
+		if gwInfo == nil {
+			// Not found, try sync once
+			gwInfo = c.core.PeerMgr.SyncGW(targetID)
+			if gwInfo == nil {
+				logging.Error("Error in obtaining information for gateway %v", targetID)
+				continue
+			}
+		}
+		response, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.StandardOfferDiscoveryRequestType, targetID, pieceCID, maxOfferRequested)
+		if err != nil {
+			logging.Error("Error in requesting gateway %v for offers: %v", targetID, err.Error())
+			continue
+		}
+		_, offers, _, _ := fcrmessages.DecodeStandardOfferDiscoveryResponse(response)
+		for _, offer := range offers {
+			temp[offer.GetMessageDigest()] = &offer
+		}
+	}
+	res := make([]cidoffer.SubCIDOffer, 0)
+	for _, offer := range temp {
+		res = append(res, *offer)
+	}
+	return res, nil
 }
 
 // DHTDiscovery performs a DHT discovery.
 func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string, numDHT uint32, maxOfferRequestedPerDHT uint32) ([]cidoffer.SubCIDOffer, error) {
-	return nil, nil
+	pieceCID, err := cid.NewContentID(cidStr)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding cid: %v: %v", cidStr, err.Error())
+		logging.Error(err.Error())
+		return nil, err
+	}
+	// Get gw info
+	gwInfo := c.core.PeerMgr.GetGWInfo(targetID)
+	if gwInfo == nil {
+		// Not found, try sync once
+		gwInfo = c.core.PeerMgr.SyncGW(targetID)
+		if gwInfo == nil {
+			err = fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			logging.Error(err.Error())
+			return nil, err
+		}
+	}
+	temp := make(map[string]*cidoffer.SubCIDOffer, 0)
+	response, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.DHTOfferDiscoveryRequestType, targetID, pieceCID, numDHT, maxOfferRequestedPerDHT)
+	if err != nil {
+		err = fmt.Errorf("Error in requesting gateway %v for offers in DHT: %v", targetID, err.Error())
+		logging.Error(err.Error())
+		return nil, err
+	}
+	_, contacted, _, _ := fcrmessages.DecodeDHTOfferDiscoveryResponse(response)
+	for _, resp := range contacted {
+		_, offers, _, _ := fcrmessages.DecodeStandardOfferDiscoveryResponse(&resp)
+		for _, offer := range offers {
+			temp[offer.GetMessageDigest()] = &offer
+		}
+	}
+	res := make([]cidoffer.SubCIDOffer, 0)
+	for _, offer := range temp {
+		res = append(res, *offer)
+	}
+	return res, nil
 }
