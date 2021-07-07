@@ -74,7 +74,6 @@ func NewCIDOffer(providerID string, cids []cid.ContentID, price *big.Int, expiry
 	if len(cids) < 1 {
 		return nil, errors.New("Group CID Offer: need to provide at least 1 CID")
 	}
-	// TODO: Check that the expiry is in the future (are there scenarios where an expired offer should be loadable?)
 	var c = CIDOffer{
 		providerID: providerID,
 		cids:       cids,

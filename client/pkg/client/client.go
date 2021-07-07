@@ -141,6 +141,14 @@ func NewFilecoinRetrievalClient(
 		return nil, err
 	}
 
+	// At start-up, updating all active gateways and providers
+	for _, gwID := range c.ReputationMgr.ListGWS() {
+		c.PeerMgr.SyncGW(gwID)
+	}
+	for _, pvdID := range c.ReputationMgr.ListPVDS() {
+		c.PeerMgr.SyncPVD(pvdID)
+	}
+
 	return &FilecoinRetrievalClient{
 		core: c,
 	}, nil
