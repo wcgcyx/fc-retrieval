@@ -247,6 +247,7 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 
 		// Check offer
 		remainSub := int(maxOfferRequestedPerDHT)
+		duplicateCheck := make(map[string]bool)
 		for _, offer := range offers {
 			// Verify offer one by one
 			// Get offer signing key
@@ -288,7 +289,15 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 				c.ReputationMgr.PendGW(targetID)
 				return nil, err
 			}
-
+			// Check duplicates
+			_, ok := duplicateCheck[offer.GetMessageDigest()]
+			if ok {
+				err = fmt.Errorf("Received duplicated offers")
+				logging.Error(err.Error())
+				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+				c.ReputationMgr.PendGW(targetID)
+				return nil, err
+			}
 			// Offer verified
 			remainSub--
 			c.OfferMgr.AddSubOffer(&offer)

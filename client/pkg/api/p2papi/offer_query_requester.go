@@ -187,6 +187,7 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 
 	// Check payment and offer
 	remain := int64(maxOfferRequested)
+	duplicateCheck := make(map[string]bool)
 	for _, offer := range offers {
 		// Verify offer one by one
 		// Get offer signing key
@@ -228,7 +229,15 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 			c.ReputationMgr.PendGW(targetID)
 			return nil, err
 		}
-
+		// Check duplicates
+		_, ok := duplicateCheck[offer.GetMessageDigest()]
+		if ok {
+			err = fmt.Errorf("Received duplicated offers")
+			logging.Error(err.Error())
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
+			return nil, err
+		}
 		// Offer verified
 		remain--
 		c.OfferMgr.AddSubOffer(&offer)
