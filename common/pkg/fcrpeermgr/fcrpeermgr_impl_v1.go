@@ -25,7 +25,9 @@ import (
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/dhtring"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
 )
 
 // FCRPeerMgrImplV1 implements FCRPeerMgr, it is an in-memory version.
@@ -35,6 +37,9 @@ type FCRPeerMgrImplV1 struct {
 
 	// Register manager
 	registerMgr fcrregistermgr.FCRRegisterMgr
+
+	// Reputation manager
+	reputationMgr fcrreputationmgr.FCRReputationMgr
 
 	// Duration to wait between two updates
 	refreshDuration time.Duration
@@ -69,10 +74,11 @@ type FCRPeerMgrImplV1 struct {
 	rangeLock sync.RWMutex
 }
 
-func NewFCRPeerMgrImplV1(registerMgr fcrregistermgr.FCRRegisterMgr, gatewayDiscv bool, providerDiscv bool, trackCIDRange bool, trackAnchor string, refreshDuration time.Duration) FCRPeerMgr {
+func NewFCRPeerMgrImplV1(registerMgr fcrregistermgr.FCRRegisterMgr, reputationMgr fcrreputationmgr.FCRReputationMgr, gatewayDiscv bool, providerDiscv bool, trackCIDRange bool, trackAnchor string, refreshDuration time.Duration) FCRPeerMgr {
 	return &FCRPeerMgrImplV1{
 		start:                  false,
 		registerMgr:            registerMgr,
+		reputationMgr:          reputationMgr,
 		refreshDuration:        refreshDuration,
 		gatewayDiscv:           gatewayDiscv,
 		providerDiscv:          providerDiscv,
@@ -170,6 +176,10 @@ func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) *Peer {
 	gwPeer.NetworkAddr = gwReg.NetworkAddr
 	gwPeer.Deregistering = gwReg.Deregistering
 	gwPeer.DeregisteringHeight = gwReg.DeregisteringHeight
+	if gwPeer.Deregistering && mgr.reputationMgr != nil {
+		mgr.reputationMgr.UpdateGWRecord(gwID, reputation.NodeDeregistering.Copy(), 0)
+		mgr.reputationMgr.PendGW(gwID)
+	}
 	return &Peer{
 		RootKey:             gwPeer.RootKey,
 		NodeID:              gwPeer.NodeID,
@@ -210,6 +220,10 @@ func (mgr *FCRPeerMgrImplV1) SyncPVD(pvdID string) *Peer {
 	pvdPeer.NetworkAddr = pvdReg.NetworkAddr
 	pvdPeer.Deregistering = pvdReg.Deregistering
 	pvdPeer.DeregisteringHeight = pvdReg.DeregisteringHeight
+	if pvdPeer.Deregistering && mgr.reputationMgr != nil {
+		mgr.reputationMgr.UpdatePVDRecord(pvdID, reputation.NodeDeregistering.Copy(), 0)
+		mgr.reputationMgr.PendPVD(pvdID)
+	}
 	// Return copy
 	return &Peer{
 		RootKey:             pvdPeer.RootKey,
@@ -407,6 +421,10 @@ func (mgr *FCRPeerMgrImplV1) gwSyncRoutine() {
 						DeregisteringHeight: gwInfo.DeregisteringHeight,
 					}
 					mgr.discoveredGWSLock.Unlock()
+					if gwInfo.Deregistering && mgr.reputationMgr != nil {
+						mgr.reputationMgr.UpdateGWRecord(gwInfo.NodeID, reputation.NodeDeregistering.Copy(), 0)
+						mgr.reputationMgr.PendGW(gwInfo.NodeID)
+					}
 				}
 			}
 		}
@@ -503,6 +521,10 @@ func (mgr *FCRPeerMgrImplV1) pvdSyncRoutine() {
 						DeregisteringHeight: pvdInfo.DeregisteringHeight,
 					}
 					mgr.discoveredPVDSLock.Unlock()
+					if pvdInfo.Deregistering && mgr.reputationMgr != nil {
+						mgr.reputationMgr.UpdatePVDRecord(pvdInfo.NodeID, reputation.NodeDeregistering.Copy(), 0)
+						mgr.reputationMgr.PendPVD(pvdInfo.NodeID)
+					}
 				}
 			}
 		}

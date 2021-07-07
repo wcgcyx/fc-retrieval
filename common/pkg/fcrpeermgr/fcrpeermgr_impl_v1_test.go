@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
 )
 
@@ -374,7 +375,11 @@ func (m *mockRegisterMgr) GetRegisteredProvidersByRegion(height uint64, region s
 
 func TestAutoSync(t *testing.T) {
 	mockRegisterMgr := newMockRegister()
-	peerMgr := NewFCRPeerMgrImplV1(mockRegisterMgr, true, true, true, "0000000000000000000000000000000000000000000000000000000000000009", time.Second)
+	mockReputationMgr := fcrreputationmgr.NewFCRReputationMgrImpV1()
+	err := mockReputationMgr.Start()
+	assert.Empty(t, err)
+	defer mockReputationMgr.Shutdown()
+	peerMgr := NewFCRPeerMgrImplV1(mockRegisterMgr, mockReputationMgr, true, true, true, "0000000000000000000000000000000000000000000000000000000000000009", time.Second)
 	// No effect before starting manager routine
 	peerMgr.Sync()
 	peerMgr.SyncGW("0000000000000000000000000000000000000000000000000000000000000000")
@@ -384,7 +389,7 @@ func TestAutoSync(t *testing.T) {
 	assert.Empty(t, peer)
 	peer = peerMgr.GetPVDInfo("0000000000000000000000000000000000000000000000000000000000000014")
 	assert.Empty(t, peer)
-	err := peerMgr.Start()
+	err = peerMgr.Start()
 	assert.Empty(t, err)
 	defer peerMgr.Shutdown()
 	err = peerMgr.Start()
@@ -415,8 +420,12 @@ func TestAutoSync(t *testing.T) {
 
 func TestSyncUpgrade(t *testing.T) {
 	mockRegisterMgr := newMockRegister()
-	peerMgr := NewFCRPeerMgrImplV1(mockRegisterMgr, true, true, true, "0000000000000000000000000000000000000000000000000000000000000009", time.Second)
-	err := peerMgr.Start()
+	mockReputationMgr := fcrreputationmgr.NewFCRReputationMgrImpV1()
+	err := mockReputationMgr.Start()
+	assert.Empty(t, err)
+	defer mockReputationMgr.Shutdown()
+	peerMgr := NewFCRPeerMgrImplV1(mockRegisterMgr, mockReputationMgr, true, true, true, "0000000000000000000000000000000000000000000000000000000000000009", time.Second)
+	err = peerMgr.Start()
 	assert.Empty(t, err)
 	defer peerMgr.Shutdown()
 	peerMgr.Sync()
@@ -473,8 +482,12 @@ func TestSyncUpgrade(t *testing.T) {
 
 func TestSyncSingle(t *testing.T) {
 	mockRegisterMgr := newMockRegister()
-	peerMgr := NewFCRPeerMgrImplV1(mockRegisterMgr, true, true, true, "0000000000000000000000000000000000000000000000000000000000000009", time.Second)
-	err := peerMgr.Start()
+	mockReputationMgr := fcrreputationmgr.NewFCRReputationMgrImpV1()
+	err := mockReputationMgr.Start()
+	assert.Empty(t, err)
+	defer mockReputationMgr.Shutdown()
+	peerMgr := NewFCRPeerMgrImplV1(mockRegisterMgr, mockReputationMgr, true, true, true, "0000000000000000000000000000000000000000000000000000000000000009", time.Second)
+	err = peerMgr.Start()
 	assert.Empty(t, err)
 	defer peerMgr.Shutdown()
 	peerMgr.Sync()

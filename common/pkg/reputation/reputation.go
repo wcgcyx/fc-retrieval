@@ -76,15 +76,9 @@ var ContentRetrieved = Record{
 	violation: false,
 }
 
-var NetworkError = Record{
-	reason:    "Network error",
-	point:     -1,
-	violation: false,
-}
-
-var InvalidResponse = Record{
-	reason:    "Received an invalid response",
-	point:     -2,
+var NodeDeregistering = Record{
+	reason:    "Node is deregistering",
+	point:     -5,
 	violation: false,
 }
 

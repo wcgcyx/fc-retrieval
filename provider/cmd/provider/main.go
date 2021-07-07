@@ -127,14 +127,6 @@ func main() {
 		return
 	}
 
-	err = c.ReputationMgr.Start()
-	if err != nil {
-		logging.Error("Error in starting Reputation Manager: %v", err)
-		c.Ready <- false
-		gracefulExit()
-		return
-	}
-
 	// Everything has been started.
 	c.Ready <- true
 	// Wait for this provider to be registered.
@@ -183,9 +175,6 @@ func gracefulExit() {
 	}
 	if c.OfferMgr != nil {
 		c.OfferMgr.Shutdown()
-	}
-	if c.ReputationMgr != nil {
-		c.ReputationMgr.Shutdown()
 	}
 
 	logging.Info("Filecoin Provider Shutdown: Completed")

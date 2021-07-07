@@ -31,7 +31,6 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpaymentmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpeermgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
@@ -94,7 +93,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 
 	// Initialise peer manager
 	registerMgr := fcrregistermgr.NewFCRRegisterMgrImplV1(registerAPIAddr, &http.Client{Timeout: 180 * time.Second})
-	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(registerMgr, true, false, false, nodeID, c.Settings.SyncDuration)
+	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(registerMgr, nil, true, false, false, nodeID, c.Settings.SyncDuration)
 
 	// Initialise payment manager
 	lotusMgr := fcrlotusmgr.NewFCRLotusMgrImplV1(lotusAPIAddr, lotusAuthToken, nil)
@@ -102,9 +101,6 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 
 	// Initialise offer manager
 	c.OfferMgr = fcroffermgr.NewFCROfferMgrImplV1(true)
-
-	// Initialise reputation manager
-	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
 
 	// Ask the server to start
 	c.Ready <- true

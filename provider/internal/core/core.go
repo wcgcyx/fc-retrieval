@@ -26,7 +26,6 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcroffermgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpaymentmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpeermgr"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/settings"
@@ -66,9 +65,6 @@ type Core struct {
 
 	// The Offer Manager
 	OfferMgr fcroffermgr.FCROfferMgr
-
-	// The Reputation Manager
-	ReputationMgr fcrreputationmgr.FCRReputationMgr
 }
 
 // Single instance of the provider
@@ -97,7 +93,6 @@ func GetSingleInstance(confs ...*settings.AppSettings) *Core {
 			AdminServer:       nil,
 			P2PServer:         nil,
 			OfferMgr:          nil,
-			ReputationMgr:     nil,
 			PeerMgr:           nil,
 			PaymentMgr:        nil,
 		}

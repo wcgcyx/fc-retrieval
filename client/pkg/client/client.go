@@ -107,8 +107,16 @@ func NewFilecoinRetrievalClient(
 		return nil, err
 	}
 
+	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
+	err = c.ReputationMgr.Start()
+	if err != nil {
+		err = fmt.Errorf("Error in starting reputation manager: %v", err.Error())
+		logging.Error(err.Error())
+		return nil, err
+	}
+
 	c.RegisterMgr = fcrregistermgr.NewFCRRegisterMgrImplV1(registerAPIAddr, &http.Client{Timeout: 180 * time.Second})
-	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(c.RegisterMgr, false, false, false, nodeID, time.Hour)
+	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(c.RegisterMgr, c.ReputationMgr, false, false, false, nodeID, time.Hour)
 	err = c.PeerMgr.Start()
 	if err != nil {
 		err = fmt.Errorf("Error in starting peer manager: %v", err.Error())
@@ -129,14 +137,6 @@ func NewFilecoinRetrievalClient(
 	err = c.OfferMgr.Start()
 	if err != nil {
 		err = fmt.Errorf("Error in starting offer manager: %v", err.Error())
-		logging.Error(err.Error())
-		return nil, err
-	}
-
-	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
-	err = c.ReputationMgr.Start()
-	if err != nil {
-		err = fmt.Errorf("Error in starting reputation manager: %v", err.Error())
 		logging.Error(err.Error())
 		return nil, err
 	}

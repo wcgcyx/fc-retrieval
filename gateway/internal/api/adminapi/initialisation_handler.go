@@ -84,10 +84,13 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	// Initialise P2P Server
 	c.P2PServer = fcrserver.NewFCRServerImplV1(p2pPrvKey, uint(p2pPort), c.Settings.TCPInactivityTimeout)
 
+	// Initialise reputation manager
+	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
+
 	// Initialise peer manager
 	registerMgr := fcrregistermgr.NewFCRRegisterMgrImplV1(registerAPIAddr, &http.Client{Timeout: 180 * time.Second})
 	c.StoreFullOffer = c.Settings.StoreFullOffer
-	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(registerMgr, true, true, !c.StoreFullOffer, nodeID, c.Settings.SyncDuration)
+	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(registerMgr, c.ReputationMgr, true, true, !c.StoreFullOffer, nodeID, c.Settings.SyncDuration)
 
 	// Initialise payment manager
 	lotusMgr := fcrlotusmgr.NewFCRLotusMgrImplV1(lotusAPIAddr, lotusAuthToken, nil)
@@ -95,9 +98,6 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 
 	// Initialise offer manager
 	c.OfferMgr = fcroffermgr.NewFCROfferMgrImplV1(true)
-
-	// Initialise reputation manager
-	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
 
 	// Ask the server to start
 	c.Ready <- true
