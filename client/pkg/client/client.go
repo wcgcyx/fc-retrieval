@@ -154,7 +154,7 @@ func NewFilecoinRetrievalClient(
 	}, nil
 }
 
-// Search searches gateway that is in given location.
+// Search searches gateways that are in given location.
 func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 	// TODO, Search by location
 	res := make([]string, 0)
@@ -170,8 +170,14 @@ func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 	return res, nil
 }
 
-// AddActive adds an active gateway ID
-func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
+// AddActiveGW adds an active gateway ID
+func (c *FilecoinRetrievalClient) AddActiveGW(targetID string) error {
+	if c.core.ReputationMgr.GetGWReputation(targetID) != nil {
+		err := fmt.Errorf("Gateway %v is already active", targetID)
+		logging.Error(err.Error())
+		return err
+	}
+
 	// Get gw info
 	gwInfo := c.core.PeerMgr.GetGWInfo(targetID)
 	if gwInfo == nil {
@@ -208,9 +214,58 @@ func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
 	return nil
 }
 
-// ListActive lists all active gateways
-func (c *FilecoinRetrievalClient) ListActive() ([]string, error) {
+// ListActiveGWS lists all active gateways
+func (c *FilecoinRetrievalClient) ListActiveGWS() ([]string, error) {
 	return c.core.ReputationMgr.ListGWS(), nil
+}
+
+// AddActivePVD adds an active provider ID
+func (c *FilecoinRetrievalClient) AddActivePVD(targetID string) error {
+	if c.core.ReputationMgr.GetPVDReputation(targetID) != nil {
+		err := fmt.Errorf("Gateway %v is already active", targetID)
+		logging.Error(err.Error())
+		return err
+	}
+
+	// Get pvd info
+	pvdInfo := c.core.PeerMgr.GetPVDInfo(targetID)
+	if pvdInfo == nil {
+		// Not found, try sync once
+		pvdInfo = c.core.PeerMgr.SyncPVD(targetID)
+		if pvdInfo == nil {
+			err := fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			logging.Error(err.Error())
+			return err
+		}
+	}
+	_, err := c.core.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
+	if err != nil {
+		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, pvdInfo.NetworkAddr, err.Error())
+		logging.Error(err.Error())
+		return err
+	}
+	// Create payment channel
+	recipientAddr, err := fcrcrypto.GetWalletAddress(pvdInfo.RootKey)
+	if err != nil {
+		err = fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, pvdInfo.RootKey, err.Error())
+		logging.Error(err.Error())
+		return err
+	}
+
+	err = c.core.PaymentMgr.Create(recipientAddr, c.core.TopupAmount)
+	if err != nil {
+		err = fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.core.TopupAmount.String(), err.Error())
+		logging.Error(err.Error())
+		return err
+	}
+	// Add provider entry to reputation
+	c.core.ReputationMgr.AddPVD(pvdInfo.NodeID)
+	return nil
+}
+
+// ListActivePVDS lists all active providers
+func (c *FilecoinRetrievalClient) ListActivePVDS() ([]string, error) {
+	return c.core.ReputationMgr.ListPVDS(), nil
 }
 
 // StandardDiscovery performs a standard discovery.
