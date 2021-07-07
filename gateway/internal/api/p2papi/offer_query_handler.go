@@ -20,6 +20,7 @@ package p2papi
 
 import (
 	"fmt"
+	"time"
 
 	"math/big"
 
@@ -112,6 +113,13 @@ func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver
 		if remain == 0 {
 			break
 		}
+		// Check offer expiry, remove if less than 1 hour + 1 hour room
+		if offer.GetExpiry()-time.Now().Unix() < 7200 {
+			// Offer is soon to expire
+			c.OfferMgr.RemoveOffer(offer.GetMessageDigest())
+			continue
+		}
+
 		subOffer, err := offer.GenerateSubCIDOffer(pieceCID)
 		if err != nil {
 			// Internal error in generating sub offers

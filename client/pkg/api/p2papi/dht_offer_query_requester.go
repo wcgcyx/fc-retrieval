@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
+	"time"
 
 	"github.com/wcgcyx/fc-retrieval/client/pkg/core"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
@@ -293,6 +294,15 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 			_, ok := duplicateCheck[offer.GetMessageDigest()]
 			if ok {
 				err = fmt.Errorf("Received duplicated offers")
+				logging.Error(err.Error())
+				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+				c.ReputationMgr.PendGW(targetID)
+				return nil, err
+			}
+			// Check offer expiry, reject if less than 1 hour
+			if offer.GetExpiry()-time.Now().Unix() < 3600 {
+				// Offer is soon to expire
+				err = fmt.Errorf("Received soon to expire offer")
 				logging.Error(err.Error())
 				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
 				c.ReputationMgr.PendGW(targetID)

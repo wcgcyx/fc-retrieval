@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
+	"time"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
@@ -284,6 +285,15 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 			return nil, err
 		}
 		duplicateCheck[offer.GetMessageDigest()] = true
+		// Check offer expiry, reject if less than 1 hour + 30 min room
+		if offer.GetExpiry()-time.Now().Unix() < 5400 {
+			// Offer is soon to expire
+			err = fmt.Errorf("Received soon to expire offer")
+			logging.Error(err.Error())
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendGW(targetID)
+			return nil, err
+		}
 		// Offer verified
 		remain--
 		c.ReputationMgr.UpdateGWRecord(targetID, reputation.StandardOfferRetrieved.Copy(), 0)
