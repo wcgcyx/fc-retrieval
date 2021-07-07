@@ -50,12 +50,12 @@ type FilecoinRetrievalClient struct {
 	core *core.Core
 }
 
-// NewFilecoinRetrievalClient initialise the Filecoin Retrieval Client
+// NewFilecoinRetrievalClient initialise the Filecoin Retrieval Client.
 func NewFilecoinRetrievalClient(
-	walletPrvKey string,
+	walletPrivKey string,
 	lotusAPIAddr string,
 	lotusAuthToken string,
-	registerPrvKey string,
+	registerPrivKey string,
 	registerAPIAddr string,
 	registerAuthToken string,
 ) (*FilecoinRetrievalClient, error) {
@@ -86,20 +86,20 @@ func NewFilecoinRetrievalClient(
 
 	// Initialise P2P Server
 	// Generate Keypair
-	prvKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
+	privKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
 	if err != nil {
 		err = fmt.Errorf("Error in generating P2P key: %v", err.Error())
 		logging.Error(err.Error())
 		return nil, err
 	}
-	prvKeyBytes, err := prvKey.Raw()
+	privKeyBytes, err := privKey.Raw()
 	if err != nil {
 		err = fmt.Errorf("Error in getting P2P key bytes: %v", err.Error())
 		logging.Error(err.Error())
 		return nil, err
 	}
 	// Initialise components
-	c.P2PServer = fcrserver.NewFCRServerImplV1(hex.EncodeToString(prvKeyBytes), 0, time.Second*60)
+	c.P2PServer = fcrserver.NewFCRServerImplV1(hex.EncodeToString(privKeyBytes), 0, time.Second*60)
 	c.P2PServer.
 		AddRequester(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentRequester).
 		AddRequester(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryRequester).
@@ -132,7 +132,7 @@ func NewFilecoinRetrievalClient(
 	}
 
 	lotusMgr := fcrlotusmgr.NewFCRLotusMgrImplV1(lotusAPIAddr, lotusAuthToken, nil)
-	c.PaymentMgr = fcrpaymentmgr.NewFCRPaymentMgrImplV1(walletPrvKey, lotusMgr)
+	c.PaymentMgr = fcrpaymentmgr.NewFCRPaymentMgrImplV1(walletPrivKey, lotusMgr)
 	err = c.PaymentMgr.Start()
 	if err != nil {
 		err = fmt.Errorf("Error in starting payment manager: %v", err.Error())
@@ -161,6 +161,7 @@ func NewFilecoinRetrievalClient(
 	return res, nil
 }
 
+// Shutdown shuts down the client's routine.
 func (c *FilecoinRetrievalClient) Shutdown() {
 	if c.core.P2PServer != nil {
 		c.core.P2PServer.Shutdown()

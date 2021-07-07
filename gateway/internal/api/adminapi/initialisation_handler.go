@@ -49,7 +49,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Decoding payload
-	p2pPrvKey, p2pPort, networkAddr, rootPrvKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
+	p2pPrivKey, p2pPort, networkAddr, rootPrivKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())
@@ -57,7 +57,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Obtaining the root key
-	rootKey, nodeID, err := fcrcrypto.GetPublicKey(rootPrvKey)
+	rootKey, nodeID, err := fcrcrypto.GetPublicKey(rootPrivKey)
 	if err != nil {
 		err = fmt.Errorf("Error in obtaining the public key: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())
@@ -82,7 +82,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	c.MsgSigningKeyVer = 0
 
 	// Initialise P2P Server
-	c.P2PServer = fcrserver.NewFCRServerImplV1(p2pPrvKey, uint(p2pPort), c.Settings.TCPInactivityTimeout)
+	c.P2PServer = fcrserver.NewFCRServerImplV1(p2pPrivKey, uint(p2pPort), c.Settings.TCPInactivityTimeout)
 
 	// Initialise reputation manager
 	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
@@ -94,7 +94,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 
 	// Initialise payment manager
 	lotusMgr := fcrlotusmgr.NewFCRLotusMgrImplV1(lotusAPIAddr, lotusAuthToken, nil)
-	c.PaymentMgr = fcrpaymentmgr.NewFCRPaymentMgrImplV1(rootPrvKey, lotusMgr)
+	c.PaymentMgr = fcrpaymentmgr.NewFCRPaymentMgrImplV1(rootPrivKey, lotusMgr)
 
 	// Initialise offer manager
 	c.OfferMgr = fcroffermgr.NewFCROfferMgrImplV1(true)
