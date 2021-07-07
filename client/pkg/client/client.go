@@ -268,6 +268,48 @@ func (c *FilecoinRetrievalClient) ListActivePVDS() ([]string, error) {
 	return c.core.ReputationMgr.ListPVDS(), nil
 }
 
+// GetGWReputaion gets the reputation of a target gateway ID.
+func (c *FilecoinRetrievalClient) GetGWReputaion(targetID string) (int64, bool, bool, error) {
+	rep := c.core.ReputationMgr.GetGWReputation(targetID)
+	if rep == nil {
+		err := fmt.Errorf("Error in loading gateway %v reputation", targetID)
+		logging.Error(err.Error())
+		return 0, false, false, err
+	}
+	return rep.Score, rep.Pending, rep.Blocked, nil
+}
+
+// GetGWRecentHistory gets the most recent history of a target gateway ID.
+func (c *FilecoinRetrievalClient) GetGWHistory(targetID string, from uint, to uint) []string {
+	history := c.core.ReputationMgr.GetGWHistory(targetID, from, to)
+	res := make([]string, 0)
+	for _, rep := range history {
+		res = append(res, rep.Reason())
+	}
+	return res
+}
+
+// GetPVDReputaion gets the reputation of a target provider ID.
+func (c *FilecoinRetrievalClient) GetPVDReputaion(targetID string) (int64, bool, bool, error) {
+	rep := c.core.ReputationMgr.GetPVDReputation(targetID)
+	if rep == nil {
+		err := fmt.Errorf("Error in loading provider %v reputation", targetID)
+		logging.Error(err.Error())
+		return 0, false, false, err
+	}
+	return rep.Score, rep.Pending, rep.Blocked, nil
+}
+
+// GetPVDRecentHistory gets the most recent history of a target provider ID.
+func (c *FilecoinRetrievalClient) GetPVDHistory(targetID string, from uint, to uint) []string {
+	history := c.core.ReputationMgr.GetPVDHistory(targetID, 0, 1)
+	res := make([]string, 0)
+	for _, rep := range history {
+		res = append(res, rep.Reason())
+	}
+	return res
+}
+
 // StandardDiscovery performs a standard discovery.
 func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string, toContact map[string]uint32) ([]cidoffer.SubCIDOffer, error) {
 	pieceCID, err := cid.NewContentID(cidStr)
