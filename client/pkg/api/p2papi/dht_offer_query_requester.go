@@ -292,6 +292,7 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 			// Offer verified
 			remainSub--
 			c.OfferMgr.AddSubOffer(&offer)
+			c.ReputationMgr.UpdateGWRecord(targetID, reputation.DHTOfferRetrieved.Copy(), 0)
 		}
 		if remainSub < 0 {
 			remainSub = 0
