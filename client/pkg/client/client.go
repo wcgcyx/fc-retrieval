@@ -164,7 +164,7 @@ func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
 
 	err = c.core.PaymentMgr.Create(recipientAddr, c.core.TopupAmount)
 	if err != nil {
-		return fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.TopupAmount.String(), err.Error())
+		return fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.core.TopupAmount.String(), err.Error())
 	}
 	// Add gateway entry to reputation
 	c.core.ReputationMgr.AddGW(gwInfo.NodeID)
@@ -182,6 +182,6 @@ func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string, toContact map
 }
 
 // DHTDiscovery performs a DHT discovery.
-func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, gwID string) ([]cidoffer.SubCIDOffer, error) {
+func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string, numDHT uint32, maxOfferRequestedPerDHT uint32) ([]cidoffer.SubCIDOffer, error) {
 	return nil, nil
 }
