@@ -378,6 +378,12 @@ func (c *FilecoinRetrievalClient) ListOffers(cidStr string) ([]cidoffer.SubCIDOf
 
 // Retrieve retrieves a file to a given location
 func (c *FilecoinRetrievalClient) Retrieve(digest string, location string) error {
+	offer := c.core.OfferMgr.GetSubOfferByDigest(digest)
+	if offer == nil {
+		err := fmt.Errorf("Cannot find offer with given digest %v", digest)
+		logging.Error(err.Error())
+		return err
+	}
 	logging.Info("Not implemented, save file to %v using offer digest %v", location, digest)
 	return nil
 }
