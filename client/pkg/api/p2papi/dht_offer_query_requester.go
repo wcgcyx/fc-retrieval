@@ -74,8 +74,9 @@ func DHTOfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	// Check if the gateway is blocked/pending
 	rep := c.ReputationMgr.GetGWReputation(targetID)
 	if rep == nil {
-		c.ReputationMgr.AddGW(targetID)
-		rep = c.ReputationMgr.GetGWReputation(targetID)
+		err := fmt.Errorf("Gateway %v is not active", targetID)
+		logging.Error(err.Error())
+		return nil, err
 	}
 	if rep.Pending || rep.Blocked {
 		err := fmt.Errorf("Gateway %v is in pending %v, blocked %v", targetID, rep.Pending, rep.Blocked)
