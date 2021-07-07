@@ -92,6 +92,7 @@ func DHTOfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrser
 	}
 
 	// Payment is fine, search.
+	c.OfferMgr.IncrementCIDAccessCount(pieceCID)
 	cidHash, err := pieceCID.CalculateHash()
 	if err != nil {
 		// Internal error in calculating cid hash

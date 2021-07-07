@@ -22,12 +22,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"net/http"
 	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/wcgcyx/fc-retrieval/client/pkg/api/p2papi"
+	"github.com/wcgcyx/fc-retrieval/client/pkg/core"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrlotusmgr"
@@ -38,39 +38,14 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 )
 
 // FilecoinRetrievalClient is an example implementation using the api,
 // which holds information about the interaction of the Filecoin
 // Retrieval Client with Filecoin Retrieval Gateways/Providers.
 type FilecoinRetrievalClient struct {
-	// Msg Key
-	MsgKey string
-	// Node ID, calculated from msg key
-	NodeID string
-
-	// The P2P Server
-	P2PServer fcrserver.FCRServer
-
-	// The Register Manager
-	RegisterMgr fcrregistermgr.FCRRegisterMgr
-
-	// The Peer Manager
-	PeerMgr fcrpeermgr.FCRPeerMgr
-
-	// The Payment Manager
-	PaymentMgr fcrpaymentmgr.FCRPaymentMgr
-
-	// The Offer Manager
-	OfferMgr fcroffermgr.FCROfferMgr
-
-	// The Reputation Manager
-	ReputationMgr fcrreputationmgr.FCRReputationMgr
-
-	// Payment related
-	SearchPrice *big.Int
-	OfferPrice  *big.Int
-	TopupAmount *big.Int
+	core *core.Core
 }
 
 // NewFilecoinRetrievalClient initialise the Filecoin Retrieval Client
@@ -82,12 +57,11 @@ func NewFilecoinRetrievalClient(
 	registerAPIAddr string,
 	registerAuthToken string,
 ) (*FilecoinRetrievalClient, error) {
+	// Logging init
+	logging.InitWithoutConfig("debug", "STDOUT", "client", "RFC3339")
+
 	// Initialise client
-	c := &FilecoinRetrievalClient{
-		SearchPrice: big.NewInt(1_000_000_000_000_000),
-		OfferPrice:  big.NewInt(1_000_000_000_000_000),
-		TopupAmount: big.NewInt(100_000_000_000_000_000),
-	}
+	c := core.GetSingleInstance()
 
 	// Generating msg signing key
 	msgKey, _, _, err := fcrcrypto.GenerateRetrievalKeyPair()
@@ -148,14 +122,16 @@ func NewFilecoinRetrievalClient(
 		return nil, err
 	}
 
-	return c, nil
+	return &FilecoinRetrievalClient{
+		core: c,
+	}, nil
 }
 
 // Search searches gateway that is in given location.
 func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 	// TODO, Search by location
 	res := make([]string, 0)
-	infos, err := c.RegisterMgr.GetAllRegisteredGateway(0, 0)
+	infos, err := c.core.RegisterMgr.GetAllRegisteredGateway(0, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -168,15 +144,15 @@ func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 // AddActive adds an active gateway ID
 func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
 	// Get gw info
-	gwInfo := c.PeerMgr.GetGWInfo(targetID)
+	gwInfo := c.core.PeerMgr.GetGWInfo(targetID)
 	if gwInfo == nil {
 		// Not found, try sync once
-		gwInfo = c.PeerMgr.SyncGW(targetID)
+		gwInfo = c.core.PeerMgr.SyncGW(targetID)
 		if gwInfo == nil {
 			return fmt.Errorf("Error in obtaining information for gateway %v", targetID)
 		}
 	}
-	_, err := c.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
+	_, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
 	if err != nil {
 		return fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
 	}
@@ -186,23 +162,22 @@ func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
 		return fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, gwInfo.RootKey, err.Error())
 	}
 
-	err = c.PaymentMgr.Create(recipientAddr, c.TopupAmount)
+	err = c.core.PaymentMgr.Create(recipientAddr, c.core.TopupAmount)
 	if err != nil {
 		return fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.TopupAmount.String(), err.Error())
 	}
 	// Add gateway entry to reputation
-	c.ReputationMgr.AddGW(gwInfo.NodeID)
+	c.core.ReputationMgr.AddGW(gwInfo.NodeID)
 	return nil
 }
 
 // ListActive lists all active gateways
 func (c *FilecoinRetrievalClient) ListActive() ([]string, error) {
-	return c.ReputationMgr.ListGWS(), nil
+	return c.core.ReputationMgr.ListGWS(), nil
 }
 
 // StandardDiscovery performs a standard discovery.
-func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string) ([]cidoffer.SubCIDOffer, error) {
-	// res := make([]cidoffer.SubCIDOffer, 0)
+func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string, toContact map[string]uint32) ([]cidoffer.SubCIDOffer, error) {
 	return nil, nil
 }
 

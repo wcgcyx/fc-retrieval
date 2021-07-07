@@ -102,6 +102,7 @@ func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver
 	}
 
 	// Payment is fine, search.
+	c.OfferMgr.IncrementCIDAccessCount(pieceCID)
 	offers := c.OfferMgr.GetOffers(pieceCID)
 
 	// Generating sub CID offers
