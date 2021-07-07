@@ -47,18 +47,6 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 	// Generate random nonce
 	nonce := uint64(rand.Int63())
 
-	// Check if the gateway is blocked/pending
-	rep := c.ReputationMgr.GetGWReputation(targetID)
-	if rep == nil {
-		c.ReputationMgr.AddGW(targetID)
-		rep = c.ReputationMgr.GetGWReputation(targetID)
-	}
-	if rep.Pending || rep.Blocked {
-		err := fmt.Errorf("Gateway %v is in pending %v, blocked %v", targetID, rep.Pending, rep.Blocked)
-		logging.Error(err.Error())
-		return nil, err
-	}
-
 	// Get gateway information
 	gwInfo := c.PeerMgr.GetGWInfo(targetID)
 	if gwInfo == nil {
@@ -69,6 +57,18 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 			logging.Error(err.Error())
 			return nil, err
 		}
+	}
+
+	// Check if the gateway is blocked/pending
+	rep := c.ReputationMgr.GetGWReputation(targetID)
+	if rep == nil {
+		c.ReputationMgr.AddGW(targetID)
+		rep = c.ReputationMgr.GetGWReputation(targetID)
+	}
+	if rep.Pending || rep.Blocked {
+		err := fmt.Errorf("Gateway %v is in pending %v, blocked %v", targetID, rep.Pending, rep.Blocked)
+		logging.Error(err.Error())
+		return nil, err
 	}
 
 	// Pay the recipient
