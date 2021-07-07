@@ -67,11 +67,15 @@ func NewFilecoinRetrievalClient(
 	// Generating msg signing key
 	msgKey, _, _, err := fcrcrypto.GenerateRetrievalKeyPair()
 	if err != nil {
+		err = fmt.Errorf("Error in generating msg signing key: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 	c.MsgKey = msgKey
 	_, nodeID, err := fcrcrypto.GetPublicKey(msgKey)
 	if err != nil {
+		err = fmt.Errorf("Error in generating nodeID from msg signing key %v: %v", msgKey, err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 	c.NodeID = nodeID
@@ -80,10 +84,14 @@ func NewFilecoinRetrievalClient(
 	// Generate Keypair
 	prvKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
 	if err != nil {
+		err = fmt.Errorf("Error in generating P2P key: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 	prvKeyBytes, err := prvKey.Raw()
 	if err != nil {
+		err = fmt.Errorf("Error in getting P2P key bytes: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 	// Initialise components
@@ -94,6 +102,8 @@ func NewFilecoinRetrievalClient(
 		AddRequester(fcrmessages.DHTOfferDiscoveryRequestType, p2papi.DHTOfferQueryRequester)
 	err = c.P2PServer.Start()
 	if err != nil {
+		err = fmt.Errorf("Error in starting P2P server: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
@@ -101,6 +111,8 @@ func NewFilecoinRetrievalClient(
 	c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(c.RegisterMgr, false, false, false, nodeID, time.Hour)
 	err = c.PeerMgr.Start()
 	if err != nil {
+		err = fmt.Errorf("Error in starting peer manager: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
@@ -108,18 +120,24 @@ func NewFilecoinRetrievalClient(
 	c.PaymentMgr = fcrpaymentmgr.NewFCRPaymentMgrImplV1(walletPrvKey, lotusMgr)
 	err = c.PaymentMgr.Start()
 	if err != nil {
+		err = fmt.Errorf("Error in starting payment manager: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
 	c.OfferMgr = fcroffermgr.NewFCROfferMgrImplV1(true)
 	err = c.OfferMgr.Start()
 	if err != nil {
+		err = fmt.Errorf("Error in starting offer manager: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
 	c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
 	err = c.ReputationMgr.Start()
 	if err != nil {
+		err = fmt.Errorf("Error in starting reputation manager: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
@@ -134,6 +152,8 @@ func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 	res := make([]string, 0)
 	infos, err := c.core.RegisterMgr.GetAllRegisteredGateway(0, 0)
 	if err != nil {
+		err = fmt.Errorf("Error in getting all registered gateways: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 	for _, info := range infos {
@@ -150,22 +170,30 @@ func (c *FilecoinRetrievalClient) AddActive(targetID string) error {
 		// Not found, try sync once
 		gwInfo = c.core.PeerMgr.SyncGW(targetID)
 		if gwInfo == nil {
-			return fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			err := fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+			logging.Error(err.Error())
+			return err
 		}
 	}
 	_, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
 	if err != nil {
-		return fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
+		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
+		logging.Error(err.Error())
+		return err
 	}
 	// Create payment channel
 	recipientAddr, err := fcrcrypto.GetWalletAddress(gwInfo.RootKey)
 	if err != nil {
-		return fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, gwInfo.RootKey, err.Error())
+		err = fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, gwInfo.RootKey, err.Error())
+		logging.Error(err.Error())
+		return err
 	}
 
 	err = c.core.PaymentMgr.Create(recipientAddr, c.core.TopupAmount)
 	if err != nil {
-		return fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.core.TopupAmount.String(), err.Error())
+		err = fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.core.TopupAmount.String(), err.Error())
+		logging.Error(err.Error())
+		return err
 	}
 	// Add gateway entry to reputation
 	c.core.ReputationMgr.AddGW(gwInfo.NodeID)
