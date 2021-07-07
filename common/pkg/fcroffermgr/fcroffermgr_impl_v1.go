@@ -216,6 +216,17 @@ func (mgr *FCROfferMgrImplV1) ListOffers(from uint, to uint) []cidoffer.CIDOffer
 	return res
 }
 
+func (mgr *FCROfferMgrImplV1) GetOfferByDigest(digest string) *cidoffer.CIDOffer {
+	// Return a copy
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
+	res := mgr.digestOfferMap[digest]
+	if res != nil {
+		res = res.Copy()
+	}
+	return res
+}
+
 func (mgr *FCROfferMgrImplV1) RemoveOffer(digest string) {
 	// Need to update cid -> digest map, tag -> digest map and digest -> offer map
 	mgr.lock.RLock()
@@ -322,6 +333,16 @@ func (mgr *FCROfferMgrImplV1) ListSubOffers(from uint, to uint) []cidoffer.SubCI
 			}
 		}
 		index++
+	}
+	return res
+}
+
+func (mgr *FCROfferMgrImplV1) GetSubOfferByDigest(digest string) *cidoffer.SubCIDOffer {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
+	res := mgr.digestOfferMapS[digest]
+	if res != nil {
+		res = res.Copy()
 	}
 	return res
 }

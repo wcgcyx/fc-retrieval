@@ -152,6 +152,11 @@ func TestAddOffer(t *testing.T) {
 	assert.Equal(t, "d746ad9bf2a5deafe1f8848eed376e0c68ccd4c600d8b2c9c5d7b832a729ea21", res[2].GetMessageDigest())
 	assert.Equal(t, "fb46952a0a8c2c58d76d3b131099d2cbbfdb0029905efb7a7aad709dd827a9f5", res[3].GetMessageDigest())
 
+	offer := mgr.GetOfferByDigest("a9aac8229414ad4f42e73cf93e79f922ff65d5a6465c83be6070baaeeca988ff")
+	assert.Empty(t, offer)
+	offer = mgr.GetOfferByDigest("09aac8229414ad4f42e73cf93e79f922ff65d5a6465c83be6070baaeeca988ff")
+	assert.NotEmpty(t, offer)
+
 	mgr.RemoveOffer("09aac8229414ad4f42e73cf93e79f922ff65d5a6465c83be6070baaeeca988ff")
 	res = mgr.GetOffers(cid5)
 	assert.Equal(t, 0, len(res))
@@ -255,6 +260,11 @@ func TestSubOffer(t *testing.T) {
 	assert.Equal(t, "ae291b1b04d853387cedbb5d4a05578b516e3838b5ce5e206a340dacaef7387e", res[3].GetMessageDigest())
 	assert.Equal(t, "d1b1a90b7430bef3113868b13a2ea71fecd06b3ba98950afa54ba5ef31af3382", res[4].GetMessageDigest())
 	assert.Equal(t, "e567ac85122552402b0e142925998fdbebf086441d24d31a91e5022105a84ee9", res[5].GetMessageDigest())
+
+	subOffer := mgr.GetSubOfferByDigest("8cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0")
+	assert.Empty(t, subOffer)
+	subOffer = mgr.GetSubOfferByDigest("6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0")
+	assert.NotEmpty(t, subOffer)
 
 	mgr.RemoveSubOffer("8cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0")
 	mgr.RemoveSubOffer("6cafb9da087efacf5325fe8def74e0af9eeb3b070137a4a4cb56fc86969f54e0")

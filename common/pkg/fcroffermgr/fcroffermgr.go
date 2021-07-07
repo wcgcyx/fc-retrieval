@@ -60,6 +60,9 @@ type FCROfferMgr interface {
 	// ListOffers gets a list of offers from given index to given index.
 	ListOffers(from uint, to uint) []cidoffer.CIDOffer
 
+	// GetOfferByDigest
+	GetOfferByDigest(digest string) *cidoffer.CIDOffer
+
 	// RemoveOffer removes an offer by digest
 	RemoveOffer(digest string)
 
@@ -72,6 +75,9 @@ type FCROfferMgr interface {
 
 	// ListSubOffers gets a list of offers from given index to given index.
 	ListSubOffers(from uint, to uint) []cidoffer.SubCIDOffer
+
+	// GetSubOfferByDigest
+	GetSubOfferByDigest(digest string) *cidoffer.SubCIDOffer
 
 	// RemoveSubOffer removes an offer by digest
 	RemoveSubOffer(digest string)
