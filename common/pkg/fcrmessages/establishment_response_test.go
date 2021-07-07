@@ -33,7 +33,7 @@ func TestEstablishmentResponse(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, true, msg.ack)
 	assert.Equal(t, uint64(100), msg.nonce)
-	assert.Equal(t, "7b226368616c6c656e6765223a2274657374206368616c6c656e6765227d", hex.EncodeToString(msg.messageBody))
+	assert.Equal(t, "7b226e6f64655f6964223a22222c226368616c6c656e6765223a2274657374206368616c6c656e6765227d", hex.EncodeToString(msg.messageBody))
 	assert.Equal(t, "", msg.signature)
 
 	resNonce, resChallenge, err := DecodeEstablishmentResponse(msg)
