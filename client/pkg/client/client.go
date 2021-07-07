@@ -64,6 +64,9 @@ func NewFilecoinRetrievalClient(
 
 	// Initialise client
 	c := core.GetSingleInstance()
+	res := &FilecoinRetrievalClient{
+		core: c,
+	}
 
 	// Generating msg signing key
 	msgKey, _, _, err := fcrcrypto.GenerateRetrievalKeyPair()
@@ -105,6 +108,7 @@ func NewFilecoinRetrievalClient(
 	if err != nil {
 		err = fmt.Errorf("Error in starting P2P server: %v", err.Error())
 		logging.Error(err.Error())
+		res.Shutdown()
 		return nil, err
 	}
 
@@ -113,6 +117,7 @@ func NewFilecoinRetrievalClient(
 	if err != nil {
 		err = fmt.Errorf("Error in starting reputation manager: %v", err.Error())
 		logging.Error(err.Error())
+		res.Shutdown()
 		return nil, err
 	}
 
@@ -122,6 +127,7 @@ func NewFilecoinRetrievalClient(
 	if err != nil {
 		err = fmt.Errorf("Error in starting peer manager: %v", err.Error())
 		logging.Error(err.Error())
+		res.Shutdown()
 		return nil, err
 	}
 
@@ -131,6 +137,7 @@ func NewFilecoinRetrievalClient(
 	if err != nil {
 		err = fmt.Errorf("Error in starting payment manager: %v", err.Error())
 		logging.Error(err.Error())
+		res.Shutdown()
 		return nil, err
 	}
 
@@ -139,6 +146,7 @@ func NewFilecoinRetrievalClient(
 	if err != nil {
 		err = fmt.Errorf("Error in starting offer manager: %v", err.Error())
 		logging.Error(err.Error())
+		res.Shutdown()
 		return nil, err
 	}
 
@@ -150,9 +158,25 @@ func NewFilecoinRetrievalClient(
 		c.PeerMgr.SyncPVD(pvdID)
 	}
 
-	return &FilecoinRetrievalClient{
-		core: c,
-	}, nil
+	return res, nil
+}
+
+func (c *FilecoinRetrievalClient) Shutdown() {
+	if c.core.P2PServer != nil {
+		c.core.P2PServer.Shutdown()
+	}
+	if c.core.PeerMgr != nil {
+		c.core.PeerMgr.Shutdown()
+	}
+	if c.core.PaymentMgr != nil {
+		c.core.PaymentMgr.Shutdown()
+	}
+	if c.core.OfferMgr != nil {
+		c.core.OfferMgr.Shutdown()
+	}
+	if c.core.ReputationMgr != nil {
+		c.core.ReputationMgr.Shutdown()
+	}
 }
 
 // Search searches gateways that are in given location.
@@ -216,8 +240,8 @@ func (c *FilecoinRetrievalClient) AddActiveGW(targetID string) error {
 }
 
 // ListActiveGWS lists all active gateways
-func (c *FilecoinRetrievalClient) ListActiveGWS() ([]string, error) {
-	return c.core.ReputationMgr.ListGWS(), nil
+func (c *FilecoinRetrievalClient) ListActiveGWS() []string {
+	return c.core.ReputationMgr.ListGWS()
 }
 
 // AddActivePVD adds an active provider ID
@@ -265,8 +289,8 @@ func (c *FilecoinRetrievalClient) AddActivePVD(targetID string) error {
 }
 
 // ListActivePVDS lists all active providers
-func (c *FilecoinRetrievalClient) ListActivePVDS() ([]string, error) {
-	return c.core.ReputationMgr.ListPVDS(), nil
+func (c *FilecoinRetrievalClient) ListActivePVDS() []string {
+	return c.core.ReputationMgr.ListPVDS()
 }
 
 // GetGWReputaion gets the reputation of a target gateway ID.
