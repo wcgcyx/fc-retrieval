@@ -19,7 +19,6 @@ package fcradminserver
  */
 
 import (
-	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -31,7 +30,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
@@ -207,42 +205,4 @@ func decrypt(enc []byte, key []byte) ([]byte, error) {
 	}
 
 	return plain, nil
-}
-
-func Request(addr string, keyStr string, msgType byte, data []byte) (byte, []byte, error) {
-	if !strings.HasPrefix(addr, "http://") {
-		addr = "http://" + addr
-	}
-	key, err := hex.DecodeString(keyStr)
-	if err != nil {
-		return 0, nil, err
-	}
-	if len(key) != 32 {
-		return 0, nil, fmt.Errorf("Wrong key size, expect 32, got: %v", len(key))
-	}
-	enc, err := encrypt(append([]byte{msgType}, data...), key)
-	if err != nil {
-		return 0, nil, err
-	}
-	req, err := http.NewRequest("POST", addr, bytes.NewReader(enc))
-	if err != nil {
-		return 0, nil, err
-	}
-	client := &http.Client{Timeout: 90 * time.Second}
-	r, err := client.Do(req)
-	if err != nil {
-		return 0, nil, err
-	}
-	content, err := ioutil.ReadAll(r.Body)
-	if closeErr := r.Body.Close(); closeErr != nil {
-		return 0, nil, closeErr
-	}
-	if len(content) <= 1 {
-		return 0, nil, fmt.Errorf("Received content with empty request %v", content)
-	}
-	plain, err := decrypt(content, key)
-	if err != nil {
-		return 0, nil, err
-	}
-	return plain[0], plain[1:], nil
 }
