@@ -30,6 +30,8 @@ import (
 	"os/signal"
 	"time"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
