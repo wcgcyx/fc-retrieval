@@ -31,7 +31,7 @@ func TestUploadFileStartRequest(t *testing.T) {
 
 	data, err := EncodeUploadFileStartRequest(mockTag, mockData)
 	assert.Empty(t, err)
-	assert.Equal(t, "7b22746167223a2274657374746167222c22636964223a2274657374636964222c2264617461223a224151494442413d3d227d", hex.EncodeToString(data))
+	assert.Equal(t, "7b22746167223a2274657374746167222c2264617461223a224151494442413d3d227d", hex.EncodeToString(data))
 
 	resTag, resData, err := DecodeUploadFileStartRequest(data)
 	assert.Empty(t, err)

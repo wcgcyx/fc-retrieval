@@ -34,7 +34,7 @@ func TestListFilesResponse(t *testing.T) {
 
 	data, err := EncodeListFilesResponse(mockFiles, mockCIDs, mockSizes, mockPublished, mockFrequency)
 	assert.Empty(t, err)
-	assert.Equal(t, "7b2266696c6573223a5b2266696c6530222c2266696c6531225d2c2263696473223a5b2263696430222c2263696431225d2c227075626c6973686564223a5b747275652c66616c73655d2c226672657175656e6379223a5b3130302c3230305d7d", hex.EncodeToString(data))
+	assert.Equal(t, "7b2266696c6573223a5b2266696c6530222c2266696c6531225d2c2263696473223a5b2263696430222c2263696431225d2c2273697a6573223a5b313030302c323030305d2c227075626c6973686564223a5b747275652c66616c73655d2c226672657175656e6379223a5b3130302c3230305d7d", hex.EncodeToString(data))
 
 	resFiles, resCIDs, resSizes, resPublished, resFrequency, err := DecodeListFilesResponse(data)
 	assert.Empty(t, err)
