@@ -66,6 +66,7 @@ func main() {
 	// Attempt to load token
 	var token [32]byte
 	os.MkdirAll(c.Settings.SystemDir, os.ModePerm)
+	os.MkdirAll(c.Settings.RetrievalDir, os.ModePerm)
 	f, err := os.Open(c.Settings.AdminKeyFile)
 	if err == nil {
 		n, err := f.Read(token[:])
