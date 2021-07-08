@@ -124,7 +124,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 		}
 	case "inspect-gateway-gwpeer":
 		if len(blocks) != 3 {
-			fmt.Println("Usage: ls-gateway-peers ${targetID} ${peerID}")
+			fmt.Println("Usage: inspect-gateway-gwpeer ${targetID} ${peerID}")
 			return
 		}
 		score, pending, blocked, history, err := c.admin.InspectGateway(blocks[1], blocks[2])
@@ -151,7 +151,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to block peer for given gateway %v\n", msg)
+			fmt.Printf("Fail to block peer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Done")
@@ -166,7 +166,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to unblock peer for given gateway %v\n", msg)
+			fmt.Printf("Fail to unblock peer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Done")
@@ -181,10 +181,28 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to resuming peer for given gateway %v\n", msg)
+			fmt.Printf("Fail to resuming peer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Done")
+	case "inspect-gateway-pvdpeer":
+		if len(blocks) != 3 {
+			fmt.Println("Usage: inspect-gateway-pvdpeer ${targetID} ${peerID}")
+			return
+		}
+		score, pending, blocked, history, err := c.admin.InspectProvider(blocks[1], blocks[2])
+		if err != nil {
+			fmt.Printf("Error in inspecting peer for given gateway: %v\n", err.Error())
+			return
+		}
+		fmt.Printf("Provider peer %v:\n", blocks[2])
+		fmt.Printf("Reputation score: %v\n", score)
+		fmt.Printf("Pending: %t\n", pending)
+		fmt.Printf("Blocked: %t\n", blocked)
+		fmt.Println("Recent history:")
+		for i, entry := range history {
+			fmt.Printf("History %v - %v\n", i, entry)
+		}
 	case "block-gateway-pvdpeer":
 		if len(blocks) != 3 {
 			fmt.Println("Usage: block-gateway-pvdpeer ${targetID} ${peerID}")
@@ -196,7 +214,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to block peer for given gateway %v\n", msg)
+			fmt.Printf("Fail to block peer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Done")
@@ -211,7 +229,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to unblock peer for given gateway %v\n", msg)
+			fmt.Printf("Fail to unblock peer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Done")
@@ -226,7 +244,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to resuming peer for given gateway %v\n", msg)
+			fmt.Printf("Fail to resuming peer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Done")
@@ -274,7 +292,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		if !ok {
-			fmt.Printf("Fail to cache offer for given gateway %v\n", msg)
+			fmt.Printf("Fail to cache offer for given gateway: %v\n", msg)
 			return
 		}
 		fmt.Println("Offer cached")
