@@ -44,6 +44,15 @@ import (
 
 // Start Gateway service
 func main() {
+	// Configure what should be called if Control-C is hit.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	go func() {
+		<-sig
+		gracefulExit()
+		os.Exit(0)
+	}()
+
 	// Load config
 	conf := config.NewConfig()
 	appSettings := config.Map(conf)
@@ -64,6 +73,8 @@ func main() {
 			rand.Read(token[:])
 		}
 		f.Close()
+	} else {
+		rand.Read(token[:])
 	}
 	f, err = os.Create(c.Settings.AdminKeyFile)
 	if err != nil {
@@ -159,16 +170,6 @@ func main() {
 		return
 	}
 	// Register succeed. Run gateway
-
-	// Configure what should be called if Control-C is hit.
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	go func() {
-		<-sig
-		gracefulExit()
-		os.Exit(0)
-	}()
-
 	logging.Info("Filecoin Gateway Start-up Complete")
 
 	// Wait forever
