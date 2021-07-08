@@ -33,9 +33,22 @@ func RequestUploadFile(adminURL string, adminKey string, filename string, tag st
 	string, // msg
 	error, // error
 ) {
-	data, err := os.ReadFile(filename)
+	info, err := os.Stat(filename)
 	if err != nil {
 		err = fmt.Errorf("Error opening file: %v", filename)
+		logging.Error(err.Error())
+		return false, "", err
+	}
+	// TODO, Uncap the size
+	// 26214400 is 25MB, cap the size
+	if info.Size() > 26214400 {
+		err = fmt.Errorf("File size is too large %v > 26214400 (25MB)", info.Size())
+		logging.Error(err.Error())
+		return false, "", err
+	}
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		err = fmt.Errorf("Error reading file: %v", filename)
 		logging.Error(err.Error())
 		return false, "", err
 	}
