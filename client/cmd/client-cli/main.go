@@ -370,7 +370,9 @@ func (c *ClientCLI) executor(in string) {
 		fmt.Printf("Success, file saved to %v\n", blocks[2])
 	case "exit":
 		fmt.Println("Shutdown client...")
-		c.client.Shutdown()
+		if c.client != nil {
+			c.client.Shutdown()
+		}
 		fmt.Println("Bye!")
 		os.Exit(0)
 	}
