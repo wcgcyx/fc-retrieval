@@ -22,7 +22,7 @@ const (
 	StandardOfferDiscoveryRequestType = byte(0)
 	DHTOfferDiscoveryRequestType      = byte(1)
 	OfferPublishRequestType           = byte(2)
-	DataRetrievalRequestType          = byte(3) // Placeholder, TBD
-	PaymentProxyRequestType           = byte(4) // Placeholder, TBD
-	EstablishmentRequestType          = byte(5)
+	EstablishmentRequestType          = byte(3)
+	DataRetrievalRequestType          = byte(4) // Placeholder, TBD
+	PaymentProxyRequestType           = byte(5) // Placeholder, TBD
 )
