@@ -58,14 +58,15 @@ func main() {
 
 	// Attempt to load token
 	var token [32]byte
+	os.MkdirAll(c.Settings.SystemDir, os.ModePerm)
 	f, err := os.Open(c.Settings.AdminKeyFile)
 	if err == nil {
 		n, err := f.Read(token[:])
 		if n != 32 || err != nil {
 			rand.Read(token[:])
 		}
+		f.Close()
 	}
-	f.Close()
 	f, err = os.Create(c.Settings.AdminKeyFile)
 	if err != nil {
 		logging.Error("Error in creating token file: %v", err.Error())

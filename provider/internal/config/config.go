@@ -70,6 +70,7 @@ func Map(conf *viper.Viper) settings.AppSettings {
 		LogTimeFormat:  conf.GetString("LOG_TIME_FORMAT"),
 
 		BindAdminAPI: conf.GetInt("BIND_ADMIN_API"),
+		SystemDir:    conf.GetString("SYSTEM_DIR"),
 		AdminKeyFile: conf.GetString("ADMIN_KEY_FILE"),
 		RetrievalDir: conf.GetString("RETRIEVAL_DIR"),
 
