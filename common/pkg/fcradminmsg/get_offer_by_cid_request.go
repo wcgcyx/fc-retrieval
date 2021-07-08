@@ -20,34 +20,29 @@ package fcradminmsg
 
 import "encoding/json"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
+// getOfferByCIDRequestJson represents the request to get offer.
+type getOfferByCIDRequestJson struct {
+	CID string `json:"cid"`
 }
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
+// EncodeGetOfferByCIDRequest is used to get the byte array of getOfferByCIDRequestJson
+func EncodeGetOfferByCIDRequest(
+	cid string,
+) ([]byte, error) {
+	return json.Marshal(&getOfferByCIDRequestJson{
+		CID: cid,
 	})
-	return res
 }
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
+// DecodeGetOfferByCIDRequest is used to get the fields from byte array of getOfferByCIDRequestJson
+func DecodeGetOfferByCIDRequest(data []byte) (
+	string, // cid
 	error, // error
 ) {
-	msg := ackJson{}
+	msg := getOfferByCIDRequestJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return false, "", err
+		return "", err
 	}
-	return msg.ACK, msg.Data, nil
+	return msg.CID, nil
 }

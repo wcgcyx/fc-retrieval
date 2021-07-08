@@ -20,34 +20,33 @@ package fcradminmsg
 
 import "encoding/json"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
+// cacheOfferByDigestRequestJson represents the request to cache an offer
+type cacheOfferByDigestRequestJson struct {
+	Digest string `json:"digest"`
+	CID    string `json:"cid"`
 }
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
+// EncodeCacheOfferByDigestRequest is used to get the byte array of cacheOfferByDigestRequestJson
+func EncodeCacheOfferByDigestRequest(
+	digest string,
+	cid string,
+) ([]byte, error) {
+	return json.Marshal(&cacheOfferByDigestRequestJson{
+		Digest: digest,
+		CID:    cid,
 	})
-	return res
 }
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
+// DecodeCacheOfferByDigestRequest is used to get the fields from byte array of cacheOfferByDigestRequestJson
+func DecodeCacheOfferByDigestRequest(data []byte) (
+	string, // digest
+	string, // cid
 	error, // error
 ) {
-	msg := ackJson{}
+	msg := cacheOfferByDigestRequestJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return false, "", err
+		return "", "", err
 	}
-	return msg.ACK, msg.Data, nil
+	return msg.Digest, msg.CID, nil
 }

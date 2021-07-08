@@ -18,36 +18,23 @@ package fcradminmsg
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "encoding/json"
+import (
+	"encoding/hex"
+	"testing"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
-}
+	"github.com/stretchr/testify/assert"
+)
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
-	})
-	return res
-}
+func TestInspectPeerRequest(t *testing.T) {
+	mockID := "testid"
+	mockGateway := true
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
-	error, // error
-) {
-	msg := ackJson{}
-	err := json.Unmarshal(data, &msg)
-	if err != nil {
-		return false, "", err
-	}
-	return msg.ACK, msg.Data, nil
+	data, err := EncodeInspectPeerRequest(mockID, mockGateway)
+	assert.Empty(t, err)
+	assert.Equal(t, "7b226e6f64655f6964223a22746573746964222c2267617465776179223a747275657d", hex.EncodeToString(data))
+
+	resID, resGateway, err := DecodeInspectPeerRequest(data)
+	assert.Empty(t, err)
+	assert.Equal(t, mockID, resID)
+	assert.Equal(t, mockGateway, resGateway)
 }

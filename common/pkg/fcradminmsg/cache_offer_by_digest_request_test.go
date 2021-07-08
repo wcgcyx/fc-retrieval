@@ -18,36 +18,23 @@ package fcradminmsg
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "encoding/json"
+import (
+	"encoding/hex"
+	"testing"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
-}
+	"github.com/stretchr/testify/assert"
+)
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
-	})
-	return res
-}
+func TestCacheOfferByDigestRequest(t *testing.T) {
+	mockDigest := "testdigest"
+	mockCID := "testcid"
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
-	error, // error
-) {
-	msg := ackJson{}
-	err := json.Unmarshal(data, &msg)
-	if err != nil {
-		return false, "", err
-	}
-	return msg.ACK, msg.Data, nil
+	data, err := EncodeCacheOfferByDigestRequest(mockDigest, mockCID)
+	assert.Empty(t, err)
+	assert.Equal(t, "7b22646967657374223a2274657374646967657374222c22636964223a2274657374636964227d", hex.EncodeToString(data))
+
+	resDigest, resCID, err := DecodeCacheOfferByDigestRequest(data)
+	assert.Empty(t, err)
+	assert.Equal(t, mockDigest, resDigest)
+	assert.Equal(t, mockCID, resCID)
 }

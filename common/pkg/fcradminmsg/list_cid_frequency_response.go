@@ -20,34 +20,33 @@ package fcradminmsg
 
 import "encoding/json"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
+// listCIDFrequencyResponseJson represents the response of listing cid frequency.
+type listCIDFrequencyResponseJson struct {
+	CIDs  []string `json:"cids"`
+	Count []int    `json:"count"`
 }
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
+// EncodeListCIDFrequencyResponse is used to get the byte array of listCIDFrequencyResponseJson
+func EncodeListCIDFrequencyResponse(
+	cids []string,
+	count []int,
+) ([]byte, error) {
+	return json.Marshal(&listCIDFrequencyResponseJson{
+		CIDs:  cids,
+		Count: count,
 	})
-	return res
 }
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
+// DecodeListCIDFrequencyResponse is used to get the fields from byte array of listCIDFrequencyResponseJson
+func DecodeListCIDFrequencyResponse(data []byte) (
+	[]string, // cids
+	[]int, // count
 	error, // error
 ) {
-	msg := ackJson{}
+	msg := listCIDFrequencyResponseJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return false, "", err
+		return nil, nil, err
 	}
-	return msg.ACK, msg.Data, nil
+	return msg.CIDs, msg.Count, nil
 }

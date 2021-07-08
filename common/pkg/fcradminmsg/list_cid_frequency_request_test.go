@@ -18,36 +18,23 @@ package fcradminmsg
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "encoding/json"
+import (
+	"encoding/hex"
+	"testing"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
-}
+	"github.com/stretchr/testify/assert"
+)
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
-	})
-	return res
-}
+func TestListCIDFrequencyRequest(t *testing.T) {
+	mockFrom := uint(2)
+	mockTo := uint(12)
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
-	error, // error
-) {
-	msg := ackJson{}
-	err := json.Unmarshal(data, &msg)
-	if err != nil {
-		return false, "", err
-	}
-	return msg.ACK, msg.Data, nil
+	data, err := EncodeListCIDFrequencyRequest(mockFrom, mockTo)
+	assert.Empty(t, err)
+	assert.Equal(t, "7b2266726f6d223a322c22746f223a31327d", hex.EncodeToString(data))
+
+	resFrom, resTo, err := DecodeListCIDFrequencyRequest(data)
+	assert.Empty(t, err)
+	assert.Equal(t, mockFrom, resFrom)
+	assert.Equal(t, mockTo, resTo)
 }

@@ -62,20 +62,18 @@ func EncodeInitialisationRequest(
 }
 
 // DecodeInitialisationRequest is used to get the fields from byte array of initialisationRequestJson
-// It returns the P2P private key, P2P port, network address, root private key, lotus API Addr, lotus auth token,
-// register private key, register API addr, register auth token, region code and error.
 func DecodeInitialisationRequest(data []byte) (
-	string,
-	int,
-	string,
-	string,
-	string,
-	string,
-	string,
-	string,
-	string,
-	string,
-	error,
+	string, // p2p private key
+	int, // p2p port
+	string, // network addr
+	string, // root priv key
+	string, // lotus api addr
+	string, // lotus auth token
+	string, // register private key
+	string, // register api addr
+	string, // register auth token
+	string, // region code
+	error, // error
 ) {
 	msg := initialisationRequestJson{}
 	err := json.Unmarshal(data, &msg)

@@ -19,7 +19,25 @@ package fcradminmsg
  */
 
 const (
-	InitialisationRequestType = 0
-	PublishOfferRequestType   = 1
-	ACKType                   = 2
+	InitialisationRequestType        = 0
+	ListPeersRequestType             = 1
+	ListPeersResponseType            = 2
+	InspectPeerRequestType           = 3
+	InspectPeerResponseType          = 5
+	ChangePeerStatusRequestType      = 6
+	ListCIDFrequencyRequestType      = 12
+	ListCIDFrequencyResponseType     = 13
+	GetOfferByCIDRequestType         = 14
+	GetOfferByCIDResponseType        = 15
+	CacheOfferByDigestRequestType    = 16
+	ListFilesRequestType             = 17
+	ListFilesResponseType            = 18
+	PublishOfferRequestType          = 19
+	InspectFileRequestType           = 20
+	InspectFileResponseType          = 21
+	UploadFileStartRequestType       = 22
+	UploadFileTransmitRequestType    = 23
+	UploadFileRetransmitResponseType = 24
+	UploadFileEndRequestType         = 25
+	ACKType                          = 26
 )

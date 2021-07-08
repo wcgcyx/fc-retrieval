@@ -48,13 +48,12 @@ func EncodePublishOfferRequest(
 }
 
 // DecodePublishOfferRequest is used to get the fields from byte array of publishOfferRequestJson
-// It returns the files, the price, the expiry, qos and error
 func DecodePublishOfferRequest(data []byte) (
-	[]string,
-	*big.Int,
-	int64,
-	uint64,
-	error,
+	[]string, // files
+	*big.Int, // price
+	int64, // expiry
+	uint64, // qos
+	error, // error
 ) {
 	msg := publishOfferRequestJson{}
 	err := json.Unmarshal(data, &msg)

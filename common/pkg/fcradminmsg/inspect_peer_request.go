@@ -20,34 +20,33 @@ package fcradminmsg
 
 import "encoding/json"
 
-// ackJson represents the a ack to message.
-type ackJson struct {
-	ACK  bool   `json:"ack"`
-	Data string `json:"data"`
+// inspectPeerRequestJson represents the request to inspect a peer.
+type inspectPeerRequestJson struct {
+	NodeID  string `json:"node_id"`
+	Gateway bool   `json:"gateway"`
 }
 
-// EncodeACK is used to get the byte array of ackJson
-func EncodeACK(
-	ack bool,
-	data string,
-) []byte {
-	res, _ := json.Marshal(&ackJson{
-		ACK:  ack,
-		Data: data,
+// EncodeInspectPeerRequest is used to get the byte array of inspectPeerRequestJson
+func EncodeInspectPeerRequest(
+	nodeID string,
+	gateway bool,
+) ([]byte, error) {
+	return json.Marshal(&inspectPeerRequestJson{
+		NodeID:  nodeID,
+		Gateway: gateway,
 	})
-	return res
 }
 
-// DecodeACK is used to get the fields from byte array of ackJson
-func DecodeACK(data []byte) (
-	bool, // ack
-	string, // data
+// DecodeInspectPeerRequest is used to get the fields from byte array of inspectPeerRequestJson
+func DecodeInspectPeerRequest(data []byte) (
+	string, // node id
+	bool, // gateway
 	error, // error
 ) {
-	msg := ackJson{}
+	msg := inspectPeerRequestJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return false, "", err
+		return "", false, err
 	}
-	return msg.ACK, msg.Data, nil
+	return msg.NodeID, msg.Gateway, nil
 }
