@@ -26,56 +26,34 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 )
 
-// RequestInitiasation initialises a given gateway
-func RequestInitiasation(
-	adminURL string,
-	adminKey string,
-	p2pPrivKey string,
-	p2pPort int,
-	networkAddr string,
-	rootPrivKey string,
-	lotusAPIAddr string,
-	lotusAuthToken string,
-	registerPrivKey string,
-	registerAPIAddr string,
-	registerAuthToken string,
-	regionCode string,
-) (
-	bool, // ack
-	string, // msg
+// RequestGetOfferByCID gets offers containing given cid from a managed provider
+func RequestGetOfferByCID(adminURL string, adminKey string, cid string) (
+	[]string, // digests
+	[]string, // providers
+	[]string, // prices
+	[]int64, // expiry
+	[]uint64, // qos
 	error, // error
 ) {
-	// Encode request
-	request, err := fcradminmsg.EncodeInitialisationRequest(
-		p2pPrivKey,
-		p2pPort,
-		networkAddr,
-		rootPrivKey,
-		lotusAPIAddr,
-		lotusAuthToken,
-		registerPrivKey,
-		registerAPIAddr,
-		registerAuthToken,
-		regionCode,
-	)
+	request, err := fcradminmsg.EncodeGetOfferByCIDRequest(cid)
 	if err != nil {
-		err = fmt.Errorf("Error in encoding request: %v", err.Error())
+		err = fmt.Errorf("Error in encoding request: %v", request)
 		logging.Error(err.Error())
-		return false, "", err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	respType, respData, err := fcradminserver.Request(adminURL, adminKey, fcradminmsg.InitialisationRequestType, request)
+	respType, respData, err := fcradminserver.Request(adminURL, adminKey, fcradminmsg.GetOfferByCIDRequestType, request)
 	if err != nil {
 		err = fmt.Errorf("Error in sending request: %v", err.Error())
 		logging.Error(err.Error())
-		return false, "", err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	if respType != fcradminmsg.ACKType {
-		err = fmt.Errorf("Getting response of wrong type expect %v, got %v", fcradminmsg.ACKType, respType)
+	if respType != fcradminmsg.GetOfferByCIDResponseType {
+		err = fmt.Errorf("Getting response of wrong type expect %v, got %v", fcradminmsg.GetOfferByCIDResponseType, respType)
 		logging.Error(err.Error())
-		return false, "", err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	return fcradminmsg.DecodeACK(respData)
+	return fcradminmsg.DecodeGetOfferByCIDResponse(respData)
 }

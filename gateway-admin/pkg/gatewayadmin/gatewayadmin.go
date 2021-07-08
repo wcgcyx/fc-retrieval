@@ -103,7 +103,7 @@ func (a *FilecoinRetrievalGatewayAdmin) InitialiseGateway(
 	}
 
 	// Decode request
-	ok, msg, err := adminapi.RequestInitiasation(adminURL, adminKey, p2pPrivKey, p2pPort, networkAddr, gatewayIP, rootPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken, regionCode)
+	ok, msg, err := adminapi.RequestInitiasation(adminURL, adminKey, p2pPrivKey, p2pPort, networkAddr, rootPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken, regionCode)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding response: %v", err.Error())
 		logging.Error(err.Error())

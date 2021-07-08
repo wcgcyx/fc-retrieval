@@ -26,7 +26,7 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 )
 
-// RequestInitiasation initialises a given gateway
+// RequestInitiasation initialises a given provider
 func RequestInitiasation(
 	adminURL string,
 	adminKey string,

@@ -20,51 +20,27 @@ package adminapi
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 )
 
-// RequestInitiasation initialises a given gateway
-func RequestInitiasation(
-	adminURL string,
-	adminKey string,
-	p2pPrivKey string,
-	p2pPort int,
-	networkAddr string,
-	rootPrivKey string,
-	lotusAPIAddr string,
-	lotusAuthToken string,
-	registerPrivKey string,
-	registerAPIAddr string,
-	registerAuthToken string,
-	regionCode string,
-) (
+// RequestPublishOffer asks a given provider to publish a file
+func RequestPublishOffer(adminURL string, adminKey string, files []string, price *big.Int, expiry int64, qos uint64) (
 	bool, // ack
 	string, // msg
 	error, // error
 ) {
-	// Encode request
-	request, err := fcradminmsg.EncodeInitialisationRequest(
-		p2pPrivKey,
-		p2pPort,
-		networkAddr,
-		rootPrivKey,
-		lotusAPIAddr,
-		lotusAuthToken,
-		registerPrivKey,
-		registerAPIAddr,
-		registerAuthToken,
-		regionCode,
-	)
+	request, err := fcradminmsg.EncodePublishOfferRequest(files, price, expiry, qos)
 	if err != nil {
-		err = fmt.Errorf("Error in encoding request: %v", err.Error())
+		err = fmt.Errorf("Error in encoding request: %v", request)
 		logging.Error(err.Error())
 		return false, "", err
 	}
 
-	respType, respData, err := fcradminserver.Request(adminURL, adminKey, fcradminmsg.InitialisationRequestType, request)
+	respType, respData, err := fcradminserver.Request(adminURL, adminKey, fcradminmsg.PublishOfferRequestType, request)
 	if err != nil {
 		err = fmt.Errorf("Error in sending request: %v", err.Error())
 		logging.Error(err.Error())
