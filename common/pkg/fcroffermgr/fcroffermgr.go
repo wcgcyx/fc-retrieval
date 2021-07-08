@@ -45,6 +45,9 @@ type FCROfferMgr interface {
 	// GetAccessCountByCID gets the access count of a given cid.
 	GetAccessCountByCID(cid *cid.ContentID) int
 
+	// ListAccessCount lists the cid and access count from most accessed to least accessed
+	ListAccessCount(from uint, to uint) ([]string, []int)
+
 	/* CID Offer related functions */
 	// AddOffer adds an cid offer to the storage.
 	// If calling from provider, needs to first call add cid tag to track tag.

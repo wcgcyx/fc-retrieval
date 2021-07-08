@@ -39,6 +39,9 @@ type FCROfferMgrImplV1 struct {
 	// cidCountMap is a map from cid -> count
 	cidCountMap map[string]int
 
+	// countCIDMap is a map from count -> (map cid string -> true)
+	countCIDMap map[int]map[string]bool
+
 	// cidDigestMap is a map from cid string -> (map digest string -> true)
 	cidDigestMap map[string]map[string]bool
 
@@ -60,6 +63,7 @@ func NewFCROfferMgrImplV1(tracking bool) FCROfferMgr {
 		lock:            sync.RWMutex{},
 		cidTagMap:       make(map[string]string),
 		cidCountMap:     make(map[string]int),
+		countCIDMap:     make(map[int]map[string]bool),
 		cidDigestMap:    make(map[string]map[string]bool),
 		tagDigestMap:    make(map[string]map[string]bool),
 		digestOfferMap:  make(map[string]*cidoffer.CIDOffer),
@@ -79,6 +83,15 @@ func (mgr *FCROfferMgrImplV1) AddCIDTag(cid *cid.ContentID, tag string) {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 	mgr.cidTagMap[cid.ToString()] = tag
+	_, ok := mgr.cidCountMap[cid.ToString()]
+	if !ok {
+		mgr.cidCountMap[cid.ToString()] = 0
+		_, ok = mgr.countCIDMap[0]
+		if !ok {
+			mgr.countCIDMap[0] = make(map[string]bool)
+		}
+		mgr.countCIDMap[0][cid.ToString()] = true
+	}
 }
 
 func (mgr *FCROfferMgrImplV1) GetTagByCID(cid *cid.ContentID) string {
@@ -93,8 +106,25 @@ func (mgr *FCROfferMgrImplV1) IncrementCIDAccessCount(cid *cid.ContentID) {
 	_, ok := mgr.cidCountMap[cid.ToString()]
 	if !ok {
 		mgr.cidCountMap[cid.ToString()] = 1
+		_, ok = mgr.countCIDMap[1]
+		if !ok {
+			mgr.countCIDMap[1] = make(map[string]bool)
+		}
+		mgr.countCIDMap[1][cid.ToString()] = true
 	} else {
+		oldCount := mgr.cidCountMap[cid.ToString()]
+		newCount := oldCount + 1
 		mgr.cidCountMap[cid.ToString()]++
+		// Update count cid map
+		delete(mgr.countCIDMap[oldCount], cid.ToString())
+		if len(mgr.countCIDMap[oldCount]) == 0 {
+			delete(mgr.countCIDMap, oldCount)
+		}
+		_, ok = mgr.countCIDMap[newCount]
+		if !ok {
+			mgr.countCIDMap[newCount] = make(map[string]bool)
+		}
+		mgr.countCIDMap[newCount][cid.ToString()] = true
 	}
 }
 
@@ -102,6 +132,48 @@ func (mgr *FCROfferMgrImplV1) GetAccessCountByCID(cid *cid.ContentID) int {
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
 	return mgr.cidCountMap[cid.ToString()]
+}
+
+func (mgr *FCROfferMgrImplV1) ListAccessCount(from uint, to uint) ([]string, []int) {
+	resCID := make([]string, 0)
+	resCount := make([]int, 0)
+
+	if from >= to || from >= uint(len(mgr.cidCountMap)) {
+		return resCID, resCount
+	}
+
+	counts := make([]int, len(mgr.countCIDMap))
+	i := 0
+	for count := range mgr.countCIDMap {
+		counts[i] = count
+		i++
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(counts)))
+
+	index := uint(0)
+	for _, count := range counts {
+		cids := mgr.countCIDMap[count]
+		// Sort cids
+		keys := make([]string, len(cids))
+		j := 0
+		for key := range cids {
+			keys[j] = key
+			j++
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			if index >= from {
+				if index < to {
+					resCID = append(resCID, key)
+					resCount = append(resCount, count)
+				} else {
+					return resCID, resCount
+				}
+				index++
+			}
+		}
+	}
+	return resCID, resCount
 }
 
 func (mgr *FCROfferMgrImplV1) AddOffer(offer *cidoffer.CIDOffer) {

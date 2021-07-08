@@ -97,6 +97,10 @@ func TestAddOffer(t *testing.T) {
 	mgr.AddOffer(offer4)
 	mgr.AddOffer(offer5)
 
+	res1, res2 := mgr.ListAccessCount(0, 10)
+	assert.Equal(t, []string{"QmPQ42Rdn4rvsEFab6aoGHg4Cj1kiNh6xpNCpRVq98Qevz", "QmQ2GoeeLevT6TWk9xt6JLorvHc3AhAvJxqT2bfSUgf63C", "QmWJi2BHLpKpCnD3sA3jcSWv5M51D6Zf1WY4rN8BrQtCgi", "QmZbmXDNWtDafGzCPgAJwFnMXrtXH6DunKGnd6FNuJVzwS", "QmcVy3EpcDPeVkJExZQxx5ZStaey19min1LLkgwt9cJYYM", "baga6ea4seaqesauho7j2thfi4g4u5zbnhn2okd74s2igpvc2lsb7rrsfstoy4by", "baga6ea4seaqlyo5kq57dbjmw4rcexvtqbr5sdhqdfyezvy6hy3bdezfvu6jeiby", "baga6ea4seaqpdbfmh26egh4oqpb4dtr5mjtrktedcp527pfcui5pz63faik3wgq"}, res1)
+	assert.Equal(t, []int{0, 0, 0, 0, 0, 0, 0, 0}, res2)
+
 	res := mgr.GetOffers(cid1)
 	assert.Equal(t, 1, len(res))
 	res = mgr.GetOffers(cid2)
@@ -116,6 +120,10 @@ func TestAddOffer(t *testing.T) {
 	mgr.IncrementCIDAccessCount(cid1)
 	count = mgr.GetAccessCountByCID(cid1)
 	assert.Equal(t, count, 2)
+
+	res1, res2 = mgr.ListAccessCount(0, 2)
+	assert.Equal(t, []string{"QmWJi2BHLpKpCnD3sA3jcSWv5M51D6Zf1WY4rN8BrQtCgi", "QmPQ42Rdn4rvsEFab6aoGHg4Cj1kiNh6xpNCpRVq98Qevz"}, res1)
+	assert.Equal(t, []int{2, 0}, res2)
 
 	res = mgr.GetOffersByTag("CID10")
 	assert.Equal(t, 0, len(res))
