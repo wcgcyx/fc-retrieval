@@ -39,7 +39,6 @@ func RequestUploadFile(adminURL string, adminKey string, filename string, tag st
 		logging.Error(err.Error())
 		return false, "", err
 	}
-	// TODO, Uncap the size
 	// 26214400 is 25MB, cap the size
 	if info.Size() > 26214400 {
 		err = fmt.Errorf("File size is too large %v > 26214400 (25MB)", info.Size())

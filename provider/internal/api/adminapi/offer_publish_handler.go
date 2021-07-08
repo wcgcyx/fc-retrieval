@@ -49,7 +49,6 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 		return fcradminmsg.ACKType, ack, err
 	}
 
-	// TODO: Replace files to be the real cid.
 	cids := make([]cid.ContentID, 0)
 	for _, file := range files {
 		reader, err := os.Open(filepath.Join(c.Settings.RetrievalDir, file))
@@ -85,7 +84,7 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Send offer
-	// TODO, concurrency and memory
+	// TODO, concurrency and memory (too many gateways)
 	gws := c.PeerMgr.ListGWS()
 	for _, gw := range gws {
 		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, offer)

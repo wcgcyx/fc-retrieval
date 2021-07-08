@@ -71,7 +71,7 @@ func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserv
 	}
 
 	// Offer verified, add to storage
-	// TODO: c.StoreFullOffer
+	// TODO: if c.StoreFullOffer is set to false, only store offer if it contains an cid that is within the range
 	c.OfferMgr.AddOffer(offer)
 	return writer.Write(fcrmessages.CreateFCRACKMsg(nonce, []byte{0}), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 }

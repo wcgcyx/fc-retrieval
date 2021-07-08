@@ -385,6 +385,7 @@ func (c *FilecoinRetrievalClient) Retrieve(digest string, location string) error
 		logging.Error(err.Error())
 		return err
 	}
+	// TODO, Implement retrieval
 	logging.Info("Not implemented, save file to %v using offer digest %v", location, digest)
 	return nil
 }
