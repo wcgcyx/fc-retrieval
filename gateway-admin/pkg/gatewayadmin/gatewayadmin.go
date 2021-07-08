@@ -25,8 +25,6 @@ import (
 	"sync"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
@@ -104,39 +102,8 @@ func (a *FilecoinRetrievalGatewayAdmin) InitialiseGateway(
 		return err
 	}
 
-	// Encode request
-	data, err := fcradminmsg.EncodeInitialisationRequest(
-		p2pPrivKey,
-		p2pPort,
-		networkAddr,
-		rootPrivKey,
-		lotusAPIAddr,
-		lotusAuthToken,
-		registerPrivKey,
-		registerAPIAddr,
-		registerAuthToken,
-		regionCode,
-	)
-	if err != nil {
-		err = fmt.Errorf("Error in encoding request: %v", err.Error())
-		logging.Error(err.Error())
-		return err
-	}
-	respType, respData, err := fcradminserver.Request(adminURL, adminKey, fcradminmsg.InitialisationRequestType, data)
-	if err != nil {
-		err = fmt.Errorf("Error in sending request: %v", err.Error())
-		logging.Error(err.Error())
-		return err
-	}
-
-	if respType != fcradminmsg.ACKType {
-		err = fmt.Errorf("Getting response of wrong type expect %v, got %v", fcradminmsg.ACKType, respType)
-		logging.Error(err.Error())
-		return err
-	}
-
 	// Decode request
-	ok, msg, err := fcradminmsg.DecodeACK(respData)
+	ok, msg, err := adminapi.RequestInitiasation(adminURL, adminKey, p2pPrivKey, p2pPort, networkAddr, gatewayIP, rootPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken, regionCode)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding response: %v", err.Error())
 		logging.Error(err.Error())

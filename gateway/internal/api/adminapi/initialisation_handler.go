@@ -48,7 +48,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 		return fcradminmsg.ACKType, ack, err
 	}
 
-	// Decoding payload
+	// Decode payload
 	p2pPrivKey, p2pPort, networkAddr, rootPrivKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
