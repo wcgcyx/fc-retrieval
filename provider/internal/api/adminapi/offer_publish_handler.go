@@ -21,6 +21,8 @@ package adminapi
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
@@ -50,12 +52,19 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	// TODO: Replace files to be the real cid.
 	cids := make([]cid.ContentID, 0)
 	for _, file := range files {
-		cid, err := cid.NewContentID(file)
+		reader, err := os.Open(filepath.Join(c.Settings.RetrievalDir, file))
+		if err != nil {
+			err = fmt.Errorf("Fail to open file %v: %v", file, err.Error())
+			ack := fcradminmsg.EncodeACK(false, err.Error())
+			return fcradminmsg.ACKType, ack, err
+		}
+		cid, err := cid.NewContentIDFromFile(reader)
 		if err != nil {
 			err = fmt.Errorf("Invalid CID: %v", err.Error())
 			ack := fcradminmsg.EncodeACK(false, err.Error())
 			return fcradminmsg.ACKType, ack, err
 		}
+		c.OfferMgr.AddCIDTag(cid, file)
 		cids = append(cids, *cid)
 	}
 
@@ -81,6 +90,9 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	for _, gw := range gws {
 		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, offer)
 	}
+
+	// Add offer
+	c.OfferMgr.AddOffer(offer)
 
 	// Succeed
 	ack := fcradminmsg.EncodeACK(true, "Succeed")

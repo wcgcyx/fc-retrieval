@@ -39,6 +39,9 @@ type FCROfferMgr interface {
 	// GetTagByCID gets the tag associated by the given cid.
 	GetTagByCID(cid *cid.ContentID) string
 
+	// GetCIDByTag gets the cid string associated by the given tag.
+	GetCIDByTag(tag string) string
+
 	// IncrementCIDAccessCount increments the access count for a given cid.
 	IncrementCIDAccessCount(cid *cid.ContentID)
 

@@ -18,21 +18,23 @@ package fcradminmsg
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const (
-	InitialisationRequestType     = 0
-	ListPeersRequestType          = 1
-	ListPeersResponseType         = 2
-	InspectPeerRequestType        = 3
-	InspectPeerResponseType       = 5
-	ChangePeerStatusRequestType   = 6
-	ListCIDFrequencyRequestType   = 12
-	ListCIDFrequencyResponseType  = 13
-	GetOfferByCIDRequestType      = 14
-	GetOfferByCIDResponseType     = 15
-	CacheOfferByDigestRequestType = 16
-	ListFilesRequestType          = 17
-	ListFilesResponseType         = 18
-	PublishOfferRequestType       = 19
-	UploadFileRequestType         = 20
-	ACKType                       = 21
+import (
+	"encoding/hex"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestUploadFileStartRequest(t *testing.T) {
+	mockTag := "testtag"
+	mockData := []byte{1, 2, 3, 4}
+
+	data, err := EncodeUploadFileStartRequest(mockTag, mockData)
+	assert.Empty(t, err)
+	assert.Equal(t, "7b22746167223a2274657374746167222c22636964223a2274657374636964222c2264617461223a224151494442413d3d227d", hex.EncodeToString(data))
+
+	resTag, resData, err := DecodeUploadFileStartRequest(data)
+	assert.Empty(t, err)
+	assert.Equal(t, mockTag, resTag)
+	assert.Equal(t, mockData, resData)
+}

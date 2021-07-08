@@ -36,6 +36,9 @@ type FCROfferMgrImplV1 struct {
 	// cidTagMap is a map from cid string -> tag string
 	cidTagMap map[string]string
 
+	// tagCIDMap is a map from tag -> cid string
+	tagCIDMap map[string]string
+
 	// cidCountMap is a map from cid -> count
 	cidCountMap map[string]int
 
@@ -62,6 +65,7 @@ func NewFCROfferMgrImplV1(tracking bool) FCROfferMgr {
 	return &FCROfferMgrImplV1{
 		lock:            sync.RWMutex{},
 		cidTagMap:       make(map[string]string),
+		tagCIDMap:       make(map[string]string),
 		cidCountMap:     make(map[string]int),
 		countCIDMap:     make(map[int]map[string]bool),
 		cidDigestMap:    make(map[string]map[string]bool),
@@ -83,6 +87,7 @@ func (mgr *FCROfferMgrImplV1) AddCIDTag(cid *cid.ContentID, tag string) {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 	mgr.cidTagMap[cid.ToString()] = tag
+	mgr.tagCIDMap[tag] = cid.ToString()
 	_, ok := mgr.cidCountMap[cid.ToString()]
 	if !ok {
 		mgr.cidCountMap[cid.ToString()] = 0
@@ -98,6 +103,12 @@ func (mgr *FCROfferMgrImplV1) GetTagByCID(cid *cid.ContentID) string {
 	mgr.lock.RLock()
 	defer mgr.lock.RUnlock()
 	return mgr.cidTagMap[cid.ToString()]
+}
+
+func (mgr *FCROfferMgrImplV1) GetCIDByTag(tag string) string {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
+	return mgr.tagCIDMap[tag]
 }
 
 func (mgr *FCROfferMgrImplV1) IncrementCIDAccessCount(cid *cid.ContentID) {

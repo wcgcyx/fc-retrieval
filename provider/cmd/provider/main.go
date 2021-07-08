@@ -93,7 +93,12 @@ func main() {
 	c.AdminServer = fcradminserver.NewFCRAdminServerImplV1(fmt.Sprintf("localhost:%v", c.Settings.BindAdminAPI), adminKey)
 	c.AdminServer.
 		// Handlers
-		AddHandler(fcradminmsg.InitialisationRequestType, adminapi.InitialisationHandler)
+		AddHandler(fcradminmsg.InitialisationRequestType, adminapi.InitialisationHandler).
+		AddHandler(fcradminmsg.GetOfferByCIDRequestType, adminapi.GetOfferByCIDHandler).
+		AddHandler(fcradminmsg.ListFilesRequestType, adminapi.ListFilesHandler).
+		AddHandler(fcradminmsg.PublishOfferRequestType, adminapi.OfferPublishHandler).
+		AddHandler(fcradminmsg.UploadFileRequestType, adminapi.UploadFileHandler)
+
 	err = c.AdminServer.Start()
 	if err != nil {
 		logging.Error("Error in starting admin server: %v", err)

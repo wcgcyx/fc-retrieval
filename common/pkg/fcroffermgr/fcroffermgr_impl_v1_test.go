@@ -89,6 +89,9 @@ func TestAddOffer(t *testing.T) {
 	mgr.AddCIDTag(cid7, "CID7")
 	mgr.AddCIDTag(cid8, "CID8")
 
+	testCIDStr := mgr.GetCIDByTag("CID3")
+	assert.Equal(t, cid3.ToString(), testCIDStr)
+
 	mgr.AddOffer(offer0)
 	mgr.AddOffer(offer0)
 	mgr.AddOffer(offer1)

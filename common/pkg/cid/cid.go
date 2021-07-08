@@ -25,7 +25,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"io/fs"
+	"io"
 	"io/ioutil"
 
 	"github.com/cbergoon/merkletree"
@@ -48,11 +48,11 @@ func NewContentID(cidStr string) (*ContentID, error) {
 }
 
 // NewContentIDFromFile creates a ContentID object from a given file.
-func NewContentIDFromFile(file fs.File) (*ContentID, error) {
+func NewContentIDFromFile(reader io.Reader) (*ContentID, error) {
 	// TODO:
 	// 1. Might have problem for large file.
 	// 2. For now, it just uses the plain bytes, we need to generate a merkle DAG
-	data, err := ioutil.ReadAll(file)
+	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
