@@ -74,7 +74,7 @@ func DHTOfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrser
 	}
 	// expected is 1 * search price + numDHT * (search price + max offer per DHT * offer price)
 	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(int64(maxOfferRequestedPerDHT)))), big.NewInt(int64(numDHT))))
-	if expected.Cmp(received) < 0 {
+	if received.Cmp(expected) < 0 {
 		// Short payment
 		// Refund money
 		if received.Cmp(c.Settings.SearchPrice) <= 0 {

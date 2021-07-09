@@ -19,6 +19,7 @@ package settings
  */
 
 import (
+	"math/big"
 	"time"
 )
 
@@ -59,4 +60,7 @@ type AppSettings struct {
 	MsgKeyUpdateDuration     time.Duration `mapstructure:"MSG_KEY_UPDATE_DURATION"`     // Msg key update duration
 	TCPInactivityTimeout     time.Duration `mapstructure:"TCP_INACTIVITY_TIMEOUT"`      // TCP inactivity timeout
 	TCPLongInactivityTimeout time.Duration `mapstructure:"TCP_LONG_INACTIVITY_TIMEOUT"` // TCP long inactivity timeout
+
+	// Price, this is not configurable at the moment.
+	SearchPrice *big.Int `mapstructure:"SEARCH_PRICE"` // Search price
 }

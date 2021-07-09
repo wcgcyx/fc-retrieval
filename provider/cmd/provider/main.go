@@ -112,6 +112,9 @@ func main() {
 
 	// Provider has been initialised.
 	c.P2PServer.
+		// Handlers
+		AddHandler(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentHandler).
+		AddHandler(fcrmessages.DataRetrievalRequestType, p2papi.DataRetrievalHandler).
 		// Requesters
 		AddRequester(fcrmessages.OfferPublishRequestType, p2papi.OfferPublishRequester)
 

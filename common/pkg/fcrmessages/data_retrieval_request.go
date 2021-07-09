@@ -28,6 +28,7 @@ import (
 
 // dataRetrievalRequestJson represents the request to retrieve a piece of data.
 type dataRetrievalRequestJson struct {
+	SenderID    string `json:"sender_id"`
 	Offer       string `json:"offer"`
 	AccountAddr string `json:"account_addr"`
 	Voucher     string `json:"voucher"`
@@ -36,6 +37,7 @@ type dataRetrievalRequestJson struct {
 // EncodeDataRetrievalRequest is used to get the FCRMessage of dataRetrievalRequest.
 func EncodeDataRetrievalRequest(
 	nonce uint64,
+	senderID string,
 	offer *cidoffer.SubCIDOffer,
 	accountAddr string,
 	voucher string,
@@ -45,6 +47,7 @@ func EncodeDataRetrievalRequest(
 		return nil, err
 	}
 	body, err := json.Marshal(dataRetrievalRequestJson{
+		SenderID:    senderID,
 		Offer:       hex.EncodeToString(data),
 		AccountAddr: accountAddr,
 		Voucher:     voucher,
@@ -59,27 +62,28 @@ func EncodeDataRetrievalRequest(
 // It returns the nonce, offer, account address and voucher.
 func DecodeDataRetrievalRequest(fcrMsg *FCRReqMsg) (
 	uint64,
+	string,
 	*cidoffer.SubCIDOffer,
 	string,
 	string,
 	error,
 ) {
 	if fcrMsg.Type() != DataRetrievalRequestType {
-		return 0, nil, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", DataRetrievalRequestType, fcrMsg.Type())
+		return 0, "", nil, "", "", fmt.Errorf("Message type mismatch, expect %v, got %v", DataRetrievalRequestType, fcrMsg.Type())
 	}
 	msg := dataRetrievalRequestJson{}
 	err := json.Unmarshal(fcrMsg.Body(), &msg)
 	if err != nil {
-		return 0, nil, "", "", err
+		return 0, "", nil, "", "", err
 	}
 	data, err := hex.DecodeString(msg.Offer)
 	if err != nil {
-		return 0, nil, "", "", err
+		return 0, "", nil, "", "", err
 	}
 	offer := cidoffer.SubCIDOffer{}
 	err = offer.FromBytes(data)
 	if err != nil {
-		return 0, nil, "", "", err
+		return 0, "", nil, "", "", err
 	}
-	return fcrMsg.Nonce(), &offer, msg.AccountAddr, msg.Voucher, nil
+	return fcrMsg.Nonce(), msg.SenderID, &offer, msg.AccountAddr, msg.Voucher, nil
 }

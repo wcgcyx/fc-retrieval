@@ -20,6 +20,8 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -57,6 +59,13 @@ func Map(conf *viper.Viper) settings.AppSettings {
 		tcpLongInactivityTimeout = settings.DefaultLongTCPInactivityTimeout
 	}
 
+	defaultSearchPrice := new(big.Int)
+	_, err = fmt.Sscan(conf.GetString("SEARCH_PRICE"), defaultSearchPrice)
+	if err != nil {
+		// defaultSearchPrice is the default search price "0.001".
+		defaultSearchPrice = big.NewInt(1_000_000_000_000_000)
+	}
+
 	return settings.AppSettings{
 		LogServiceName: conf.GetString("LOG_SERVICE_NAME"),
 		LogLevel:       conf.GetString("LOG_LEVEL"),
@@ -78,6 +87,8 @@ func Map(conf *viper.Viper) settings.AppSettings {
 		MsgKeyUpdateDuration:     msgKeyUpdateDuration,
 		TCPInactivityTimeout:     tcpInactivityTimeout,
 		TCPLongInactivityTimeout: tcpLongInactivityTimeout,
+
+		SearchPrice: defaultSearchPrice,
 	}
 }
 

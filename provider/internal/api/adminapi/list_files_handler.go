@@ -30,6 +30,7 @@ import (
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
+// ListFilesHandler lists all the files.
 func ListFilesHandler(data []byte) (byte, []byte, error) {
 	// Get core
 	c := core.GetSingleInstance()

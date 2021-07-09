@@ -87,6 +87,7 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 		return fcradminmsg.ACKType, ack, err
 	}
 	c.OfferSigningKey = offerKey
+	c.OfferSigningPubKey = offerSigningKey
 
 	// Initialise P2P Server
 	c.P2PServer = fcrserver.NewFCRServerImplV1(p2pPrivKey, uint(p2pPort), c.Settings.TCPInactivityTimeout)

@@ -20,26 +20,24 @@ package p2papi
 
 import (
 	"fmt"
-	"time"
-
+	"io/ioutil"
 	"math/big"
+	"path/filepath"
 
-	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
+	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
-// OfferQueryHandler handles standard offer query.
-func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
+func DataRetrievalHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()
 	defer c.MsgSigningKeyLock.RUnlock()
 
 	// Message decoding
-	nonce, senderID, pieceCID, maxOfferRequested, accountAddr, voucher, err := fcrmessages.DecodeStandardOfferDiscoveryRequest(request)
+	nonce, senderID, offer, accountAddr, voucher, err := fcrmessages.DecodeDataRetrievalRequest(request)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
 		logging.Error(err.Error())
@@ -78,12 +76,12 @@ func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver
 		logging.Error(err.Error())
 		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
-	if lane != 0 {
-		err = fmt.Errorf("Not correct lane received expect 0 got %v:", lane)
+	if lane != 1 {
+		err = fmt.Errorf("Not correct lane received expect 1 got %v:", lane)
 		logging.Error(err.Error())
 		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
-	expected := big.NewInt(0).Add(c.Settings.SearchPrice, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(int64(maxOfferRequested))))
+	expected := big.NewInt(0).Add(c.Settings.SearchPrice, offer.GetPrice())
 	if received.Cmp(expected) < 0 {
 		// Short payment
 		// Refund money
@@ -102,60 +100,73 @@ func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver
 		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
 
-	// Payment is fine, search.
-	c.OfferMgr.IncrementCIDAccessCount(pieceCID)
-	offers := c.OfferMgr.GetOffers(pieceCID)
-
-	// Generating sub CID offers
-	res := make([]cidoffer.SubCIDOffer, 0)
-	remain := int64(maxOfferRequested)
-	for _, offer := range offers {
-		if remain == 0 {
-			break
-		}
-		// Check offer expiry, remove if less than 1 hour + 1 hour room
-		if offer.GetExpiry()-time.Now().Unix() < 7200 {
-			// Offer is soon to expire
-			c.OfferMgr.RemoveOffer(offer.GetMessageDigest())
-			continue
-		}
-
-		subOffer, err := offer.GenerateSubCIDOffer(pieceCID)
-		if err != nil {
-			// Internal error in generating sub offers
-			var ierr error
-			refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, received)
-			if ierr != nil {
-				// This should never happen
-				logging.Error("Error in refunding: %v", ierr.Error())
-			}
-			err = fmt.Errorf("Internal error in generating sub cid offer: %v, refund voucher %v", err.Error(), refundVoucher)
-			logging.Error(err.Error())
-			return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
-		}
-		res = append(res, *subOffer)
-		remain--
-	}
-	if remain > 0 {
+	// Payment is fine, verify offer
+	if offer.Verify(c.OfferSigningPubKey) != nil {
+		// Refund money
 		var ierr error
-		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(remain))))
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, c.Settings.SearchPrice))
 		if ierr != nil {
 			// This should never happen
-			logging.Error("Error in refunding %v", ierr.Error())
+			logging.Error("Error in refunding: %v", ierr.Error())
 		}
+		err = fmt.Errorf("Fail to verify the offer signature, refund voucher %v", refundVoucher)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
-
-	// Respond
-	response, err := fcrmessages.EncodeStandardOfferDiscoveryResponse(nonce, res, refundVoucher)
+	// Verify offer merkle proof
+	if offer.VerifyMerkleProof() != nil {
+		// Refund money
+		var ierr error
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, c.Settings.SearchPrice))
+		if ierr != nil {
+			// This should never happen
+			logging.Error("Error in refunding: %v", ierr.Error())
+		}
+		err = fmt.Errorf("Fail to verify the offer merkle proof, refund voucher %v", refundVoucher)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+	}
+	// Verify offer expiry
+	if offer.HasExpired() {
+		// Refund money
+		var ierr error
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, c.Settings.SearchPrice))
+		if ierr != nil {
+			// This should never happen
+			logging.Error("Error in refunding: %v", ierr.Error())
+		}
+		err = fmt.Errorf("Offer has expired, refund voucher %v", refundVoucher)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+	}
+	// Offer is verified. Respond
+	// First get the tag
+	tag := c.OfferMgr.GetTagByCID(offer.GetSubCID())
+	// Second read the data
+	data, err := ioutil.ReadFile(filepath.Join(c.Settings.RetrievalDir, tag))
 	if err != nil {
-		// Internal error in encoding
+		// Refund money, internal error, refund all
 		var ierr error
 		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, received)
 		if ierr != nil {
 			// This should never happen
-			logging.Error("Error in refunding %v", ierr.Error())
+			logging.Error("Error in refunding: %v", ierr.Error())
 		}
-		err = fmt.Errorf("Internal error in encoding response: %v, refund voucher %v", err.Error(), refundVoucher)
+		err = fmt.Errorf("Internal error in finding the content, refund voucher %v", refundVoucher)
+		logging.Error(err.Error())
+		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+	}
+	// Third encoding response
+	response, err := fcrmessages.EncodeDataRetrievalResponse(nonce, tag, data)
+	if err != nil {
+		// Refund money, internal error, refund all
+		var ierr error
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, received)
+		if ierr != nil {
+			// This should never happen
+			logging.Error("Error in refunding: %v", ierr.Error())
+		}
+		err = fmt.Errorf("Internal error in encoding the response, refund voucher %v", refundVoucher)
 		logging.Error(err.Error())
 		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}

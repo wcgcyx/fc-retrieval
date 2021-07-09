@@ -49,7 +49,8 @@ type Core struct {
 	MsgSigningKeyVer  byte
 	MsgSigningKeyLock sync.RWMutex
 
-	OfferSigningKey string
+	OfferSigningKey    string
+	OfferSigningPubKey string
 
 	// The Admin Server
 	AdminServer fcradminserver.FCRAdminServer
