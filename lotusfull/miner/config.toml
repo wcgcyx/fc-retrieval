@@ -1,0 +1,65 @@
+# Default config:
+[API]
+  ListenAddress = "/ip4/0.0.0.0/tcp/2345/http"
+#  RemoteListenAddress = "127.0.0.1:2345"
+#  Timeout = "30s"
+#
+[Backup]
+#  DisableMetadataLog = false
+#
+[Libp2p]
+#  ListenAddresses = ["/ip4/0.0.0.0/tcp/0", "/ip6/::/tcp/0"]
+#  AnnounceAddresses = []
+#  NoAnnounceAddresses = []
+#  ConnMgrLow = 150
+#  ConnMgrHigh = 180
+#  ConnMgrGrace = "20s"
+#
+[Pubsub]
+#  Bootstrapper = false
+#  RemoteTracer = "/dns4/pubsub-tracer.filecoin.io/tcp/4001/p2p/QmTd6UvR47vUidRNZ1ZKXHrAFhqTJAD27rKL9XYghEKgKX"
+#
+[Dealmaking]
+#  ConsiderOnlineStorageDeals = true
+#  ConsiderOfflineStorageDeals = true
+#  ConsiderOnlineRetrievalDeals = true
+#  ConsiderOfflineRetrievalDeals = true
+#  ConsiderVerifiedStorageDeals = true
+#  ConsiderUnverifiedStorageDeals = true
+#  PieceCidBlocklist = []
+#  ExpectedSealDuration = "24h0m0s"
+#  PublishMsgPeriod = "1h0m0s"
+#  MaxDealsPerPublishMsg = 8
+#  MaxProviderCollateralMultiplier = 2
+#  Filter = ""
+#  RetrievalFilter = ""
+#
+[Sealing]
+#  MaxWaitDealsSectors = 2
+#  MaxSealingSectors = 0
+#  MaxSealingSectorsForDeals = 0
+#  WaitDealsDelay = "6h0m0s"
+  AlwaysKeepUnsealedCopy = true
+#
+[Storage]
+#  ParallelFetchLimit = 10
+#  AllowAddPiece = true
+#  AllowPreCommit1 = true
+#  AllowPreCommit2 = true
+#  AllowCommit = true
+#  AllowUnseal = true
+#
+[Fees]
+#  MaxPreCommitGasFee = "0.025 FIL"
+#  MaxCommitGasFee = "0.05 FIL"
+#  MaxTerminateGasFee = "0.5 FIL"
+#  MaxWindowPoStGasFee = "5 FIL"
+#  MaxPublishDealsFee = "0.05 FIL"
+#  MaxMarketBalanceAddFee = "0.007 FIL"
+#
+[Addresses]
+#  PreCommitControl = []
+#  CommitControl = []
+#  DisableOwnerFallback = false
+#  DisableWorkerFallback = false
+#
