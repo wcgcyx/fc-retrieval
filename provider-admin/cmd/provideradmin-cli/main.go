@@ -77,6 +77,9 @@ func (c *ProviderAdminCLI) executor(in string) {
 	in = strings.TrimSpace(in)
 	blocks := strings.Split(in, " ")
 	switch blocks[0] {
+	case "init-dev":
+		// Note: this is a hidden command, used by developers to test
+		c.initDev()
 	case "init-provider":
 		if len(blocks) != 13 {
 			fmt.Println("Usage: init-provider ${adminURL} ${adminKey} ${p2pPort} ${providerIP} ${rootPrivKey} ${lotusAPIAddr} {lotusAuthToken} {registerPrivKey} {registerAPIAddr} {registerAuthToken} {regionCode} {alias}")
@@ -237,4 +240,29 @@ func handleExit() {
 	rawModeOff.Stdin = os.Stdin
 	_ = rawModeOff.Run()
 	rawModeOff.Wait()
+}
+
+// initDev is only used by developers to test, its hard-coded
+func (c *ProviderAdminCLI) initDev() {
+	env := os.Getenv("DEVINIT")
+	vars := strings.Split(env, ";")
+	lotusAuthToken := vars[0]
+	for i := 1; i < len(vars); i++ {
+		info := strings.Split(vars[i], ",")
+		adminURL := fmt.Sprintf("%v:9010", info[0])
+		adminKey := info[1]
+		providerIP := info[0]
+		rootPrivKey := info[2]
+		lotusAPIAddr := "http://lotus:1234/rpc/v0"
+		registerPrivKey := "_"
+		registerAPIAddr := "register:9020"
+		registerAuthToken := "_"
+		regionCode := "au"
+		alias := info[0]
+		err := c.admin.InitialiseProvider(adminURL, adminKey, 9011, providerIP, rootPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken, regionCode, alias)
+		if err != nil {
+			panic(err)
+		}
+	}
+	fmt.Println("All providers are initialised.")
 }

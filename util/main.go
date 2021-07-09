@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/filecoin-project/go-address"
@@ -20,15 +22,72 @@ import (
 var localLotusAP = "http://127.0.0.1:1234/rpc/v0"
 
 func main() {
+	// Get lotus token
 	token, acct := getLotusToken()
-	fmt.Printf("Lotus token is: %v\n", token)
-	privKeys, _, err := generateAccount(localLotusAP, token, acct, 50)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	for i, key := range privKeys {
-		fmt.Printf("Key %v:\t%v\n", i, key)
+	res := token
+	if os.Args[1] == "gw" {
+		cmd := exec.Command("docker", "ps", "--filter", "ancestor=wcgcyx/fc-retrieval/gateway", "--format", "{{.Names}}")
+		stdout, err := cmd.Output()
+		if err != nil {
+			panic(err)
+		}
+		gws := strings.Split(string(stdout[:len(stdout)-1]), "\n")
+		privKeys, _, err := generateAccount(localLotusAP, token, acct, len(gws))
+		if err != nil {
+			panic(err)
+		}
+		for i, gw := range gws {
+			cmd = exec.Command("docker", "ps", "--filter", fmt.Sprintf("name=%v", gw), "--format", "{{.ID}}")
+			stdout, err := cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			id := string(stdout[:len(stdout)-1])
+			cmd = exec.Command("docker", "exec", id, "cat", ".fc-retrieval/gateway/admin.key")
+			stdout, err = cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			adminKey := hex.EncodeToString(stdout)
+			// Generate a root private key for it
+			res = fmt.Sprintf("%v;%v,%v,%v", res, gw, adminKey, privKeys[i])
+		}
+		fmt.Println(res)
+	} else if os.Args[1] == "pvd" {
+		cmd := exec.Command("docker", "ps", "--filter", "ancestor=wcgcyx/fc-retrieval/provider", "--format", "{{.Names}}")
+		stdout, err := cmd.Output()
+		if err != nil {
+			panic(err)
+		}
+		gws := strings.Split(string(stdout[:len(stdout)-1]), "\n")
+		privKeys, _, err := generateAccount(localLotusAP, token, acct, len(gws))
+		if err != nil {
+			panic(err)
+		}
+		for i, gw := range gws {
+			cmd = exec.Command("docker", "ps", "--filter", fmt.Sprintf("name=%v", gw), "--format", "{{.ID}}")
+			stdout, err := cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			id := string(stdout[:len(stdout)-1])
+			cmd = exec.Command("docker", "exec", id, "cat", ".fc-retrieval/provider/admin.key")
+			stdout, err = cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			adminKey := hex.EncodeToString(stdout)
+			// Generate a root private key for it
+			res = fmt.Sprintf("%v;%v,%v,%v", res, gw, adminKey, privKeys[i])
+		}
+		fmt.Println(res)
+	} else {
+		// Must be client
+		privKeys, _, err := generateAccount(localLotusAP, token, acct, 1)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%v;%v\n", token, privKeys[0])
 	}
 }
 

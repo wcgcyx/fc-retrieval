@@ -24,20 +24,19 @@ buildall:
 	docker build -t wcgcyx/lotusfull -f lotusfull/Dockerfile .
 
 start:
+	docker stop $(shell docker ps -q) || true
+	docker rm $(shell docker ps -q -a) || true
 	docker compose up
 
 clean:
 	docker stop $(shell docker ps -q) || true
 	docker rm $(shell docker ps -q -a)
 
-gen:
-	cd util; go run ./main.go; cd ..
-
 runclient:
-	docker run -it --network=shared wcgcyx/fc-retrieval/client ./main
+	cd util; ./runclient.sh
 
 rungwadmin:
-	docker run -it --network=shared wcgcyx/fc-retrieval/gateway-admin ./main
+	cd util; ./rungwadmin.sh
 
 runpvdadmin:
-	docker run -it --network=shared wcgcyx/fc-retrieval/provider-admin ./main
+	cd util; ./runpvdadmin.sh

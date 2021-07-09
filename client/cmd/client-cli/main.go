@@ -89,6 +89,9 @@ func (c *ClientCLI) executor(in string) {
 	in = strings.TrimSpace(in)
 	blocks := strings.Split(in, " ")
 	switch blocks[0] {
+	case "init-dev":
+		// Note: this is a hidden command, used by developers to test
+		c.initDev()
 	case "init":
 		if c.initialised {
 			fmt.Println("Client has already been initialised")
@@ -388,4 +391,30 @@ func handleExit() {
 	rawModeOff.Stdin = os.Stdin
 	_ = rawModeOff.Run()
 	rawModeOff.Wait()
+}
+
+// initDev is only used by developers to test, its hard-coded
+func (c *ClientCLI) initDev() {
+	if c.initialised {
+		fmt.Println("Client has already been initialised")
+		return
+	}
+
+	env := os.Getenv("DEVINIT")
+	vars := strings.Split(env, ";")
+	lotusAuthToken := vars[0]
+	walletPrivKey := vars[1]
+	lotusAPIAddr := "http://lotus:1234/rpc/v0"
+	registerPrivKey := "_"
+	registerAPIAddr := "register:9020"
+	registerAuthToken := "_"
+
+	var err error
+	c.client, err = client.NewFilecoinRetrievalClient(walletPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken)
+	if err != nil {
+		fmt.Printf("Error in initialising the client: %v\n", err.Error())
+		return
+	}
+	fmt.Println("Client has been initialised successfully")
+	c.initialised = true
 }

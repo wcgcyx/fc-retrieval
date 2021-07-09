@@ -82,6 +82,9 @@ func (c *GatewayAdminCLI) executor(in string) {
 	in = strings.TrimSpace(in)
 	blocks := strings.Split(in, " ")
 	switch blocks[0] {
+	case "init-dev":
+		// Note: this is a hidden command, used by developers to test
+		c.initDev()
 	case "init-gateway":
 		if len(blocks) != 13 {
 			fmt.Println("Usage: init-gateway ${adminURL} ${adminKey} ${p2pPort} ${gatewayIP} ${rootPrivKey} ${lotusAPIAddr} {lotusAuthToken} {registerPrivKey} {registerAPIAddr} {registerAuthToken} {regionCode} {alias}")
@@ -313,4 +316,29 @@ func handleExit() {
 	rawModeOff.Stdin = os.Stdin
 	_ = rawModeOff.Run()
 	rawModeOff.Wait()
+}
+
+// initDev is only used by developers to test, its hard-coded
+func (c *GatewayAdminCLI) initDev() {
+	env := os.Getenv("DEVINIT")
+	vars := strings.Split(env, ";")
+	lotusAuthToken := vars[0]
+	for i := 1; i < len(vars); i++ {
+		info := strings.Split(vars[i], ",")
+		adminURL := fmt.Sprintf("%v:9010", info[0])
+		adminKey := info[1]
+		gatewayIP := info[0]
+		rootPrivKey := info[2]
+		lotusAPIAddr := "http://lotus:1234/rpc/v0"
+		registerPrivKey := "_"
+		registerAPIAddr := "register:9020"
+		registerAuthToken := "_"
+		regionCode := "au"
+		alias := info[0]
+		err := c.admin.InitialiseGateway(adminURL, adminKey, 9011, gatewayIP, rootPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken, regionCode, alias)
+		if err != nil {
+			panic(err)
+		}
+	}
+	fmt.Println("All gateways are initialised.")
 }

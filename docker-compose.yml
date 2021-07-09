@@ -1,6 +1,16 @@
 version: "3.8"
 services:
   
+  lotus:
+    image: wcgcyx/lotusfull
+    container_name: lotus
+    ports:
+      - "1234:1234"
+      - "2345:2345"
+    networks:
+      - shared
+    restart: unless-stopped
+
   redis:
     image: "redis:alpine"
     container_name: redis
@@ -23,21 +33,9 @@ services:
     depends_on:
       - redis
 
-  gateway:
-    image: wcgcyx/fc-retrieval/gateway
-    container_name: gateway
-    networks:
-      - shared
-    env_file:
-      - gateway/.env.example
-    restart: unless-stopped
-    depends_on: 
-      - register
-      - lotus
-  
-  provider:
+  provider0:
     image: wcgcyx/fc-retrieval/provider
-    container_name: provider
+    container_name: provider0
     networks:
       - shared
     env_file:
@@ -47,15 +45,27 @@ services:
       - register
       - lotus
 
-  lotus:
-    image: wcgcyx/lotusfull
-    container_name: lotus
-    ports:
-      - "1234:1234"
-      - "2345:2345"
+  gateway0:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway0
     networks:
       - shared
+    env_file:
+      - gateway/.env.example
     restart: unless-stopped
+    depends_on: 
+      - provider0
+
+  gateway1:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway1
+    networks:
+      - shared
+    env_file:
+      - gateway/.env.example
+    restart: unless-stopped
+    depends_on: 
+      - gateway0
 
 networks:
   shared:
