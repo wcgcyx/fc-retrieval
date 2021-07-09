@@ -174,6 +174,7 @@ func main() {
 	}
 	// Register succeed. Run gateway
 	logging.Info("Filecoin Gateway Start-up Complete")
+	c.PeerMgr.Sync()
 
 	// Wait forever
 	// TODO: Start message signing key update routine.

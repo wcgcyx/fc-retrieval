@@ -161,6 +161,7 @@ func main() {
 		return
 	}
 	logging.Info("Filecoin Provider Start-up Complete")
+	c.PeerMgr.Sync()
 
 	// Wait forever
 	// TODO: Start message signing key update routine.

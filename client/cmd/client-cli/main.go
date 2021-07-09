@@ -64,8 +64,10 @@ func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "init", Description: "Initialise the client by given key and service API Addr"},
 		{Text: "search", Description: "Search gateways by given location"},
+		{Text: "add-active-gateway", Description: "Add active gateway"},
 		{Text: "ls-active-gateways", Description: "List active gateways"},
 		{Text: "inspect-active-gateway", Description: "Inspect given active gateway"},
+		{Text: "add-active-provider", Description: "Add active provider"},
 		{Text: "ls-active-providers", Description: "List active providers"},
 		{Text: "inspect-active-provider", Description: "Inspect given active provider"},
 		{Text: "block-gateway", Description: "Block given gateway"},
@@ -127,6 +129,21 @@ func (c *ClientCLI) executor(in string) {
 		for _, gw := range gws {
 			fmt.Printf("ID: %v", gw)
 		}
+	case "add-active-gateway":
+		if !c.initialised {
+			fmt.Println("Client has not been initialised yet")
+			return
+		}
+		if len(blocks) != 2 {
+			fmt.Println("Usage: add-active-gateway ${targetID}")
+			return
+		}
+		err := c.client.AddActiveGW(blocks[1])
+		if err != nil {
+			fmt.Printf("Error in adding active gateway for %v: %v\n", blocks[1], err.Error())
+			return
+		}
+		fmt.Println("Added.")
 	case "ls-active-gateways":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
@@ -167,6 +184,21 @@ func (c *ClientCLI) executor(in string) {
 		for index, entry := range history {
 			fmt.Printf("Activity %v: %v\n", index, entry)
 		}
+	case "add-active-provider":
+		if !c.initialised {
+			fmt.Println("Client has not been initialised yet")
+			return
+		}
+		if len(blocks) != 2 {
+			fmt.Println("Usage: add-active-provider ${targetID}")
+			return
+		}
+		err := c.client.AddActivePVD(blocks[1])
+		if err != nil {
+			fmt.Printf("Error in adding active provider for %v: %v\n", blocks[1], err.Error())
+			return
+		}
+		fmt.Println("Added.")
 	case "ls-active-providers":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
