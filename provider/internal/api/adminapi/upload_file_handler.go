@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
@@ -58,6 +59,21 @@ func UploadFileHandler(data []byte) (byte, []byte, error) {
 			ack := fcradminmsg.EncodeACK(false, err.Error())
 			return fcradminmsg.ACKType, ack, err
 		}
+		// Save cid, tag
+		reader, err := os.Open(filepath.Join(c.Settings.RetrievalDir, tag))
+		if err != nil {
+			err = fmt.Errorf("Fail to open file for cid calculation %v: %v", tag, err.Error())
+			ack := fcradminmsg.EncodeACK(false, err.Error())
+			return fcradminmsg.ACKType, ack, err
+		}
+		cid, err := cid.NewContentIDFromFile(reader)
+		if err != nil {
+			err = fmt.Errorf("Invalid CID: %v", err.Error())
+			ack := fcradminmsg.EncodeACK(false, err.Error())
+			return fcradminmsg.ACKType, ack, err
+		}
+		c.OfferMgr.AddCIDTag(cid, tag)
+
 	} else {
 		// Exist
 		err = fmt.Errorf("Filename already existed %v", tag)

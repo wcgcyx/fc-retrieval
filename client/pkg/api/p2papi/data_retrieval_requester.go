@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/wcgcyx/fc-retrieval/client/pkg/core"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
@@ -32,14 +33,13 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
-	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // DataRetrievalRequester requests a data retrieval
 func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	// Get parameters
-	if len(args) != 2 {
-		err := fmt.Errorf("Wrong arguments, expect length 2, got length %v", len(args))
+	if len(args) != 3 {
+		err := fmt.Errorf("Wrong arguments, expect length 3, got length %v", len(args))
 		logging.Error(err.Error())
 		return nil, err
 	}
@@ -55,11 +55,15 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		logging.Error(err.Error())
 		return nil, err
 	}
+	retrievalPath, ok := args[2].(string)
+	if !ok {
+		err := fmt.Errorf("Wrong arguments, expect a retrievalPath in string")
+		logging.Error(err.Error())
+		return nil, err
+	}
 
 	// Get core structure
 	c := core.GetSingleInstance()
-	c.MsgSigningKeyLock.RLock()
-	defer c.MsgSigningKeyLock.RUnlock()
 
 	// Generate random nonce
 	nonce := uint64(rand.Int63())
@@ -79,8 +83,9 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	// Check if the provider is blocked/pending
 	rep := c.ReputationMgr.GetPVDReputation(targetID)
 	if rep == nil {
-		c.ReputationMgr.AddPVD(targetID)
-		rep = c.ReputationMgr.GetPVDReputation(targetID)
+		err := fmt.Errorf("Provider %v is not active", targetID)
+		logging.Error(err.Error())
+		return nil, err
 	}
 	if rep.Pending || rep.Blocked {
 		err := fmt.Errorf("Provider %v is in pending %v, blocked %v", targetID, rep.Pending, rep.Blocked)
@@ -95,7 +100,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		logging.Error(err.Error())
 		return nil, err
 	}
-	expected := big.NewInt(0).Add(c.Settings.SearchPrice, offer.GetPrice())
+	expected := big.NewInt(0).Add(c.SearchPrice, offer.GetPrice())
 	voucher, create, topup, err := c.PaymentMgr.Pay(recipientAddr, 0, expected)
 	if err != nil {
 		err = fmt.Errorf("Error in paying provider %v with expected amount of %v: %v", targetID, expected.String(), err.Error())
@@ -103,37 +108,14 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		return nil, err
 	}
 	if create {
-		// Need to create
-		// First do an establishment to see if the target is alive.
-		_, err := c.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, false)
-		if err != nil {
-			err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, pvdInfo.NetworkAddr, err.Error())
-			logging.Error(err.Error())
-			return nil, err
-		}
-		err = c.PaymentMgr.Create(recipientAddr, c.Settings.TopupAmount)
-		if err != nil {
-			err = fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.Settings.TopupAmount.String(), err.Error())
-			logging.Error(err.Error())
-			return nil, err
-		}
-		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 0, expected)
-		if create || topup {
-			// This should never happen
-			err = fmt.Errorf("Error in paying provider %v, needs to create/topup after just creation", targetID)
-			logging.Error(err.Error())
-			return nil, err
-		}
-		if err != nil {
-			err = fmt.Errorf("Error in paying provider %v with expected amount of %v: %v after just creation", targetID, expected.String(), err.Error())
-			logging.Error(err.Error())
-			return nil, err
-		}
+		err = fmt.Errorf("No payment channel to %v", targetID)
+		logging.Error(err.Error())
+		return nil, err
 	} else if topup {
 		// Need to topup
-		err = c.PaymentMgr.Topup(recipientAddr, c.Settings.TopupAmount)
+		err = c.PaymentMgr.Topup(recipientAddr, c.TopupAmount)
 		if err != nil {
-			err = fmt.Errorf("Error in topup a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.Settings.TopupAmount.String(), err.Error())
+			err = fmt.Errorf("Error in topup a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.TopupAmount.String(), err.Error())
 			logging.Error(err.Error())
 			return nil, err
 		}
@@ -162,7 +144,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Write request
-	err = writer.Write(request, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
+	err = writer.Write(request, c.MsgKey, 0, c.TCPInactivityTimeout)
 	if err != nil {
 		err = fmt.Errorf("Error in sending request to %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
@@ -173,7 +155,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Get a response
-	response, err := reader.Read(c.Settings.TCPInactivityTimeout)
+	response, err := reader.Read(c.TCPInactivityTimeout)
 	if err != nil {
 		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
@@ -228,9 +210,9 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Save file
-	if _, err := os.Stat(filepath.Join(c.Settings.RetrievalDir, tag)); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(retrievalPath, tag)); os.IsNotExist(err) {
 		// Not exist, save
-		f, err := os.Create(filepath.Join(c.Settings.RetrievalDir, tag))
+		f, err := os.Create(filepath.Join(retrievalPath, tag))
 		if err == nil {
 			_, err = f.Write(data)
 			f.Close()
@@ -248,7 +230,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Read file
-	fileReader, err := os.Open(filepath.Join(c.Settings.RetrievalDir, tag))
+	fileReader, err := os.Open(filepath.Join(retrievalPath, tag))
 	if err != nil {
 		err = fmt.Errorf("Fail to open file for cid calculation %v: %v", tag, err.Error())
 		logging.Error(err.Error())

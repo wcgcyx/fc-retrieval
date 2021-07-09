@@ -103,7 +103,8 @@ func NewFilecoinRetrievalClient(
 	c.P2PServer.
 		AddRequester(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentRequester).
 		AddRequester(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryRequester).
-		AddRequester(fcrmessages.DHTOfferDiscoveryRequestType, p2papi.DHTOfferQueryRequester)
+		AddRequester(fcrmessages.DHTOfferDiscoveryRequestType, p2papi.DHTOfferQueryRequester).
+		AddRequester(fcrmessages.DataRetrievalRequestType, p2papi.DataRetrievalRequester)
 	err = c.P2PServer.Start()
 	if err != nil {
 		err = fmt.Errorf("Error in starting P2P server: %v", err.Error())
@@ -379,15 +380,26 @@ func (c *FilecoinRetrievalClient) ListOffers(cidStr string) ([]cidoffer.SubCIDOf
 
 // Retrieve retrieves a file to a given location
 func (c *FilecoinRetrievalClient) Retrieve(digest string, location string) error {
-	offer := c.core.OfferMgr.GetSubOfferByDigest(digest)
-	if offer == nil {
+	suboffer := c.core.OfferMgr.GetSubOfferByDigest(digest)
+	if suboffer == nil {
 		err := fmt.Errorf("Cannot find offer with given digest %v", digest)
 		logging.Error(err.Error())
 		return err
 	}
-	// TODO, Implement retrieval
-	logging.Info("Not implemented, save file to %v using offer digest %v", location, digest)
-	return nil
+	// Get provider information
+	pvdInfo := c.core.PeerMgr.GetPVDInfo(suboffer.GetProviderID())
+	if pvdInfo == nil {
+		// Not found, try sync once
+		pvdInfo = c.core.PeerMgr.SyncPVD(suboffer.GetProviderID())
+		if pvdInfo == nil {
+			err := fmt.Errorf("Cannot find provider %v that supplied the offer", suboffer.GetProviderID())
+			logging.Error(err.Error())
+			return err
+		}
+	}
+	// Do data retrieval
+	_, err := c.core.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.DataRetrievalRequestType, pvdInfo.NodeID, suboffer, location)
+	return err
 }
 
 // StandardDiscovery performs a standard discovery.

@@ -82,14 +82,17 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 	}
 
 	expected := big.NewInt(0).Add(c.SearchPrice, big.NewInt(0).Mul(c.OfferPrice, big.NewInt(int64(maxOfferRequested))))
-	voucher, _, topup, err := c.PaymentMgr.Pay(recipientAddr, 0, expected)
+	voucher, create, topup, err := c.PaymentMgr.Pay(recipientAddr, 0, expected)
 	if err != nil {
 		err = fmt.Errorf("Error in paying gateway %v with expected amount of %v: %v", targetID, expected.String(), err.Error())
 		logging.Error(err.Error())
 		return nil, err
 	}
-
-	if topup {
+	if create {
+		err = fmt.Errorf("No payment channel to %v", targetID)
+		logging.Error(err.Error())
+		return nil, err
+	} else if topup {
 		// Need to topup
 		err = c.PaymentMgr.Topup(recipientAddr, c.TopupAmount)
 		if err != nil {

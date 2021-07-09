@@ -119,7 +119,8 @@ func main() {
 		AddHandler(fcrmessages.OfferPublishRequestType, p2papi.OfferPublishHandler).
 		// Requesters
 		AddRequester(fcrmessages.StandardOfferDiscoveryRequestType, p2papi.OfferQueryRequester).
-		AddRequester(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentRequester)
+		AddRequester(fcrmessages.EstablishmentRequestType, p2papi.EstablishmentRequester).
+		AddRequester(fcrmessages.DataRetrievalRequestType, p2papi.DataRetrievalRequester)
 
 	err = c.P2PServer.Start()
 	if err != nil {

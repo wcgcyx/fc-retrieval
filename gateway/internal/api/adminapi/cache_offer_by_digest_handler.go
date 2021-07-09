@@ -22,8 +22,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
-	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
@@ -39,15 +40,49 @@ func CacheOfferByDigestHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Decode payload
-	digest, cid, err := fcradminmsg.DecodeCacheOfferByDigestRequest(data)
+	digest, cidStr, err := fcradminmsg.DecodeCacheOfferByDigestRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
+	cid, err := cid.NewContentID(cidStr)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding cid: %v", err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
+	}
+	offer := c.OfferMgr.GetOfferByDigest(digest)
+	if offer == nil {
+		err = fmt.Errorf("Cannot find offer with digest: %v", digest)
+		ack := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
+	}
+	suboffer, err := offer.GenerateSubCIDOffer(cid)
+	if err != nil {
+		err = fmt.Errorf("Error in generating sub cid offer: %v", err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
+	}
 
-	// TODO, Implement caching
-	logging.Info("Received request from admin to cache offer %v with cid %v", digest, cid)
+	// Get provider information
+	pvdInfo := c.PeerMgr.GetPVDInfo(suboffer.GetProviderID())
+	if pvdInfo == nil {
+		// Not found, try sync once
+		pvdInfo = c.PeerMgr.SyncPVD(suboffer.GetProviderID())
+		if pvdInfo == nil {
+			err = fmt.Errorf("Cannot find provider %v that supplied the offer", suboffer.GetProviderID())
+			ack := fcradminmsg.EncodeACK(false, err.Error())
+			return fcradminmsg.ACKType, ack, err
+		}
+	}
+	// Do caching
+	_, err = c.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.DataRetrievalRequestType, pvdInfo.NodeID, suboffer)
+	if err != nil {
+		err = fmt.Errorf("Error in data retrieval: %v", err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
+	}
 
 	// Succeed
 	ack := fcradminmsg.EncodeACK(true, "Succeed.")

@@ -46,7 +46,7 @@ func EncodeDataRetrievalResponse(
 }
 
 // DecodeDataRetrievalResponse is used to get the fields from FCRMessage of dataRetrievalResponseJson.
-// It returns the nonce, tag, and file data.s
+// It returns the nonce, tag, and file data and error.
 func DecodeDataRetrievalResponse(fcrMsg *FCRACKMsg) (
 	uint64,
 	string,
