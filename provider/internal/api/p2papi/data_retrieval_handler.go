@@ -30,6 +30,7 @@ import (
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
+// DataRetrievalHandler handles data retrieval request.
 func DataRetrievalHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
 	// Get core structure
 	c := core.GetSingleInstance()

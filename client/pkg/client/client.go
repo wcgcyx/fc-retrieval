@@ -215,7 +215,7 @@ func (c *FilecoinRetrievalClient) AddActiveGW(targetID string) error {
 			return err
 		}
 	}
-	_, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
+	_, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, true)
 	if err != nil {
 		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
 		logging.Error(err.Error())
@@ -264,7 +264,7 @@ func (c *FilecoinRetrievalClient) AddActivePVD(targetID string) error {
 			return err
 		}
 	}
-	_, err := c.core.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
+	_, err := c.core.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, false)
 	if err != nil {
 		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, pvdInfo.NetworkAddr, err.Error())
 		logging.Error(err.Error())

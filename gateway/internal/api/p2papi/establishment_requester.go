@@ -24,6 +24,7 @@ import (
 	"math/rand"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpeermgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
@@ -32,14 +33,20 @@ import (
 // EstablishmentRequester sends an establishment request.
 func EstablishmentRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
 	// Get parameters
-	if len(args) != 1 {
-		err := fmt.Errorf("Wrong arguments, expect length 1, got length %v", len(args))
+	if len(args) != 2 {
+		err := fmt.Errorf("Wrong arguments, expect length 2, got length %v", len(args))
 		logging.Error(err.Error())
 		return nil, err
 	}
 	targetID, ok := args[0].(string)
 	if !ok {
 		err := fmt.Errorf("Wrong arguments, expect a target ID in string")
+		logging.Error(err.Error())
+		return nil, err
+	}
+	gateway, ok := args[1].(bool)
+	if !ok {
+		err := fmt.Errorf("Wrong arguments, expect a gateway in bool")
 		logging.Error(err.Error())
 		return nil, err
 	}
@@ -79,20 +86,38 @@ func EstablishmentRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Verify the response
-	gwInfo := c.PeerMgr.GetGWInfo(targetID)
-	if gwInfo == nil {
-		// Not found, try sync once
-		gwInfo = c.PeerMgr.SyncGW(targetID)
-		if gwInfo == nil {
-			err = fmt.Errorf("Error in obtaining information for gateway %v", targetID)
-			logging.Error(err.Error())
-			return nil, err
+	var nodeInfo *fcrpeermgr.Peer
+	if gateway {
+		nodeInfo = c.PeerMgr.GetGWInfo(targetID)
+		if nodeInfo == nil {
+			// Not found, try sync once
+			nodeInfo = c.PeerMgr.SyncGW(targetID)
+			if nodeInfo == nil {
+				err = fmt.Errorf("Error in obtaining information for gateway %v", targetID)
+				logging.Error(err.Error())
+				return nil, err
+			}
+		}
+	} else {
+		nodeInfo = c.PeerMgr.GetPVDInfo(targetID)
+		if nodeInfo == nil {
+			// Not found, try sync once
+			nodeInfo = c.PeerMgr.SyncPVD(targetID)
+			if nodeInfo == nil {
+				err = fmt.Errorf("Error in obtaining information for provider %v", targetID)
+				logging.Error(err.Error())
+				return nil, err
+			}
 		}
 	}
-	if response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+	if response.Verify(nodeInfo.MsgSigningKey, nodeInfo.MsgSigningKeyVer) != nil {
 		// Try update
-		gwInfo = c.PeerMgr.SyncGW(targetID)
-		if gwInfo == nil || response.Verify(gwInfo.MsgSigningKey, gwInfo.MsgSigningKeyVer) != nil {
+		if gateway {
+			nodeInfo = c.PeerMgr.SyncGW(targetID)
+		} else {
+			nodeInfo = c.PeerMgr.SyncPVD(targetID)
+		}
+		if nodeInfo == nil || response.Verify(nodeInfo.MsgSigningKey, nodeInfo.MsgSigningKeyVer) != nil {
 			err = fmt.Errorf("Error in verifying response from %v: %v", targetID, err.Error())
 			logging.Error(err.Error())
 			return nil, err

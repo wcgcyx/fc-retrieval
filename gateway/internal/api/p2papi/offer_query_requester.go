@@ -109,7 +109,7 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 	if create {
 		// Need to create
 		// First do an establishment to see if the target is alive.
-		_, err := c.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID)
+		_, err := c.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, true)
 		if err != nil {
 			err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
 			logging.Error(err.Error())
