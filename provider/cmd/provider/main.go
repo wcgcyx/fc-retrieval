@@ -91,7 +91,7 @@ func main() {
 	logging.Info("Admin access token is %v and it has been saved to %v", adminKey, c.Settings.AdminKeyFile)
 
 	// Start the Admin API, waiting for initialisation.
-	c.AdminServer = fcradminserver.NewFCRAdminServerImplV1(fmt.Sprintf("localhost:%v", c.Settings.BindAdminAPI), adminKey)
+	c.AdminServer = fcradminserver.NewFCRAdminServerImplV1(fmt.Sprintf(":%v", c.Settings.BindAdminAPI), adminKey)
 	c.AdminServer.
 		// Handlers
 		AddHandler(fcradminmsg.InitialisationRequestType, adminapi.InitialisationHandler).
@@ -105,6 +105,7 @@ func main() {
 		logging.Error("Error in starting admin server: %v", err)
 		return
 	}
+	logging.Info("Admin server starts listening on [::]:%v", c.Settings.BindAdminAPI)
 
 	// Wait for admin to initialise this provider
 	for !<-c.Ready {

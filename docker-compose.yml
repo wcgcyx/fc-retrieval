@@ -33,6 +33,7 @@ services:
     restart: unless-stopped
     depends_on: 
       - register
+      - lotus
   
   provider:
     image: wcgcyx/fc-retrieval/provider
@@ -44,6 +45,7 @@ services:
     restart: unless-stopped
     depends_on: 
       - register
+      - lotus
 
   lotus:
     image: wcgcyx/lotusfull
@@ -54,9 +56,6 @@ services:
     networks:
       - shared
     restart: unless-stopped
-    depends_on: 
-      - gateway
-      - provider
 
 networks:
   shared:
