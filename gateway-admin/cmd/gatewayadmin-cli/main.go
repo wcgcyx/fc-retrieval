@@ -327,7 +327,7 @@ func (c *GatewayAdminCLI) initDev() {
 		info := strings.Split(vars[i], ",")
 		adminURL := fmt.Sprintf("%v:9010", info[0])
 		adminKey := info[1]
-		gatewayIP := info[0]
+		gatewayIP := info[3]
 		rootPrivKey := info[2]
 		lotusAPIAddr := "http://lotus:1234/rpc/v0"
 		registerPrivKey := "_"

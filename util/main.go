@@ -50,7 +50,13 @@ func main() {
 			}
 			adminKey := hex.EncodeToString(stdout)
 			// Generate a root private key for it
-			res = fmt.Sprintf("%v;%v,%v,%v", res, gw, adminKey, privKeys[i])
+			cmd = exec.Command("docker", "run", "--net", "shared", "--rm", "giantswarm/tiny-tools", "dig", "+short", gw)
+			stdout, err = cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			ip := string(stdout[:len(stdout)-1])
+			res = fmt.Sprintf("%v;%v,%v,%v,%v", res, gw, adminKey, privKeys[i], ip)
 		}
 		fmt.Println(res)
 	} else if os.Args[1] == "pvd" {
@@ -78,7 +84,13 @@ func main() {
 			}
 			adminKey := hex.EncodeToString(stdout)
 			// Generate a root private key for it
-			res = fmt.Sprintf("%v;%v,%v,%v", res, gw, adminKey, privKeys[i])
+			cmd = exec.Command("docker", "run", "--net", "shared", "--rm", "giantswarm/tiny-tools", "dig", "+short", gw)
+			stdout, err = cmd.Output()
+			if err != nil {
+				panic(err)
+			}
+			ip := string(stdout[:len(stdout)-1])
+			res = fmt.Sprintf("%v;%v,%v,%v,%v", res, gw, adminKey, privKeys[i], ip)
 		}
 		fmt.Println(res)
 	} else {
