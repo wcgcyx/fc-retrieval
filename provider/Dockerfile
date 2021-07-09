@@ -18,7 +18,6 @@ RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o /go/bin/provider 
 FROM alpine:latest
 COPY --from=builder /go/bin/provider /main
 COPY provider/docker-entrypoint.sh /docker-entrypoint.sh
-COPY provider/.env.example /.env
 
 # Run the binary when the container starts.
 WORKDIR /

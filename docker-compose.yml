@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    networks:
+      - shared
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: 
+      redis-server --requirepass xxxx
+    restart: always
+
+  register:
+    image: wcgcyx/fc-retrieval/register
+    container_name: register
+    networks:
+      - shared
+    env_file:
+      - register/.env.example
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  gateway:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway
+    networks:
+      - shared
+    env_file:
+      - gateway/.env.example
+    restart: unless-stopped
+    depends_on: 
+      - register
+  
+  provider:
+    image: wcgcyx/fc-retrieval/provider
+    container_name: provider
+    networks:
+      - shared
+    env_file:
+      - provider/.env.example
+    restart: unless-stopped
+    depends_on: 
+      - register
+
+  lotus:
+    image: wcgcyx/lotusfull
+    container_name: lotus
+    networks:
+      - shared
+    restart: unless-stopped
+    depends_on: 
+      - gateway
+      - provider
+
+networks:
+  shared:
+    name: shared
+    external: true

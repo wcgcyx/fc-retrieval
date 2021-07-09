@@ -15,7 +15,6 @@ RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o /go/bin/register-
 # Pull build register into a second stage deploy alpine container
 FROM alpine:latest
 COPY --from=builder /go/bin/register-server /register-server
-COPY register/.env.example /.env
 
 # Run the binary when the container starts.
 WORKDIR /
