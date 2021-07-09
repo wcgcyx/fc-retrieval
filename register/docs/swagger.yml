@@ -1,0 +1,280 @@
+swagger: "2.0"
+info:
+  title: Filecoin Retrieval Register
+  version: "0.0.1"
+  description: |
+    Retrieval Providers and Retrieval Gateways register.
+produces:
+  - application/json
+consumes:
+  - application/json
+schemes:
+  - http
+
+basePath: /
+
+paths:
+  # Homepage
+  /:
+    get:
+      tags:
+        - Homepage
+      summary: Homepage
+      operationId: homepage
+      responses:
+        200:
+          description: homepage response
+          schema:
+            $ref: "#/definitions/Ack"
+        default:
+          description: user validation error
+          schema:
+            $ref: "#/definitions/Error"
+  # Registers
+  /registers/gateway:
+    post:
+      tags:
+        - Gateway
+      summary: Add a Gateway register
+      operationId: addGatewayRegister
+      description: <b>Add a Gateway register</b>
+      parameters:
+        - in: "body"
+          name: "register"
+          description: "Add a Gateway register"
+          required: true
+          schema:
+            $ref: "#/definitions/GatewayRegister"
+      responses:
+        200:
+          description: Gateway register added
+          schema:
+            $ref: "#/definitions/GatewayRegister"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      tags:
+        - Gateway
+      summary: Get register list
+      operationId: getGatewayRegisters
+      description: <b>Get Gateway register list</b>
+      responses:
+        200:
+          description: Gateway register list
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GatewayRegister"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      tags:
+        - Gateway
+      summary: Delete Gateway registers
+      operationId: deleteGatewayRegister
+      description: <b>Delete Gateway registers</b>
+      responses:
+        200:
+          description: Gateway registers deleted
+          schema:
+            $ref: "#/definitions/Ack"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /registers/gateway/{id}:
+    get:
+      tags:
+        - Gateway
+      summary: Get registered Gateway by Id
+      operationId: getGatewayRegistersById
+      description: <b>Get a provider gateway by Id</b>
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Gateway ID"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: Get a registered gateway by Id
+          schema:
+            $ref: "#/definitions/GatewayRegister"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /registers/provider:
+    post:
+      tags:
+        - Provider
+      summary: Add a Provider register
+      operationId: addProviderRegister
+      description: <b>Add a Provider register</b>
+      parameters:
+        - in: "body"
+          name: "register"
+          description: "Add a Provider register"
+          required: true
+          schema:
+            $ref: "#/definitions/ProviderRegister"
+      responses:
+        200:
+          description: Provider register added
+          schema:
+            $ref: "#/definitions/ProviderRegister"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      tags:
+        - Provider
+      summary: Get Provider register list
+      operationId: getProviderRegisters
+      description: <b>Get Provider register list</b>
+      responses:
+        200:
+          description: Provider register list
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ProviderRegister"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+
+    delete:
+      tags:
+        - Provider
+      summary: Delete Provider registers
+      operationId: deleteProviderRegister
+      description: <b>Delete Provider registers</b>
+      responses:
+        200:
+          description: Provider registers deleted
+          schema:
+            $ref: "#/definitions/Ack"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /registers/provider/{id}:
+    get:
+      tags:
+        - Provider
+      summary: Get registered Provider by Id
+      operationId: getProviderRegistersById
+      description: <b>Get a provider register by Id</b>
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Register ID"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: Get a registered provider by Id
+          schema:
+            $ref: "#/definitions/ProviderRegister"
+        default:
+          description: Internal error
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  # Registers
+  GatewayRegister:
+    type: object
+    description: Register entry
+    properties:
+      root_key:
+        type: string
+        description: Gateway root Key.
+      node_id:
+        type: string
+        description: Node ID.
+      msg_signing_key:
+        type: string
+        description: Message signing key.
+      msg_signing_key_ver:
+        type: byte
+        description: Message signing key version.
+      region_code:
+        type: string
+        description: Region code.
+      network_addr:
+        type: string
+        description: Network address.
+      deregistering:
+        type: bool
+        description: Deregistering.
+      deregistering_height:
+        type: uint64
+        description: Deregistering height.
+
+
+  ProviderRegister:
+    type: object
+    description: Register entry
+    properties:
+      root_key:
+        type: string
+        description: Gateway root key.
+      node_id:
+        type: string
+        description: Node ID.
+      msg_signing_key:
+        type: string
+        description: Message signing key.
+      msg_signing_key_ver:
+        type: byte
+        description: Message signing key version.
+      offer_signing_key:
+        type: string
+        description: Offer signing key.
+      region_code:
+        type: string
+        description: Region code.
+      network_addr:
+        type: string
+        description: Network address.
+      deregistering:
+        type: bool
+        description: Deregistering.
+      deregistering_height:
+        type: uint64
+        description: Deregistering height.
+
+  # Responses
+  Ack:
+    type: object
+    properties:
+      status:
+        type: string
+      message:
+        type: string
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
+    required:
+      - code
+      - message
+  Principal:
+    type: string

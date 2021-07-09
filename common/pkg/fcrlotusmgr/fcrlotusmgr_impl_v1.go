@@ -34,7 +34,7 @@ import (
 	"github.com/filecoin-project/go-jsonrpc"
 	lotusbig "github.com/filecoin-project/go-state-types/big"
 	crypto2 "github.com/filecoin-project/go-state-types/crypto"
-	"github.com/filecoin-project/lotus/api/apistruct"
+	"github.com/filecoin-project/lotus/api/v0api"
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/actors/builtin/paych"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -288,7 +288,7 @@ func waitReceipt(cid *cid.Cid, api LotusAPI) (*types.MessageReceipt, error) {
 
 // get lotus api returns the api that interacts with lotus for a given lotus api addr and access token
 func getRemoteLotusAPI(authToken, lotusAPIAddr string) (LotusAPI, jsonrpc.ClientCloser, error) {
-	var api apistruct.FullNodeStruct
+	var api v0api.FullNodeStruct
 	headers := http.Header{"Authorization": []string{"Bearer " + authToken}}
 	closer, err := jsonrpc.NewMergeClient(context.Background(), lotusAPIAddr, "Filecoin", []interface{}{&api.Internal, &api.CommonStruct.Internal}, headers)
 	if err != nil {
