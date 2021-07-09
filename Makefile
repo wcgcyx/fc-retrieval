@@ -15,6 +15,9 @@ clean:
 	docker stop $(shell docker ps -q) || true
 	docker rm $(shell docker ps -q -a)
 
+gen:
+	go run util/main.go
+
 run-client:
 	docker run -it --network=shared wcgcyx/fc-retrieval/client ./main
 

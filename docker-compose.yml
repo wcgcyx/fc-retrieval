@@ -48,6 +48,9 @@ services:
   lotus:
     image: wcgcyx/lotusfull
     container_name: lotus
+    ports:
+      - "1234:1234"
+      - "2345:2345"
     networks:
       - shared
     restart: unless-stopped
