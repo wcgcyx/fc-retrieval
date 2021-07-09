@@ -14,3 +14,12 @@ start:
 clean:
 	docker stop $(shell docker ps -q) || true
 	docker rm $(shell docker ps -q -a)
+
+run-client:
+	docker run -it --network=shared wcgcyx/fc-retrieval/client ./main
+
+run-gwadmin:
+	docker run -it --network=shared wcgcyx/fc-retrieval/gateway-admin ./main
+
+run-pvdadmin:
+	docker run -it --network=shared wcgcyx/fc-retrieval/provider-admin ./main
