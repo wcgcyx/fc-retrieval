@@ -172,6 +172,7 @@ func DataRetrievalHandler(reader fcrserver.FCRServerRequestReader, writer fcrser
 		logging.Error(err.Error())
 		return writer.Write(fcrmessages.CreateFCRACKErrorMsg(nonce, err), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 	}
+	c.OfferMgr.IncrementCIDAccessCount(offer.GetSubCID())
 
 	return writer.Write(response, c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 }
