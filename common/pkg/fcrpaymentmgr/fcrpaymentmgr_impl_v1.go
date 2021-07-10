@@ -245,7 +245,7 @@ func (mgr *FCRPaymentMgrImplV1) ReceiveRefund(recipientAddr string, voucher stri
 		return nil, errors.New("Refund value is not positive")
 	}
 	// Refund is valid, update lane state and channel state
-	ls.nonce = nonce
+	ls.nonce = nonce + 1
 	ls.redeemed.Sub(&ls.redeemed, diff)
 	ls.vouchers = append(ls.vouchers, voucher)
 	cs.redeemed.Sub(&cs.redeemed, diff)
