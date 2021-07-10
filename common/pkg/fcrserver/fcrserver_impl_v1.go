@@ -179,8 +179,7 @@ func (s *FCRServerImplV1) Request(multiaddrStr string, msgType byte, args ...int
 
 	writer := &FCRServerRequestWriterImplV1{conn: conn}
 	reader := &FCRServerResponseReaderImplV1{conn: conn}
-	response, err := requester(reader, writer, args...)
-	return response, nil
+	return requester(reader, writer, args...)
 }
 
 func (s *FCRServerImplV1) handleIncomingConnection(conn network.Stream) {
