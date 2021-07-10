@@ -285,7 +285,7 @@ func (c *GatewayAdminCLI) executor(in string) {
 			fmt.Printf("Offer %v: provider-%v price-%v expiry-%v qos-%v\n", digest, providers[i], prices[i], expriy[i], qos[i])
 		}
 	case "cache-gateway-offer-by-digest":
-		if len(blocks) != 3 {
+		if len(blocks) != 4 {
 			fmt.Println("Usage: cache-gateway-offer-by-digest ${targetID} ${digest} ${cid}")
 			return
 		}
