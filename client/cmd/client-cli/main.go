@@ -24,7 +24,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime/debug"
-	"strconv"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
@@ -304,16 +303,15 @@ func (c *ClientCLI) executor(in string) {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
-		if len(blocks) != 4 {
-			fmt.Println("Usage: find-offer ${contentID} ${gatewayID} ${maxOfferRequested}")
+		if len(blocks) != 2 {
+			fmt.Println("Usage: find-offer ${contentID}")
 			return
 		}
-		max, err := strconv.ParseUint(blocks[3], 10, 32)
-		if err != nil {
-			fmt.Printf("Error parsing unit from %v: %v\n", blocks[3], err.Error())
-			return
+		toContact := make(map[string]uint32)
+		for _, gw := range c.client.ListActiveGWS() {
+			toContact[gw] = 1
 		}
-		offers, err := c.client.StandardDiscovery(blocks[1], map[string]uint32{blocks[2]: uint32(max)})
+		offers, err := c.client.StandardDiscovery(blocks[1], toContact)
 		if err != nil {
 			fmt.Printf("Error doing standard discovery for %v: %v\n", blocks[1], err.Error())
 			return
@@ -327,21 +325,11 @@ func (c *ClientCLI) executor(in string) {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
-		if len(blocks) != 5 {
-			fmt.Println("Usage: find-offer ${contentID} ${gatewayID} ${numDHT} ${maxOfferRequestedPerDHT}")
+		if len(blocks) != 3 {
+			fmt.Println("Usage: find-offer ${contentID} ${gatewayID}")
 			return
 		}
-		numDHT, err := strconv.ParseUint(blocks[3], 10, 32)
-		if err != nil {
-			fmt.Printf("Error parsing unit from %v: %v\n", blocks[3], err.Error())
-			return
-		}
-		max, err := strconv.ParseUint(blocks[4], 10, 32)
-		if err != nil {
-			fmt.Printf("Error parsing unit from %v: %v\n", blocks[4], err.Error())
-			return
-		}
-		offers, err := c.client.DHTDiscovery(blocks[1], blocks[2], uint32(numDHT), uint32(max))
+		offers, err := c.client.DHTDiscovery(blocks[1], blocks[2], 8, 1)
 		if err != nil {
 			fmt.Printf("Error doing dht discovery for %v by %v: %v\n", blocks[1], blocks[2], err.Error())
 			return

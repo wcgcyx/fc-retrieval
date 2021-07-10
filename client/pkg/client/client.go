@@ -263,7 +263,7 @@ func (c *FilecoinRetrievalClient) ListActiveGWS() []string {
 // AddActivePVD adds an active provider ID
 func (c *FilecoinRetrievalClient) AddActivePVD(targetID string) error {
 	if c.core.ReputationMgr.GetPVDReputation(targetID) != nil {
-		err := fmt.Errorf("Gateway %v is already active", targetID)
+		err := fmt.Errorf("Provider %v is already active", targetID)
 		logging.Error(err.Error())
 		return err
 	}
@@ -411,6 +411,11 @@ func (c *FilecoinRetrievalClient) Retrieve(digest string, location string) error
 			return err
 		}
 	}
+	if c.core.ReputationMgr.GetPVDReputation(suboffer.GetProviderID()) == nil {
+		// If the provider isn't active, add it.
+		c.AddActivePVD(suboffer.GetProviderID())
+	}
+
 	// Do data retrieval
 	_, err := c.core.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.DataRetrievalRequestType, pvdInfo.NodeID, suboffer, location)
 	return err
@@ -496,62 +501,37 @@ func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string, n
 
 func (c *FilecoinRetrievalClient) FastRetrieve(cidStr string, location string, maxPrice *big.Int) error {
 	// First using all the active gateways to do a standard search with 1 offer
-	bestGW := ""
-	bestRep := int64(0)
 	toContact := make(map[string]uint32)
 	for _, gw := range c.core.ReputationMgr.ListGWS() {
 		toContact[gw] = 1
-		rep := c.core.ReputationMgr.GetGWReputation(gw)
-		if !rep.Pending && !rep.Blocked {
-			if bestGW == "" || rep.Score > bestRep {
-				bestGW = gw
-				bestRep = rep.Score
-			}
-		}
 	}
 	// Do standard search
 	res, err := c.StandardDiscovery(cidStr, toContact)
-	if (err != nil || len(res) == 0) && bestGW != "" {
-		// Do DHT search
-		res, err = c.DHTDiscovery(cidStr, bestGW, 4, 1)
-	}
 	if len(res) == 0 {
 		err = fmt.Errorf("No offer found for given cid: %v", cidStr)
 		logging.Error(err.Error())
 		return err
 	}
-	// TODO: Retrieve from cheapest offer in active providers, all the way to more expensive offers in active providers.
-	// Then, retrieve from cheapest offer in inactive providers, all the way to more expensive offers in inactive providers.
+	logging.Info("Find %v offers containing given cid: %v", len(res), cidStr)
+	logging.Info("Start data retrieval.")
+
+	// TODO:
+	// Sort the result, from cheapest offer in active providers, all the way to most expensive offer in active providers.
+	// Then from cheapest offer in inactive providers, all the way to most expensive offer in inactive providers.
 	// And they must not exceed max price.
-	var bestOfferPrice *big.Int
-	var bestOffer *cidoffer.SubCIDOffer
-	var bestOfferPriceActive *big.Int
-	var bestOfferActive *cidoffer.SubCIDOffer
+	// At the moment, it iterates through the offers and retrieve offer from active providers.
 	for _, offer := range res {
 		rep := c.core.ReputationMgr.GetPVDReputation(offer.GetProviderID())
-		if rep == nil {
-			if bestOffer == nil || offer.GetPrice().Cmp(bestOfferPrice) < 0 {
-				bestOffer = &offer
-				bestOfferPrice = offer.GetPrice()
+		if rep != nil && offer.GetPrice().Cmp(maxPrice) < 0 {
+			err = c.Retrieve(offer.GetMessageDigest(), location)
+			if err == nil {
+				return nil
 			}
-			continue
-		} else if rep.Pending || rep.Blocked {
-			continue
-		}
-		if bestOfferActive == nil || offer.GetPrice().Cmp(bestOfferPriceActive) < 0 {
-			bestOfferActive = &offer
-			bestOfferPriceActive = offer.GetPrice()
+			logging.Error("Error retrieving content %v using offer %v from %v", cidStr, offer.GetMessageDigest(), offer.GetProviderID())
 		}
 	}
-	// Now try to retrieve the cheapest offer supplied by active providers
-	if bestOfferActive != nil && c.Retrieve(bestOfferActive.GetMessageDigest(), location) == nil {
-		return nil
-	}
-	// Now try to retrive the cheapest offer
-	if bestOffer != nil && c.AddActivePVD(bestOffer.GetProviderID()) != nil {
-		return c.Retrieve(bestOffer.GetMessageDigest(), location)
-	}
-	err = fmt.Errorf("Fail to retrieve the file for %v", cidStr)
+
+	err = fmt.Errorf("Fail to retrieve content with cid %v", cidStr)
 	logging.Error(err.Error())
 	return err
 }
