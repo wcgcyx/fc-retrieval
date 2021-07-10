@@ -367,3 +367,29 @@ func (a *FilecoinRetrievalGatewayAdmin) CacheOfferByDigest(targetID string, dige
 	}
 	return adminapi.RequestCacheOfferByDigest(g.adminURL, g.adminKey, digest, cid)
 }
+
+// ForceSync forces a given managed provider to sync
+func (a *FilecoinRetrievalGatewayAdmin) ForceSync(targetID string) error {
+	a.lock.RLock()
+	defer a.lock.RUnlock()
+	g, ok := a.activeGateways[targetID]
+	if !ok {
+		err := fmt.Errorf("Provider %v is not in active providers", targetID)
+		logging.Error(err.Error())
+		return err
+	}
+
+	// Decode request
+	ok, msg, err := adminapi.RequestForceSync(g.adminURL, g.adminKey)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding response: %v", err.Error())
+		logging.Error(err.Error())
+		return err
+	}
+	if !ok {
+		err = fmt.Errorf("Initialisation failed with message: %v", msg)
+		logging.Error(err.Error())
+		return err
+	}
+	return nil
+}

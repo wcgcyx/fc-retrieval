@@ -64,6 +64,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "init", Description: "Initialise given provider"},
 		{Text: "set-default", Description: "Set the default provider"},
+		{Text: "sync", Description: "Force the default provider to sync"},
 		{Text: "ls", Description: "List providers this admin is administering"},
 		{Text: "list-files", Description: "List files the default provider is monitoring"},
 		{Text: "get-offers", Description: "Get offers by given cid from the default provider"},
@@ -83,6 +84,9 @@ func (c *ProviderAdminCLI) executor(in string) {
 	case "init-dev":
 		// Note: this is a hidden command, used by developers to test
 		c.initDev()
+	case "sync-dev":
+		// Note: this is a hidden command, used by developers to test
+		c.syncDev()
 	case "init":
 		if len(blocks) != 13 {
 			fmt.Println("Usage: init ${adminURL} ${adminKey} ${p2pPort} ${providerIP} ${rootPrivKey} ${lotusAPIAddr} {lotusAuthToken} {registerPrivKey} {registerAPIAddr} {registerAuthToken} {regionCode} {alias}")
@@ -103,6 +107,13 @@ func (c *ProviderAdminCLI) executor(in string) {
 			c.defaultPVD = ids[0]
 		}
 		fmt.Printf("Provider has been initialised\n")
+	case "sync":
+		err := c.admin.ForceSync(c.defaultPVD)
+		if err != nil {
+			fmt.Printf("Error in force syncing the given provider: %v\n", err.Error())
+			return
+		}
+		fmt.Println("Done")
 	case "set-default":
 		if len(blocks) != 2 {
 			fmt.Println("Usage: set-default ${providerID}")
@@ -280,4 +291,14 @@ func (c *ProviderAdminCLI) initDev() {
 		}
 	}
 	fmt.Println("All providers are initialised.")
+}
+
+func (c *ProviderAdminCLI) syncDev() {
+	ids, _, _ := c.admin.ListProviders()
+	for _, id := range ids {
+		err := c.admin.ForceSync(id)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

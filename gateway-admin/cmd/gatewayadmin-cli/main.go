@@ -62,6 +62,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "init", Description: "Initialise a given gateway"},
 		{Text: "set-default", Description: "Set the default gateway"},
+		{Text: "sync", Description: "Force the default gateway to sync"},
 		{Text: "ls", Description: "List gateways this admin is administering"},
 		{Text: "ls-peers", Description: "List the peers of the default gateway"},
 		{Text: "inspect-gwpeer", Description: "Inspect a given gateway peer of the default gateway"},
@@ -88,6 +89,9 @@ func (c *GatewayAdminCLI) executor(in string) {
 	case "init-dev":
 		// Note: this is a hidden command, used by developers to test
 		c.initDev()
+	case "sync-dev":
+		// Note: this is a hidden command, used by developers to test
+		c.syncDev()
 	case "init":
 		if len(blocks) != 13 {
 			fmt.Println("Usage: init ${adminURL} ${adminKey} ${p2pPort} ${gatewayIP} ${rootPrivKey} ${lotusAPIAddr} {lotusAuthToken} {registerPrivKey} {registerAPIAddr} {registerAuthToken} {regionCode} {alias}")
@@ -108,6 +112,13 @@ func (c *GatewayAdminCLI) executor(in string) {
 			c.defaultGW = ids[0]
 		}
 		fmt.Printf("Gateway has been initialised\n")
+	case "sync":
+		err := c.admin.ForceSync(c.defaultGW)
+		if err != nil {
+			fmt.Printf("Error in force syncing the given gateway: %v\n", err.Error())
+			return
+		}
+		fmt.Println("Done")
 	case "set-default":
 		if len(blocks) != 2 {
 			fmt.Println("Usage: set-default ${gatewayID}")
@@ -360,4 +371,15 @@ func (c *GatewayAdminCLI) initDev() {
 		}
 	}
 	fmt.Println("All gateways are initialised.")
+}
+
+// syncDev is only used by developers to test, its hard-coded
+func (c *GatewayAdminCLI) syncDev() {
+	ids, _, _ := c.admin.ListGateways()
+	for _, id := range ids {
+		err := c.admin.ForceSync(id)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

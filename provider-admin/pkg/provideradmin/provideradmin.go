@@ -254,3 +254,29 @@ func (a *FilecoinRetrievalProviderAdmin) FastPublishOffer(targetID string, filen
 	}
 	return nil
 }
+
+// ForceSync forces a given managed provider to sync
+func (a *FilecoinRetrievalProviderAdmin) ForceSync(targetID string) error {
+	a.lock.RLock()
+	defer a.lock.RUnlock()
+	p, ok := a.activeProviders[targetID]
+	if !ok {
+		err := fmt.Errorf("Provider %v is not in active providers", targetID)
+		logging.Error(err.Error())
+		return err
+	}
+
+	// Decode request
+	ok, msg, err := adminapi.RequestForceSync(p.adminURL, p.adminKey)
+	if err != nil {
+		err = fmt.Errorf("Error in decoding response: %v", err.Error())
+		logging.Error(err.Error())
+		return err
+	}
+	if !ok {
+		err = fmt.Errorf("Initialisation failed with message: %v", msg)
+		logging.Error(err.Error())
+		return err
+	}
+	return nil
+}
