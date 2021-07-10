@@ -34,13 +34,15 @@ import (
 
 // ProviderAdminCLI stores the provider admin struct for api calls
 type ProviderAdminCLI struct {
-	admin *provideradmin.FilecoinRetrievalProviderAdmin
+	defaultPVD string
+	admin      *provideradmin.FilecoinRetrievalProviderAdmin
 }
 
 // Start Client CLI
 func main() {
 	c := ProviderAdminCLI{
-		provideradmin.NewFilecoinRetrievalProviderAdmin(),
+		defaultPVD: "",
+		admin:      provideradmin.NewFilecoinRetrievalProviderAdmin(),
 	}
 	defer func() {
 		if err := recover(); err != nil {
@@ -60,13 +62,14 @@ func main() {
 // completer completes the input
 func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
-		{Text: "init-provider", Description: "Initialise given provider"},
-		{Text: "ls-providers", Description: "List providers this admin is administering"},
-		{Text: "list-provider-files", Description: "List files given provider is monitoring"},
-		{Text: "get-providers-offers-by-cid", Description: "Get offers by given cid from a given administered provider"},
-		{Text: "upload-provider-file", Description: "Upload a file to a given administered provider (max 25MB)"},
-		{Text: "publish-provider-offer", Description: "Ask a administered provider to publish an offer"},
-		{Text: "fast-publish-provider-offer", Description: "Upload a given file to a administered provider and ask it to publish an offer"},
+		{Text: "init", Description: "Initialise given provider"},
+		{Text: "set-default", Description: "Set the default provider"},
+		{Text: "ls", Description: "List providers this admin is administering"},
+		{Text: "list-files", Description: "List files the default provider is monitoring"},
+		{Text: "get-offers", Description: "Get offers by given cid from the default provider"},
+		{Text: "upload", Description: "Upload a file to the default provider (max 25MB)"},
+		{Text: "publish-offer", Description: "Ask the default provider to publish an offer"},
+		{Text: "fast-publish-offer", Description: "Upload a given file to the default provider and ask it to publish an offer"},
 		{Text: "exit", Description: "Exit the program"},
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
@@ -80,9 +83,9 @@ func (c *ProviderAdminCLI) executor(in string) {
 	case "init-dev":
 		// Note: this is a hidden command, used by developers to test
 		c.initDev()
-	case "init-provider":
+	case "init":
 		if len(blocks) != 13 {
-			fmt.Println("Usage: init-provider ${adminURL} ${adminKey} ${p2pPort} ${providerIP} ${rootPrivKey} ${lotusAPIAddr} {lotusAuthToken} {registerPrivKey} {registerAPIAddr} {registerAuthToken} {regionCode} {alias}")
+			fmt.Println("Usage: init ${adminURL} ${adminKey} ${p2pPort} ${providerIP} ${rootPrivKey} ${lotusAPIAddr} {lotusAuthToken} {registerPrivKey} {registerAPIAddr} {registerAuthToken} {regionCode} {alias}")
 			return
 		}
 		port, err := strconv.ParseInt(blocks[3], 10, 32)
@@ -95,19 +98,31 @@ func (c *ProviderAdminCLI) executor(in string) {
 			fmt.Printf("Error in initialising given provider: %v\n", err.Error())
 			return
 		}
+		if c.defaultPVD == "" {
+			ids, _, _ := c.admin.ListProviders()
+			c.defaultPVD = ids[0]
+		}
 		fmt.Printf("Provider has been initialised\n")
-	case "ls-providers":
+	case "set-default":
+		if len(blocks) != 2 {
+			fmt.Println("Usage: set-default ${providerID}")
+			return
+		}
+		c.defaultPVD = blocks[1]
+		fmt.Println("Done")
+	case "ls":
 		ids, regions, aliases := c.admin.ListProviders()
 		fmt.Println("Managed providers:")
 		for i, id := range ids {
-			fmt.Printf("Provider %v:\tid-%v\tregion-%v\talias-%v\n", i, id, regions[i], aliases[i])
+			fmt.Printf("Provider %v:\tid-%v\tregion-%v\talias-%v", i, id, regions[i], aliases[i])
+			if id == c.defaultPVD {
+				fmt.Printf("\t(default)\n")
+			} else {
+				fmt.Printf("\n")
+			}
 		}
-	case "list-provider-files":
-		if len(blocks) != 2 {
-			fmt.Println("Usage: ls-provider-files ${targetID}")
-			return
-		}
-		files, cids, sizes, published, frequency, err := c.admin.ListFiles(blocks[1])
+	case "list-files":
+		files, cids, sizes, published, frequency, err := c.admin.ListFiles(c.defaultPVD)
 		if err != nil {
 			fmt.Printf("Error in listing files for given provider: %v\n", err.Error())
 			return
@@ -117,26 +132,26 @@ func (c *ProviderAdminCLI) executor(in string) {
 			fmt.Printf("Name: %v\n", file)
 			fmt.Printf("\tCID: %v\t Size: %v\t Published: %t\t Frequency: %v\n", cids[i], sizes[i], published[i], frequency[i])
 		}
-	case "get-provider-offers-by-cid":
-		if len(blocks) != 3 {
-			fmt.Println("Usage: get-provider-offers-by-cid ${targetID} ${cid}")
+	case "get-offers":
+		if len(blocks) != 2 {
+			fmt.Println("Usage: get-offers ${cid}")
 			return
 		}
-		digests, providers, prices, expriy, qos, err := c.admin.GetOfferByCID(blocks[1], blocks[2])
+		digests, providers, prices, expriy, qos, err := c.admin.GetOfferByCID(c.defaultPVD, blocks[1])
 		if err != nil {
 			fmt.Printf("Error in get provider offers by cid: %v\n", err.Error())
 			return
 		}
-		fmt.Printf("Offers containing cid %v:\n", blocks[2])
+		fmt.Printf("Offers containing cid %v:\n", blocks[1])
 		for i, digest := range digests {
 			fmt.Printf("Offer %v: provider-%v price-%v expiry-%v qos-%v\n", digest, providers[i], prices[i], expriy[i], qos[i])
 		}
-	case "upload-provider-file":
-		if len(blocks) != 4 {
-			fmt.Println("Usage: upload-provider-file ${targetID} ${local-file} ${remote-filename}")
+	case "upload":
+		if len(blocks) != 3 {
+			fmt.Println("Usage: upload ${local-file} ${remote-filename}")
 			return
 		}
-		ok, msg, err := c.admin.UploadFile(blocks[1], blocks[2], blocks[3])
+		ok, msg, err := c.admin.UploadFile(c.defaultPVD, blocks[1], blocks[2])
 		if err != nil {
 			fmt.Printf("Error in uploading file to provider: %v\n", err.Error())
 			return
@@ -146,9 +161,9 @@ func (c *ProviderAdminCLI) executor(in string) {
 			return
 		}
 		fmt.Println("Done")
-	case "publish-provider-offer":
-		if len(blocks) < 6 {
-			fmt.Println("Usage: publish-provider-offer ${targetID} [${file}...] ${price} ${expiry} ${qos}")
+	case "publish-offer":
+		if len(blocks) < 5 {
+			fmt.Println("Usage: publish-offer [${file}...] ${price} ${expiry} ${qos}")
 			return
 		}
 		price, ok := big.NewInt(0).SetString(blocks[len(blocks)-3], 10)
@@ -170,7 +185,7 @@ func (c *ProviderAdminCLI) executor(in string) {
 			fmt.Printf("Error parsing qos: %v\n", err.Error())
 			return
 		}
-		ok, msg, err := c.admin.PublishOffer(blocks[1], blocks[2:len(blocks)-3], price, time.Now().Add(period).Unix(), qos)
+		ok, msg, err := c.admin.PublishOffer(c.defaultPVD, blocks[1:len(blocks)-3], price, time.Now().Add(period).Unix(), qos)
 		if err != nil {
 			fmt.Printf("Error in publishing offer from provider: %v\n", err.Error())
 			return
@@ -180,9 +195,9 @@ func (c *ProviderAdminCLI) executor(in string) {
 			return
 		}
 		fmt.Println("Done")
-	case "fast-publish-provider-offer":
-		if len(blocks) != 7 {
-			fmt.Println("Usage: publish-provider-offer ${targetID} ${local-file} ${remote-filename} ${price} ${expiry} ${qos}")
+	case "fast-publish-offer":
+		if len(blocks) != 6 {
+			fmt.Println("Usage: fast-publish-offer ${local-file} ${remote-filename} ${price} ${expiry} ${qos}")
 			return
 		}
 		price, ok := big.NewInt(0).SetString(blocks[len(blocks)-3], 10)
@@ -204,7 +219,7 @@ func (c *ProviderAdminCLI) executor(in string) {
 			fmt.Printf("Error parsing qos: %v\n", err.Error())
 			return
 		}
-		ok, msg, err := c.admin.UploadFile(blocks[1], blocks[2], blocks[3])
+		ok, msg, err := c.admin.UploadFile(c.defaultPVD, blocks[1], blocks[2])
 		if err != nil {
 			fmt.Printf("Error in uploading file to provider: %v\n", err.Error())
 			return
@@ -213,7 +228,7 @@ func (c *ProviderAdminCLI) executor(in string) {
 			fmt.Printf("Fail to upload file to given provider: %v\n", msg)
 			return
 		}
-		ok, msg, err = c.admin.PublishOffer(blocks[1], []string{blocks[3]}, price, time.Now().Add(period).Unix(), qos)
+		ok, msg, err = c.admin.PublishOffer(c.defaultPVD, []string{blocks[2]}, price, time.Now().Add(period).Unix(), qos)
 		if err != nil {
 			fmt.Printf("Error in publishing offer from provider: %v\n", err.Error())
 			return

@@ -362,7 +362,7 @@ func (c *ClientCLI) executor(in string) {
 			return
 		}
 		if len(blocks) != 3 {
-			fmt.Println("Usage: retrieve ${offerDigest} ${outputName}")
+			fmt.Println("Usage: retrieve ${offerDigest} ${outputDir}")
 			return
 		}
 		err := c.client.Retrieve(blocks[1], blocks[2])
@@ -377,7 +377,7 @@ func (c *ClientCLI) executor(in string) {
 			return
 		}
 		if len(blocks) != 4 {
-			fmt.Println("Usage: retrieve-fast ${contentID} ${outputName} ${maxPrice}")
+			fmt.Println("Usage: retrieve-fast ${contentID} ${outputDir} ${maxPrice}")
 			return
 		}
 		maxPrice, ok := big.NewInt(0).SetString(blocks[3], 10)
