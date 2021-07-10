@@ -68,10 +68,17 @@ func NewFilecoinRetrievalClient(
 		core: c,
 	}
 
-	var err error
-	c.WalletAddr, err = fcrcrypto.GetWalletAddress(walletPrivKey)
+	walletPubKey, _, err := fcrcrypto.GetPublicKey(walletPrivKey)
+	if err != nil {
+		err = fmt.Errorf("Error in obtaining the wallet public key: %v", err.Error())
+		logging.Error(err.Error())
+		return nil, err
+	}
+
+	c.WalletAddr, err = fcrcrypto.GetWalletAddress(walletPubKey)
 	if err != nil {
 		err = fmt.Errorf("Error in obtaining the wallet address: %v", err.Error())
+		logging.Error(err.Error())
 		return nil, err
 	}
 
