@@ -293,6 +293,7 @@ func (c *ProviderAdminCLI) initDev() {
 	fmt.Println("All providers are initialised.")
 }
 
+// syncDev is only used by developers to test, its hard-coded
 func (c *ProviderAdminCLI) syncDev() {
 	ids, _, _ := c.admin.ListProviders()
 	for _, id := range ids {
