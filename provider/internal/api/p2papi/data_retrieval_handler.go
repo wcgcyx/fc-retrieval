@@ -32,6 +32,7 @@ import (
 
 // DataRetrievalHandler handles data retrieval request.
 func DataRetrievalHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
+	logging.Debug("Handle data retrieval")
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()

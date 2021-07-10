@@ -212,7 +212,7 @@ func (r *Ring) GetClosest(hex string, num int, exclude string) []string {
 	if num >= r.size {
 		// Add everything in the ring
 		current := r.entry
-		for ok := true; ok; ok = current != r.entry {
+		for ok := true; ok; ok = current != nil && current != r.entry {
 			res = append(res, current.val)
 			current = current.next
 		}
@@ -231,7 +231,7 @@ func (r *Ring) GetClosest(hex string, num int, exclude string) []string {
 	// Now search
 	var anc *ringNode
 	current := r.entry
-	for ok := true; ok; ok = current != r.entry {
+	for ok := true; ok; ok = current != nil && current != r.entry {
 		if current.val == hex {
 			anc = current
 			break

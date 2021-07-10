@@ -23,11 +23,13 @@ import (
 	"fmt"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // ListCIDFrequencyHandler handles list cid frequency request
 func ListCIDFrequencyHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle list cid frequency from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {

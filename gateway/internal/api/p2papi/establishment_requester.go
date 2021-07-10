@@ -32,6 +32,7 @@ import (
 
 // EstablishmentRequester sends an establishment request.
 func EstablishmentRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
+	logging.Debug("Request establishment")
 	// Get parameters
 	if len(args) != 2 {
 		err := fmt.Errorf("Wrong arguments, expect length 2, got length %v", len(args))

@@ -28,11 +28,13 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cidoffer"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
 // OfferPublishHandler handles offer publish.
 func OfferPublishHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle offer publish from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {
@@ -87,7 +89,7 @@ func OfferPublishHandler(data []byte) (byte, []byte, error) {
 	// TODO, concurrency and memory (too many gateways)
 	gws := c.PeerMgr.ListGWS()
 	for _, gw := range gws {
-		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, offer)
+		c.P2PServer.Request(gw.NetworkAddr, fcrmessages.OfferPublishRequestType, gw.NodeID, offer)
 	}
 
 	// Add offer

@@ -33,12 +33,14 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/register"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // InitialisationHandler handles initialisation.
 func InitialisationHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle initialisation from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if c.Initialised {

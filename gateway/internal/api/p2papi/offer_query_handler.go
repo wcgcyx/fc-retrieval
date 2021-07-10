@@ -33,6 +33,7 @@ import (
 
 // OfferQueryHandler handles standard offer query.
 func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
+	logging.Debug("Handle offer query")
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()

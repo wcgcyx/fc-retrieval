@@ -29,6 +29,7 @@ import (
 
 // OfferPublishHandler handles offer publication.
 func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
+	logging.Debug("Handle offer publish")
 	// Get core response
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()

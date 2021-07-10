@@ -127,7 +127,7 @@ func (c *ClientCLI) executor(in string) {
 		}
 		fmt.Printf("Find gateways in given location %v:\n", blocks[1])
 		for _, gw := range gws {
-			fmt.Printf("ID: %v", gw)
+			fmt.Printf("ID: %v\n", gw)
 		}
 	case "add-active-gateway":
 		if !c.initialised {

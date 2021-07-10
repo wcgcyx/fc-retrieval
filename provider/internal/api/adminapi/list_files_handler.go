@@ -27,11 +27,13 @@ import (
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
 // ListFilesHandler lists all the files.
 func ListFilesHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle list files from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {

@@ -24,12 +24,14 @@ import (
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/reputation"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // InspectPeerHandler handles inspect peer request
 func InspectPeerHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle inspect peer from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {

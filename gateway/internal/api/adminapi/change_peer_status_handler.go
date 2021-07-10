@@ -23,11 +23,13 @@ import (
 	"fmt"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // ChangePeerStatusHandler handles change peer status request
 func ChangePeerStatusHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle change peer status from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {

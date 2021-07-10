@@ -31,6 +31,7 @@ import (
 
 // OfferPublishRequester sends an offer publish request.
 func OfferPublishRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
+	logging.Debug("Request offer publish")
 	// Get parameters
 	if len(args) != 2 {
 		err := fmt.Errorf("Wrong arguments, expect length 2, got length %v", len(args))

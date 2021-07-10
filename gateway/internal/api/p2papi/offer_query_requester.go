@@ -35,6 +35,7 @@ import (
 
 // OfferQueryRequester sends an offer query request.
 func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrserver.FCRServerRequestWriter, args ...interface{}) (*fcrmessages.FCRACKMsg, error) {
+	logging.Debug("Request offer query")
 	// Get parameters
 	if len(args) != 3 {
 		err := fmt.Errorf("Wrong arguments, expect length 3, got length %v", len(args))

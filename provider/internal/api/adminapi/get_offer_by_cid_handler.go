@@ -24,11 +24,13 @@ import (
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/provider/internal/core"
 )
 
 // GetOfferByCIDHandler handles get offer by cid request
 func GetOfferByCIDHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle get offer by cid from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {

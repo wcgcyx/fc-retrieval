@@ -25,11 +25,13 @@ import (
 	"github.com/wcgcyx/fc-retrieval/common/pkg/cid"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/core"
 )
 
 // CacheOfferByDigestHandler handles cache offer request
 func CacheOfferByDigestHandler(data []byte) (byte, []byte, error) {
+	logging.Debug("Handle cache offer by digest from admin")
 	// Get core
 	c := core.GetSingleInstance()
 	if !c.Initialised {

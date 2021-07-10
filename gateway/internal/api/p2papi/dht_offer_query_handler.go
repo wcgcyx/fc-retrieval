@@ -32,6 +32,7 @@ import (
 
 // DHTOfferQueryHandler handles dht offer query.
 func DHTOfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
+	logging.Debug("Handle dht offer query")
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()

@@ -29,6 +29,7 @@ import (
 
 // EstablishmentHandler handles dht offer establishment.
 func EstablishmentHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver.FCRServerResponseWriter, request *fcrmessages.FCRReqMsg) error {
+	logging.Debug("Handle establishment")
 	// Get core structure
 	c := core.GetSingleInstance()
 	c.MsgSigningKeyLock.RLock()
