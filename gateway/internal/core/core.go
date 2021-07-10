@@ -94,7 +94,7 @@ func GetSingleInstance(confs ...*settings.AppSettings) *Core {
 			MsgSigningKey:     "",
 			MsgSigningKeyVer:  0,
 			MsgSigningKeyLock: sync.RWMutex{},
-			StoreFullOffer:    true,
+			StoreFullOffer:    false,
 			AdminServer:       nil,
 			P2PServer:         nil,
 			OfferMgr:          nil,

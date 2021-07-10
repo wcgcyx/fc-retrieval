@@ -19,7 +19,9 @@ package p2papi
  */
 
 import (
+	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
@@ -72,7 +74,26 @@ func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserv
 	}
 
 	// Offer verified, add to storage
-	// TODO: if c.StoreFullOffer is set to false, only store offer if it contains an cid that is within the range
-	c.OfferMgr.AddOffer(offer)
+	if !c.StoreFullOffer {
+		minStr, maxStr := c.PeerMgr.GetCurrentCIDHashRange()
+		min, _ := big.NewInt(0).SetString(minStr, 16)
+		max, _ := big.NewInt(0).SetString(maxStr, 16)
+		for _, cid := range offer.GetCIDs() {
+			cidHash, err := cid.CalculateHash()
+			if err != nil {
+				err = fmt.Errorf("Error getting cid hash for %v: %v", cid.ToString(), err.Error())
+				logging.Error(err.Error())
+				continue
+			}
+			cidVal, _ := big.NewInt(0).SetString(hex.EncodeToString(cidHash), 16)
+			if cidVal.Cmp(min) >= 0 && cidVal.Cmp(max) <= 0 {
+				logging.Debug("Offer contains cid %v, within range [%v, %v], added to storage", cidHash, minStr, maxStr)
+				break
+			}
+		}
+	} else {
+		logging.Debug("Gateway stores every offer, added to storage")
+		c.OfferMgr.AddOffer(offer)
+	}
 	return writer.Write(fcrmessages.CreateFCRACKMsg(nonce, []byte{0}), c.MsgSigningKey, c.MsgSigningKeyVer, c.Settings.TCPInactivityTimeout)
 }
