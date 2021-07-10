@@ -263,12 +263,16 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		refunded, err := c.PaymentMgr.ReceiveRefund(recipientAddr, refundVoucher)
 		if err != nil {
 			// Refund is wrong, but we can still respond to client, no need to return error
+			err = fmt.Errorf("Error in receiving refund %v", err.Error())
+			logging.Error(err.Error())
 			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidRefund.Copy(), 0)
 			c.ReputationMgr.PendGW(targetID)
 		} else {
 			expectedRefund := big.NewInt(0).Mul(c.OfferPrice, big.NewInt(remain))
 			if refunded.Cmp(expectedRefund) < 0 {
 				// Refund is wrong, but we can still respond to client, no need to return error
+				err = fmt.Errorf("Error in receiving refund expect %v got %v", expectedRefund.String(), refunded.String())
+				logging.Error(err.Error())
 				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidRefund.Copy(), 0)
 				c.ReputationMgr.PendGW(targetID)
 			}

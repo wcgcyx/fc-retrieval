@@ -139,7 +139,7 @@ func OfferQueryHandler(reader fcrserver.FCRServerRequestReader, writer fcrserver
 	}
 	if remain > 0 {
 		var ierr error
-		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Sub(received, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(remain))))
+		refundVoucher, ierr = c.PaymentMgr.Refund(accountAddr, lane, big.NewInt(0).Mul(c.Settings.OfferPrice, big.NewInt(remain)))
 		if ierr != nil {
 			// This should never happen
 			logging.Error("Error in refunding %v", ierr.Error())
