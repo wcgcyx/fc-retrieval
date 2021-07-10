@@ -37,26 +37,13 @@ func main() {
 			panic(err)
 		}
 		for i, gw := range gws {
-			cmd = exec.Command("docker", "ps", "--filter", fmt.Sprintf("name=%v", gw), "--format", "{{.ID}}")
-			stdout, err := cmd.Output()
-			if err != nil {
-				panic(err)
-			}
-			id := string(stdout[:len(stdout)-1])
-			cmd = exec.Command("docker", "exec", id, "cat", ".fc-retrieval/gateway/admin.key")
-			stdout, err = cmd.Output()
-			if err != nil {
-				panic(err)
-			}
-			adminKey := hex.EncodeToString(stdout)
-			// Generate a root private key for it
 			cmd = exec.Command("docker", "run", "--net", "shared", "--rm", "giantswarm/tiny-tools", "dig", "+short", gw)
 			stdout, err = cmd.Output()
 			if err != nil {
 				panic(err)
 			}
 			ip := string(stdout[:len(stdout)-1])
-			res = fmt.Sprintf("%v;%v,%v,%v,%v", res, gw, adminKey, privKeys[i], ip)
+			res = fmt.Sprintf("%v;%v,%v,%v,%v", res, gw, "6465616135313132656636333864653962393132306366363537333664656465", privKeys[i], ip)
 		}
 		fmt.Println(res)
 	} else if os.Args[1] == "pvd" {
@@ -71,26 +58,13 @@ func main() {
 			panic(err)
 		}
 		for i, gw := range gws {
-			cmd = exec.Command("docker", "ps", "--filter", fmt.Sprintf("name=%v", gw), "--format", "{{.ID}}")
-			stdout, err := cmd.Output()
-			if err != nil {
-				panic(err)
-			}
-			id := string(stdout[:len(stdout)-1])
-			cmd = exec.Command("docker", "exec", id, "cat", ".fc-retrieval/provider/admin.key")
-			stdout, err = cmd.Output()
-			if err != nil {
-				panic(err)
-			}
-			adminKey := hex.EncodeToString(stdout)
-			// Generate a root private key for it
 			cmd = exec.Command("docker", "run", "--net", "shared", "--rm", "giantswarm/tiny-tools", "dig", "+short", gw)
 			stdout, err = cmd.Output()
 			if err != nil {
 				panic(err)
 			}
 			ip := string(stdout[:len(stdout)-1])
-			res = fmt.Sprintf("%v;%v,%v,%v,%v", res, gw, adminKey, privKeys[i], ip)
+			res = fmt.Sprintf("%v;%v,%v,%v,%v", res, gw, "6465616135313132656636333864653962393132306366363537333664656465", privKeys[i], ip)
 		}
 		fmt.Println(res)
 	} else {
