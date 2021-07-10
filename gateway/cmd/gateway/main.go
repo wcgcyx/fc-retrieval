@@ -98,7 +98,8 @@ func main() {
 		AddHandler(fcradminmsg.GetOfferByCIDRequestType, adminapi.GetOfferByCIDHandler).
 		AddHandler(fcradminmsg.InspectPeerRequestType, adminapi.InspectPeerHandler).
 		AddHandler(fcradminmsg.ListCIDFrequencyRequestType, adminapi.ListCIDFrequencyHandler).
-		AddHandler(fcradminmsg.ListPeersRequestType, adminapi.ListPeersHandler)
+		AddHandler(fcradminmsg.ListPeersRequestType, adminapi.ListPeersHandler).
+		AddHandler(fcradminmsg.ForceSyncRequestType, adminapi.ForceSyncHandler)
 
 	err = c.AdminServer.Start()
 	if err != nil {

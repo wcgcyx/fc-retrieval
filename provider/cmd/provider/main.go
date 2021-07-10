@@ -98,7 +98,8 @@ func main() {
 		AddHandler(fcradminmsg.GetOfferByCIDRequestType, adminapi.GetOfferByCIDHandler).
 		AddHandler(fcradminmsg.ListFilesRequestType, adminapi.ListFilesHandler).
 		AddHandler(fcradminmsg.PublishOfferRequestType, adminapi.OfferPublishHandler).
-		AddHandler(fcradminmsg.UploadFileRequestType, adminapi.UploadFileHandler)
+		AddHandler(fcradminmsg.UploadFileRequestType, adminapi.UploadFileHandler).
+		AddHandler(fcradminmsg.ForceSyncRequestType, adminapi.ForceSyncHandler)
 
 	err = c.AdminServer.Start()
 	if err != nil {

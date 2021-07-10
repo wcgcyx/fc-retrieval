@@ -34,5 +34,6 @@ const (
 	ListFilesResponseType         = 18
 	PublishOfferRequestType       = 19
 	UploadFileRequestType         = 20
-	ACKType                       = 21
+	ForceSyncRequestType          = 21
+	ACKType                       = 22
 )
