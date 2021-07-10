@@ -20,6 +20,7 @@ package fcrpaymentmgr
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"sync"
@@ -301,7 +302,7 @@ func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big
 		return nil, 0, err
 	}
 	if senderAddr != senderVAddr {
-		return nil, 0, errors.New("Receive sender address mismtach")
+		return nil, 0, fmt.Errorf("Receive sender address mismtach expect %v got %v", senderAddr, senderVAddr)
 	}
 	mgr.inboundChsLock.RLock()
 	cs, ok := mgr.inboundChs[senderAddr]
@@ -314,7 +315,7 @@ func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big
 		}
 		recipientAddr = cleanAddress(recipientAddr)
 		if recipientAddr != mgr.addr {
-			return nil, 0, errors.New("Receive receiver address mismatch")
+			return nil, 0, fmt.Errorf("Receive receiver address mismtach expect %v got %v", mgr.addr, recipientAddr)
 		}
 		mgr.inboundChsLock.RUnlock()
 		mgr.inboundChsLock.Lock()
@@ -333,7 +334,7 @@ func (mgr *FCRPaymentMgrImplV1) Receive(senderAddr string, voucher string) (*big
 	cs.lock.Lock()
 	defer cs.lock.Unlock()
 	if chAddr != cs.addr {
-		return nil, 0, errors.New("Receive channel address mismatch")
+		return nil, 0, fmt.Errorf("Receive channel address mismatch expect %v got %v", cs.addr, chAddr)
 	}
 	ls, ok := cs.laneStates[lane]
 	if !ok {

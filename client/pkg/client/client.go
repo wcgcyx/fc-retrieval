@@ -68,6 +68,13 @@ func NewFilecoinRetrievalClient(
 		core: c,
 	}
 
+	var err error
+	c.WalletAddr, err = fcrcrypto.GetWalletAddress(walletPrivKey)
+	if err != nil {
+		err = fmt.Errorf("Error in obtaining the wallet address: %v", err.Error())
+		return nil, err
+	}
+
 	// Generating msg signing key
 	msgKey, _, _, err := fcrcrypto.GenerateRetrievalKeyPair()
 	if err != nil {
@@ -349,7 +356,7 @@ func (c *FilecoinRetrievalClient) UnblockGW(targetID string) {
 
 // ResumeGW resumes a gateway
 func (c *FilecoinRetrievalClient) ResumeGW(targetID string) {
-	c.core.ReputationMgr.RemoveGW(targetID)
+	c.core.ReputationMgr.ResumeGW(targetID)
 }
 
 // BlockPVD blocks a provider
@@ -364,7 +371,7 @@ func (c *FilecoinRetrievalClient) UnblockPVD(targetID string) {
 
 // ResumePVD resumes a provider
 func (c *FilecoinRetrievalClient) ResumePVD(targetID string) {
-	c.core.ReputationMgr.RemovePVD(targetID)
+	c.core.ReputationMgr.ResumePVD(targetID)
 }
 
 // ListOffers lists offers by given cid

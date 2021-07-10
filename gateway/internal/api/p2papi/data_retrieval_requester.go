@@ -97,7 +97,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		return nil, err
 	}
 	expected := big.NewInt(0).Add(c.Settings.SearchPrice, offer.GetPrice())
-	voucher, create, topup, err := c.PaymentMgr.Pay(recipientAddr, 0, expected)
+	voucher, create, topup, err := c.PaymentMgr.Pay(recipientAddr, 1, expected)
 	if err != nil {
 		err = fmt.Errorf("Error in paying provider %v with expected amount of %v: %v", targetID, expected.String(), err.Error())
 		logging.Error(err.Error())
@@ -118,7 +118,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 			logging.Error(err.Error())
 			return nil, err
 		}
-		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 0, expected)
+		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 1, expected)
 		if create || topup {
 			// This should never happen
 			err = fmt.Errorf("Error in paying provider %v, needs to create/topup after just creation", targetID)
@@ -138,7 +138,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 			logging.Error(err.Error())
 			return nil, err
 		}
-		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 0, expected)
+		voucher, create, topup, err = c.PaymentMgr.Pay(recipientAddr, 1, expected)
 		if create || topup {
 			// This should never happen
 			err = fmt.Errorf("Error in paying provider %v, needs to create/topup after just topup", targetID)
