@@ -19,6 +19,38 @@ import (
 	cid2 "github.com/ipfs/go-cid"
 )
 
+// Integration test Note:
+// Step 1:
+// Start 33 Gateways (GW0 - GW32)
+// Start 3 providers (PVD0 - PVD2)
+// Start 1 client, 1 gateway admin and 1 provider admin.
+// Step 2:
+// Initialise client, initialise gateway admin and provider admin.
+// Initialise 32 gateways (GW0 - GW31) and 3 providers
+// Force every gateway and provider to sync.
+// Step 3:
+// Client add one active gateway. (GW14)
+// Step 4:
+// PVD0 publishes offer for test1.txt
+// PVD1 publishes offer for test2.txt
+// Step 5:
+// Standard discovery for test1.txt (Found 1 offer)
+// Step 6:
+// Standard discovery for test2.txt (Found 0 offer)
+// Step 7:
+// DHT discovery for test2.txt (Found 1 offer)
+// Step 8:
+// Initialise GW32.
+// Force every gateway and provider to sync.
+// Step 9:
+// PVD2 publishes offer for test1.txt + test2.txt
+// Step 10:
+// Standard discovery for test1.txt (Found 1 offer)
+// Client add one active gateway. (GW32)
+// Standard discovery for text1.txt (Found 2 offers)
+// Step 11:
+// Client does a fast-retrieval for text3.txt (Succeed).
+
 // Content
 // test1.txt CID-QmUN1ytvX4w2VG5LinWySBriHKjCA6484mdbyMJw36LdHa hash-ab9362d3129b3cf191004454aa447883b13b2f39808384b8a99a514362ac76f7
 // 		Before: [GW14, GW29]						After: [GW15, GW29] and GW32
