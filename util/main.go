@@ -19,6 +19,10 @@ import (
 	cid2 "github.com/ipfs/go-cid"
 )
 
+// CID hash test1.txt ab9362d3129b3cf191004454aa447883b13b2f39808384b8a99a514362ac76f7
+// CID hash test2.txt df14ea2bf1745c3bb4c227bc407661eabbe7ac14ff84141dcd241a05ccddb73d
+// CID hash test3.txt 494f03ec96e583f1b96778eb40b8ad01038158db2b9821fbd3df1a96cdf4315c
+
 var localLotusAP = "http://127.0.0.1:1234/rpc/v0"
 var gatewaysKeyMap = map[string]string{
 	"gateway0":  "5a7c858349ed16806e931b5fbb359e031529faf7218340d3b7e56bd58cfb97e5", // ID - 0523070e9e2dbd47c9c11c6ba861c801cd998d3002f245c3bbec6a0bf0d1fd49 // [GW25, GW9]
