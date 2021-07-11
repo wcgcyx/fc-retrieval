@@ -78,6 +78,7 @@ func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserv
 		minStr, maxStr := c.PeerMgr.GetCurrentCIDHashRange()
 		min, _ := big.NewInt(0).SetString(minStr, 16)
 		max, _ := big.NewInt(0).SetString(maxStr, 16)
+		store := false
 		for _, cid := range offer.GetCIDs() {
 			cidHash, err := cid.CalculateHash()
 			if err != nil {
@@ -89,16 +90,20 @@ func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserv
 			if max.Cmp(min) > 0 {
 				if cidVal.Cmp(min) >= 0 && cidVal.Cmp(max) <= 0 {
 					logging.Debug("Offer contains cid %v, within range [%v, %v], added to storage", hex.EncodeToString(cidHash), minStr, maxStr)
+					store = true
 					break
 				}
 			} else {
 				if cidVal.Cmp(min) >= 0 || cidVal.Cmp(max) <= 0 {
+					store = true
 					logging.Debug("Offer contains cid %v, within range [%v, %v], added to storage", hex.EncodeToString(cidHash), minStr, maxStr)
 					break
 				}
 			}
 		}
-		logging.Debug("Offer does not contain cid within range [%v, %v], ignore", minStr, maxStr)
+		if !store {
+			logging.Debug("Offer does not contain cid within range [%v, %v], ignore", minStr, maxStr)
+		}
 	} else {
 		logging.Debug("Gateway stores every offer, added to storage")
 		c.OfferMgr.AddOffer(offer)

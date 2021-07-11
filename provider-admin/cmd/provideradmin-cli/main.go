@@ -289,6 +289,10 @@ func (c *ProviderAdminCLI) initDev() {
 		if err != nil {
 			panic(err)
 		}
+		if c.defaultPVD == "" {
+			ids, _, _ := c.admin.ListProviders()
+			c.defaultPVD = ids[0]
+		}
 	}
 	fmt.Println("All providers are initialised.")
 }
