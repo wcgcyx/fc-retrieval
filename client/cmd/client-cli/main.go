@@ -329,7 +329,7 @@ func (c *ClientCLI) executor(in string) {
 			fmt.Println("Usage: find-offer ${contentID} ${gatewayID}")
 			return
 		}
-		offers, err := c.client.DHTDiscovery(blocks[1], blocks[2], 8, 1)
+		offers, err := c.client.DHTDiscovery(blocks[1], blocks[2], 4, 1)
 		if err != nil {
 			fmt.Printf("Error doing dht discovery for %v by %v: %v\n", blocks[1], blocks[2], err.Error())
 			return
