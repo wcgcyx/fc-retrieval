@@ -20,9 +20,9 @@ import (
 )
 
 // Before adding gateway 32
-// CID hash test1.txt ab9362d3129b3cf191004454aa447883b13b2f39808384b8a99a514362ac76f7 will be stored by [GW14, GW29]
-// CID hash test2.txt df14ea2bf1745c3bb4c227bc407661eabbe7ac14ff84141dcd241a05ccddb73d will be stored by [GW20, GW31] and [GW0, GW3]
-// CID hash test3.txt 494f03ec96e583f1b96778eb40b8ad01038158db2b9821fbd3df1a96cdf4315c will be stored by [GW2, GW16]
+// test1.txt CID-QmUN1ytvX4w2VG5LinWySBriHKjCA6484mdbyMJw36LdHa hash-ab9362d3129b3cf191004454aa447883b13b2f39808384b8a99a514362ac76f7 will be stored by [GW14, GW29]
+// test2.txt CID-QmYb36f6SPpEN8oeznyxD5qSwztygQrK4jn3JEaCvwxUBx hash-df14ea2bf1745c3bb4c227bc407661eabbe7ac14ff84141dcd241a05ccddb73d will be stored by [GW20, GW31] and [GW0, GW3]
+// test3.txt CID-QmRLm3zrumrNrWSwy3Awy4MJyK1Ujk2efqfAV8SaHM2z7X hash-494f03ec96e583f1b96778eb40b8ad01038158db2b9821fbd3df1a96cdf4315c will be stored by [GW2, GW16]
 
 var localLotusAP = "http://127.0.0.1:1234/rpc/v0"
 var gatewaysKeyMap = map[string]string{
