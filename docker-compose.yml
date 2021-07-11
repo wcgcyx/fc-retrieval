@@ -397,6 +397,17 @@ services:
     depends_on: 
       - gateway30
 
+  # gateway32:
+  #   image: wcgcyx/fc-retrieval/gateway
+  #   container_name: gateway32
+  #   networks:
+  #     - shared
+  #   env_file:
+  #     - gateway/.env.example
+  #   restart: unless-stopped
+  #   depends_on: 
+  #     - gateway31
+
 networks:
   shared:
     name: shared
