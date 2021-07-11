@@ -38,8 +38,14 @@ func ForceSyncHandler(data []byte) (byte, []byte, error) {
 		return fcradminmsg.ACKType, ack, err
 	}
 
+	min, max := c.PeerMgr.GetCurrentCIDHashRange()
+	logging.Debug("Before syncing min: %v, max: %v", min, max)
+
 	// Do a sync
 	c.PeerMgr.Sync()
+
+	min, max = c.PeerMgr.GetCurrentCIDHashRange()
+	logging.Debug("After syncing min: %v, max: %v", min, max)
 
 	// Succeed
 	ack := fcradminmsg.EncodeACK(true, "Succeed.")
