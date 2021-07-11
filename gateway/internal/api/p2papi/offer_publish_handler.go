@@ -86,9 +86,16 @@ func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserv
 				continue
 			}
 			cidVal, _ := big.NewInt(0).SetString(hex.EncodeToString(cidHash), 16)
-			if cidVal.Cmp(min) >= 0 && cidVal.Cmp(max) <= 0 {
-				logging.Debug("Offer contains cid %v, within range [%v, %v], added to storage", hex.EncodeToString(cidHash), minStr, maxStr)
-				break
+			if max.Cmp(min) > 0 {
+				if cidVal.Cmp(min) >= 0 && cidVal.Cmp(max) <= 0 {
+					logging.Debug("Offer contains cid %v, within range [%v, %v], added to storage", hex.EncodeToString(cidHash), minStr, maxStr)
+					break
+				}
+			} else {
+				if cidVal.Cmp(min) >= 0 || cidVal.Cmp(max) <= 0 {
+					logging.Debug("Offer contains cid %v, within range [%v, %v], added to storage", hex.EncodeToString(cidHash), minStr, maxStr)
+					break
+				}
 			}
 		}
 		logging.Debug("Offer does not contain cid within range [%v, %v], ignore", minStr, maxStr)
