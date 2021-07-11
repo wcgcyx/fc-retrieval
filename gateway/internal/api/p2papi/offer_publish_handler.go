@@ -101,7 +101,9 @@ func OfferPublishHandler(reader fcrserver.FCRServerRequestReader, writer fcrserv
 				}
 			}
 		}
-		if !store {
+		if store {
+			c.OfferMgr.AddOffer(offer)
+		} else {
 			logging.Debug("Offer does not contain cid within range [%v, %v], ignore", minStr, maxStr)
 		}
 	} else {
