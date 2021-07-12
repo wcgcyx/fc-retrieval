@@ -521,8 +521,7 @@ func (c *FilecoinRetrievalClient) FastRetrieve(cidStr string, location string, m
 	// And they must not exceed max price.
 	// At the moment, it iterates through the offers and retrieve offer from active providers.
 	for _, offer := range res {
-		rep := c.core.ReputationMgr.GetPVDReputation(offer.GetProviderID())
-		if rep != nil && offer.GetPrice().Cmp(maxPrice) < 0 {
+		if offer.GetPrice().Cmp(maxPrice) < 0 {
 			err = c.Retrieve(offer.GetMessageDigest(), location)
 			if err == nil {
 				return nil
