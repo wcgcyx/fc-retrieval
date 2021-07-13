@@ -52,8 +52,9 @@ type AppSettings struct {
 	// Admin related
 	BindAdminAPI int    `mapstructure:"BIND_ADMIN_API"` // Port number to bind to for admin secured HTTP connection
 	SystemDir    string `mapstructure:"SYSTEM_DIR"`     // Dir storing all data of this provider
-	AdminKeyFile string `mapstructure:"ADMIN_KEY_FILE"` // File storing the admin access key file
 	RetrievalDir string `mapstructure:"RETRIEVAL_DIR"`  // Retrieval Dir: /var/.fc-retrieval/provider/files
+	AdminKeyFile string `mapstructure:"ADMIN_KEY_FILE"` // File storing the admin access key file
+	ConfigFile   string `mapstructure:"CONFIG_FILE"`    // File storing the provider config
 
 	// Duration
 	SyncDuration             time.Duration `mapstructure:"SYNC_DURATION"`               // Sync duration

@@ -52,8 +52,9 @@ type AppSettings struct {
 	// Admin related
 	BindAdminAPI   int    `mapstructure:"BIND_ADMIN_API"`   // Port number to bind to for admin secured HTTP connection
 	SystemDir      string `mapstructure:"SYSTEM_DIR"`       // // Dir storing all data of this gateway
-	AdminKeyFile   string `mapstructure:"ADMIN_KEY_FILE"`   // File storing the admin access key file
 	RetrievalDir   string `mapstructure:"RETRIEVAL_DIR"`    // Retrieval Dir: /var/.fc-retrieval/gateway/files
+	AdminKeyFile   string `mapstructure:"ADMIN_KEY_FILE"`   // File storing the admin access key file
+	ConfigFile     string `mapstructure:"CONFIG_FILE"`      // File storing the gateway config
 	StoreFullOffer bool   `mapstructure:"STORE_FULL_OFFER"` // Boolean indicates whether this gateway stores full offer
 
 	// Duration

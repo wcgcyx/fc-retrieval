@@ -80,8 +80,9 @@ func Map(conf *viper.Viper) settings.AppSettings {
 
 		BindAdminAPI: conf.GetInt("BIND_ADMIN_API"),
 		SystemDir:    conf.GetString("SYSTEM_DIR"),
-		AdminKeyFile: conf.GetString("ADMIN_KEY_FILE"),
 		RetrievalDir: conf.GetString("RETRIEVAL_DIR"),
+		AdminKeyFile: conf.GetString("ADMIN_KEY_FILE"),
+		ConfigFile:   conf.GetString("CONFIG_FILE"),
 
 		SyncDuration:             syncDuration,
 		MsgKeyUpdateDuration:     msgKeyUpdateDuration,

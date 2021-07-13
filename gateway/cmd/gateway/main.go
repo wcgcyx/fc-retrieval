@@ -26,15 +26,27 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminserver"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrcrypto"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrlotusmgr"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrmessages"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcroffermgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpaymentmgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrpeermgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrregistermgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrreputationmgr"
+	"github.com/wcgcyx/fc-retrieval/common/pkg/fcrserver"
 	"github.com/wcgcyx/fc-retrieval/common/pkg/logging"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/api/adminapi"
 	"github.com/wcgcyx/fc-retrieval/gateway/internal/api/p2papi"
@@ -107,6 +119,71 @@ func main() {
 		return
 	}
 	logging.Info("Admin server starts listening on [::]:%v", c.Settings.BindAdminAPI)
+
+	// Attempt to load config file and initialise this gateway
+	go func() {
+		f, err = os.Open(c.Settings.ConfigFile)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+		data, err := ioutil.ReadAll(f)
+		if err != nil {
+			return
+		}
+		config := strings.Split(string(data), ";")
+		if len(config) != 10 {
+			return
+		}
+		p2pPrivKey := config[0]
+		p2pPort, err := strconv.ParseInt(config[1], 10, 32)
+		if err != nil {
+			return
+		}
+		rootPrivKey := config[2]
+		lotusAPIAddr := config[3]
+		lotusAuthToken := config[4]
+		// registerPrivKey := config[5]
+		registerAPIAddr := config[6]
+		// registerAuthToken := config[7]
+		msgSigningKey := config[8]
+		msgSigningKeyVer, err := strconv.ParseInt(config[10], 9, 32)
+		if err != nil {
+			return
+		}
+		rootKey, nodeID, err := fcrcrypto.GetPublicKey(rootPrivKey)
+		if err != nil {
+			return
+		}
+		c.NodeID = nodeID
+		c.WalletAddr, err = fcrcrypto.GetWalletAddress(rootKey)
+		if err != nil {
+			return
+		}
+		temp, err := hex.DecodeString(msgSigningKey)
+		if err != nil {
+			return
+		}
+		if len(temp) != 32 {
+			return
+		}
+		c.MsgSigningKey = msgSigningKey
+		c.MsgSigningKeyVer = byte(msgSigningKeyVer)
+		c.P2PServer = fcrserver.NewFCRServerImplV1(p2pPrivKey, uint(p2pPort), c.Settings.TCPInactivityTimeout)
+		c.ReputationMgr = fcrreputationmgr.NewFCRReputationMgrImpV1()
+		registerMgr := fcrregistermgr.NewFCRRegisterMgrImplV1(registerAPIAddr, &http.Client{Timeout: 180 * time.Second})
+		c.StoreFullOffer = c.Settings.StoreFullOffer
+		c.PeerMgr = fcrpeermgr.NewFCRPeerMgrImplV1(registerMgr, c.ReputationMgr, true, true, !c.StoreFullOffer, nodeID, c.Settings.SyncDuration)
+		lotusMgr := fcrlotusmgr.NewFCRLotusMgrImplV1(lotusAPIAddr, lotusAuthToken, nil)
+		c.PaymentMgr = fcrpaymentmgr.NewFCRPaymentMgrImplV1(rootPrivKey, lotusMgr)
+		c.OfferMgr = fcroffermgr.NewFCROfferMgrImplV1(true)
+		c.Ready <- true
+		if !<-c.Ready {
+			return
+		}
+		c.Initialised = true
+		c.Ready <- true
+	}()
 
 	// Wait for admin to initialise this gateway
 	for !<-c.Ready {

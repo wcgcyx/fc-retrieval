@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/wcgcyx/fc-retrieval/common/pkg/fcradminmsg"
@@ -44,13 +45,12 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 	c := core.GetSingleInstance()
 	if c.Initialised {
 		// Already initialised.
-		err := errors.New("Already initialised")
-		ack := fcradminmsg.EncodeACK(false, err.Error())
-		return fcradminmsg.ACKType, ack, err
+		ack := fcradminmsg.EncodeACK(true, "Succeed.")
+		return fcradminmsg.ACKType, ack, nil
 	}
 
 	// Decoding payload
-	p2pPrivKey, p2pPort, networkAddr, rootPrivKey, lotusAPIAddr, lotusAuthToken, _, registerAPIAddr, _, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
+	p2pPrivKey, p2pPort, networkAddr, rootPrivKey, lotusAPIAddr, lotusAuthToken, registerPrivKey, registerAPIAddr, registerAuthToken, regionCode, err := fcradminmsg.DecodeInitialisationRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())
@@ -132,6 +132,28 @@ func InitialisationHandler(data []byte) (byte, []byte, error) {
 		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
+
+	// Save the config to file
+	f, err := os.Create(c.Settings.ConfigFile)
+	if err != nil {
+		c.Ready <- false
+		logging.Error("Error in saving current config to file: %v", err.Error())
+		ack := fcradminmsg.EncodeACK(false, err.Error())
+		return fcradminmsg.ACKType, ack, err
+	}
+	f.Write([]byte(fmt.Sprintf("%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;%v",
+		p2pPrivKey,
+		p2pPort,
+		rootPrivKey,
+		lotusAPIAddr,
+		lotusAuthToken,
+		registerPrivKey,
+		registerAPIAddr,
+		registerAuthToken,
+		offerKey,
+		msgKey,
+		0)))
+	f.Close()
 
 	// Succeed.
 	c.Ready <- true
