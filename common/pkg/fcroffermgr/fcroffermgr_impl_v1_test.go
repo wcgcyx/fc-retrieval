@@ -128,9 +128,9 @@ func TestAddOffer(t *testing.T) {
 	assert.Equal(t, []string{"QmWJi2BHLpKpCnD3sA3jcSWv5M51D6Zf1WY4rN8BrQtCgi", "QmPQ42Rdn4rvsEFab6aoGHg4Cj1kiNh6xpNCpRVq98Qevz"}, res1)
 	assert.Equal(t, []int{2, 0}, res2)
 
-	res = mgr.GetOffersByTag("CID10")
+	res = mgr.GetOffers(cid10)
 	assert.Equal(t, 0, len(res))
-	res = mgr.GetOffersByTag("CID8")
+	res = mgr.GetOffers(cid8)
 	assert.Equal(t, 3, len(res))
 
 	tag := mgr.GetTagByCID(cid10)

@@ -73,15 +73,15 @@ func ListFilesHandler(data []byte) (byte, []byte, error) {
 			cidStr = cid.ToString()
 			c.OfferMgr.AddCIDTag(cid, tag)
 		}
-		cids = append(cids, cidStr)
-		sizes = append(sizes, file.Size())
-		published = append(published, len(c.OfferMgr.GetOffersByTag(tag)) > 0)
 		cid, err := cid.NewContentID(cidStr)
 		if err != nil {
 			err = fmt.Errorf("Internal error in parsing cid string %v: %v", cidStr, err.Error())
 			ack := fcradminmsg.EncodeACK(false, err.Error())
 			return fcradminmsg.ACKType, ack, err
 		}
+		cids = append(cids, cidStr)
+		sizes = append(sizes, file.Size())
+		published = append(published, len(c.OfferMgr.GetOffers(cid)) > 0)
 		frequency = append(frequency, c.OfferMgr.GetAccessCountByCID(cid))
 	}
 

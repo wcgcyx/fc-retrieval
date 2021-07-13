@@ -59,10 +59,6 @@ type FCROfferMgr interface {
 	// GetOffers gets offers containing given cid.
 	GetOffers(cID *cid.ContentID) []cidoffer.CIDOffer
 
-	// GetOffersByTag gets offers by given tag.
-	// Should be called by a provider to show offers linked with filename.
-	GetOffersByTag(tag string) []cidoffer.CIDOffer
-
 	// ListOffers gets a list of offers from given index to given index.
 	ListOffers(from uint, to uint) []cidoffer.CIDOffer
 
