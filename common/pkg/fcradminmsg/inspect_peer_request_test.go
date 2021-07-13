@@ -30,7 +30,7 @@ func TestInspectPeerRequest(t *testing.T) {
 
 	data, err := EncodeInspectPeerRequest(mockID)
 	assert.Empty(t, err)
-	assert.Equal(t, "7b226e6f64655f6964223a22746573746964222c2267617465776179223a747275657d", hex.EncodeToString(data))
+	assert.Equal(t, "7b226e6f64655f6964223a22746573746964227d", hex.EncodeToString(data))
 
 	resID, err := DecodeInspectPeerRequest(data)
 	assert.Empty(t, err)
