@@ -166,11 +166,13 @@ func NewFilecoinRetrievalClient(
 	}
 
 	// At start-up, updating all active gateways and providers
-	for _, gwID := range c.ReputationMgr.ListGWS() {
-		c.PeerMgr.SyncGW(gwID)
-	}
-	for _, pvdID := range c.ReputationMgr.ListPVDS() {
-		c.PeerMgr.SyncPVD(pvdID)
+	for _, peerID := range c.ReputationMgr.ListPeers() {
+		if c.PeerMgr.GetGWInfo(peerID) != nil {
+			c.PeerMgr.SyncGW(peerID)
+		}
+		if c.PeerMgr.GetPVDInfo(peerID) != nil {
+			c.PeerMgr.SyncPVD(peerID)
+		}
 	}
 
 	return res, nil
@@ -211,35 +213,43 @@ func (c *FilecoinRetrievalClient) Search(location string) ([]string, error) {
 	return res, nil
 }
 
-// AddActiveGW adds an active gateway ID
-func (c *FilecoinRetrievalClient) AddActiveGW(targetID string) error {
-	if c.core.ReputationMgr.GetGWReputation(targetID) != nil {
-		err := fmt.Errorf("Gateway %v is already active", targetID)
+// AddActivePeer adds an active peer by its ID
+func (c *FilecoinRetrievalClient) AddActivePeer(targetID string) error {
+	if c.core.ReputationMgr.GetPeerReputation(targetID) != nil {
+		err := fmt.Errorf("Peer %v is already active", targetID)
 		logging.Error(err.Error())
 		return err
 	}
 
-	// Get gw info
-	gwInfo := c.core.PeerMgr.GetGWInfo(targetID)
-	if gwInfo == nil {
+	// Get peer info as it is a gateway
+	peerInfo := c.core.PeerMgr.GetGWInfo(targetID)
+	if peerInfo == nil {
 		// Not found, try sync once
-		gwInfo = c.core.PeerMgr.SyncGW(targetID)
-		if gwInfo == nil {
-			err := fmt.Errorf("Error in obtaining information for gateway %v", targetID)
-			logging.Error(err.Error())
-			return err
+		peerInfo = c.core.PeerMgr.SyncGW(targetID)
+		if peerInfo == nil {
+			// Get peer info as it is a provider
+			peerInfo = c.core.PeerMgr.GetPVDInfo(targetID)
+			if peerInfo == nil {
+				// Not found, try sync once
+				peerInfo = c.core.PeerMgr.SyncPVD(targetID)
+				if peerInfo == nil {
+					err := fmt.Errorf("Error in obtaining information for peer %v", targetID)
+					logging.Error(err.Error())
+					return err
+				}
+			}
 		}
 	}
-	_, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, true)
+	_, err := c.core.P2PServer.Request(peerInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, true)
 	if err != nil {
-		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, gwInfo.NetworkAddr, err.Error())
+		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, peerInfo.NetworkAddr, err.Error())
 		logging.Error(err.Error())
 		return err
 	}
 	// Create payment channel
-	recipientAddr, err := fcrcrypto.GetWalletAddress(gwInfo.RootKey)
+	recipientAddr, err := fcrcrypto.GetWalletAddress(peerInfo.RootKey)
 	if err != nil {
-		err = fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, gwInfo.RootKey, err.Error())
+		err = fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, peerInfo.RootKey, err.Error())
 		logging.Error(err.Error())
 		return err
 	}
@@ -250,79 +260,30 @@ func (c *FilecoinRetrievalClient) AddActiveGW(targetID string) error {
 		logging.Error(err.Error())
 		return err
 	}
-	// Add gateway entry to reputation
-	c.core.ReputationMgr.AddGW(gwInfo.NodeID)
+	// Add peer entry to reputation
+	c.core.ReputationMgr.AddPeer(peerInfo.NodeID)
 	return nil
 }
 
-// ListActiveGWS lists all active gateways
-func (c *FilecoinRetrievalClient) ListActiveGWS() []string {
-	return c.core.ReputationMgr.ListGWS()
+// ListActivePeers lists all active peers
+func (c *FilecoinRetrievalClient) ListActivePeers() []string {
+	return c.core.ReputationMgr.ListPeers()
 }
 
-// AddActivePVD adds an active provider ID
-func (c *FilecoinRetrievalClient) AddActivePVD(targetID string) error {
-	if c.core.ReputationMgr.GetPVDReputation(targetID) != nil {
-		err := fmt.Errorf("Provider %v is already active", targetID)
-		logging.Error(err.Error())
-		return err
-	}
-
-	// Get pvd info
-	pvdInfo := c.core.PeerMgr.GetPVDInfo(targetID)
-	if pvdInfo == nil {
-		// Not found, try sync once
-		pvdInfo = c.core.PeerMgr.SyncPVD(targetID)
-		if pvdInfo == nil {
-			err := fmt.Errorf("Error in obtaining information for gateway %v", targetID)
-			logging.Error(err.Error())
-			return err
-		}
-	}
-	_, err := c.core.P2PServer.Request(pvdInfo.NetworkAddr, fcrmessages.EstablishmentRequestType, targetID, false)
-	if err != nil {
-		err = fmt.Errorf("Error in sending establishment request to %v with addr %v: %v", targetID, pvdInfo.NetworkAddr, err.Error())
-		logging.Error(err.Error())
-		return err
-	}
-	// Create payment channel
-	recipientAddr, err := fcrcrypto.GetWalletAddress(pvdInfo.RootKey)
-	if err != nil {
-		err = fmt.Errorf("Error in obtaining wallet addreess for gateway %v with root key %v: %v", targetID, pvdInfo.RootKey, err.Error())
-		logging.Error(err.Error())
-		return err
-	}
-
-	err = c.core.PaymentMgr.Create(recipientAddr, c.core.TopupAmount)
-	if err != nil {
-		err = fmt.Errorf("Error in creating a payment channel to %v with wallet address %v with topup amount of %v: %v", targetID, recipientAddr, c.core.TopupAmount.String(), err.Error())
-		logging.Error(err.Error())
-		return err
-	}
-	// Add provider entry to reputation
-	c.core.ReputationMgr.AddPVD(pvdInfo.NodeID)
-	return nil
-}
-
-// ListActivePVDS lists all active providers
-func (c *FilecoinRetrievalClient) ListActivePVDS() []string {
-	return c.core.ReputationMgr.ListPVDS()
-}
-
-// GetGWReputaion gets the reputation of a target gateway ID.
-func (c *FilecoinRetrievalClient) GetGWReputaion(targetID string) (int64, bool, bool, error) {
-	rep := c.core.ReputationMgr.GetGWReputation(targetID)
+// GetPeerReputaion gets the reputation of a target peer ID.
+func (c *FilecoinRetrievalClient) GetPeerReputaion(peerID string) (int64, bool, bool, error) {
+	rep := c.core.ReputationMgr.GetPeerReputation(peerID)
 	if rep == nil {
-		err := fmt.Errorf("Error in loading gateway %v reputation", targetID)
+		err := fmt.Errorf("Error in loading gateway %v reputation", peerID)
 		logging.Error(err.Error())
 		return 0, false, false, err
 	}
 	return rep.Score, rep.Pending, rep.Blocked, nil
 }
 
-// GetGWRecentHistory gets the most recent history of a target gateway ID.
-func (c *FilecoinRetrievalClient) GetGWHistory(targetID string, from uint, to uint) []string {
-	history := c.core.ReputationMgr.GetGWHistory(targetID, from, to)
+// GetPeerRecentHistory gets the most recent history of a target peer ID.
+func (c *FilecoinRetrievalClient) GetPeerHistory(targetID string, from uint, to uint) []string {
+	history := c.core.ReputationMgr.GetPeerHistory(targetID, from, to)
 	res := make([]string, 0)
 	for _, rep := range history {
 		res = append(res, rep.Reason())
@@ -330,55 +291,19 @@ func (c *FilecoinRetrievalClient) GetGWHistory(targetID string, from uint, to ui
 	return res
 }
 
-// GetPVDReputaion gets the reputation of a target provider ID.
-func (c *FilecoinRetrievalClient) GetPVDReputaion(targetID string) (int64, bool, bool, error) {
-	rep := c.core.ReputationMgr.GetPVDReputation(targetID)
-	if rep == nil {
-		err := fmt.Errorf("Error in loading provider %v reputation", targetID)
-		logging.Error(err.Error())
-		return 0, false, false, err
-	}
-	return rep.Score, rep.Pending, rep.Blocked, nil
+// BlockPeer blocks a peer
+func (c *FilecoinRetrievalClient) BlockPeer(targetID string) {
+	c.core.ReputationMgr.BlockPeer(targetID)
 }
 
-// GetPVDRecentHistory gets the most recent history of a target provider ID.
-func (c *FilecoinRetrievalClient) GetPVDHistory(targetID string, from uint, to uint) []string {
-	history := c.core.ReputationMgr.GetPVDHistory(targetID, 0, 1)
-	res := make([]string, 0)
-	for _, rep := range history {
-		res = append(res, rep.Reason())
-	}
-	return res
+// UnblockPeer unblocks a peer
+func (c *FilecoinRetrievalClient) UnblockPeer(targetID string) {
+	c.core.ReputationMgr.UnBlockPeer(targetID)
 }
 
-// BlockGW blocks a gateway
-func (c *FilecoinRetrievalClient) BlockGW(targetID string) {
-	c.core.ReputationMgr.BlockGW(targetID)
-}
-
-// UnblockGW unblocks a gateway
-func (c *FilecoinRetrievalClient) UnblockGW(targetID string) {
-	c.core.ReputationMgr.UnBlockGW(targetID)
-}
-
-// ResumeGW resumes a gateway
-func (c *FilecoinRetrievalClient) ResumeGW(targetID string) {
-	c.core.ReputationMgr.ResumeGW(targetID)
-}
-
-// BlockPVD blocks a provider
-func (c *FilecoinRetrievalClient) BlockPVD(targetID string) {
-	c.core.ReputationMgr.BlockPVD(targetID)
-}
-
-// UnblockPVD unblocks a provider
-func (c *FilecoinRetrievalClient) UnblockPVD(targetID string) {
-	c.core.ReputationMgr.UnBlockPVD(targetID)
-}
-
-// ResumePVD resumes a provider
-func (c *FilecoinRetrievalClient) ResumePVD(targetID string) {
-	c.core.ReputationMgr.ResumePVD(targetID)
+// ResumePeer resumes a peer
+func (c *FilecoinRetrievalClient) ResumePeer(targetID string) {
+	c.core.ReputationMgr.ResumePeer(targetID)
 }
 
 // ListOffers lists offers by given cid
@@ -411,9 +336,9 @@ func (c *FilecoinRetrievalClient) Retrieve(digest string, location string) error
 			return err
 		}
 	}
-	if c.core.ReputationMgr.GetPVDReputation(suboffer.GetProviderID()) == nil {
+	if c.core.ReputationMgr.GetPeerReputation(suboffer.GetProviderID()) == nil {
 		// If the provider isn't active, add it.
-		c.AddActivePVD(suboffer.GetProviderID())
+		c.AddActivePeer(suboffer.GetProviderID())
 	}
 
 	// Do data retrieval
@@ -422,7 +347,13 @@ func (c *FilecoinRetrievalClient) Retrieve(digest string, location string) error
 }
 
 // StandardDiscovery performs a standard discovery.
-func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string, toContact map[string]uint32) ([]cidoffer.SubCIDOffer, error) {
+func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string) ([]cidoffer.SubCIDOffer, error) {
+	toContact := make(map[string]uint32)
+	for _, gw := range c.core.ReputationMgr.ListPeers() {
+		if c.core.PeerMgr.GetGWInfo(gw) != nil {
+			toContact[gw] = 1
+		}
+	}
 	pieceCID, err := cid.NewContentID(cidStr)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding cid: %v: %v", cidStr, err.Error())
@@ -460,7 +391,7 @@ func (c *FilecoinRetrievalClient) StandardDiscovery(cidStr string, toContact map
 }
 
 // DHTDiscovery performs a DHT discovery.
-func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string, numDHT uint32, maxOfferRequestedPerDHT uint32) ([]cidoffer.SubCIDOffer, error) {
+func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string) ([]cidoffer.SubCIDOffer, error) {
 	pieceCID, err := cid.NewContentID(cidStr)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding cid: %v: %v", cidStr, err.Error())
@@ -479,7 +410,7 @@ func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string, n
 		}
 	}
 	temp := make(map[string]*cidoffer.SubCIDOffer, 0)
-	response, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.DHTOfferDiscoveryRequestType, targetID, pieceCID, numDHT, maxOfferRequestedPerDHT)
+	response, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.DHTOfferDiscoveryRequestType, targetID, pieceCID, 4, 1)
 	if err != nil {
 		err = fmt.Errorf("Error in requesting gateway %v for offers in DHT: %v", targetID, err.Error())
 		logging.Error(err.Error())
@@ -500,13 +431,8 @@ func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string, n
 }
 
 func (c *FilecoinRetrievalClient) FastRetrieve(cidStr string, location string, maxPrice *big.Int) error {
-	// First using all the active gateways to do a standard search with 1 offer
-	toContact := make(map[string]uint32)
-	for _, gw := range c.core.ReputationMgr.ListGWS() {
-		toContact[gw] = 1
-	}
 	// Do standard search
-	res, err := c.StandardDiscovery(cidStr, toContact)
+	res, err := c.StandardDiscovery(cidStr)
 	if len(res) == 0 {
 		err = fmt.Errorf("No offer found for given cid: %v", cidStr)
 		logging.Error(err.Error())

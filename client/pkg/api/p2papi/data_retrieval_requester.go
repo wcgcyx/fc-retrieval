@@ -81,7 +81,7 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 	}
 
 	// Check if the provider is blocked/pending
-	rep := c.ReputationMgr.GetPVDReputation(targetID)
+	rep := c.ReputationMgr.GetPeerReputation(targetID)
 	if rep == nil {
 		err := fmt.Errorf("Provider %v is not active", targetID)
 		logging.Error(err.Error())
@@ -149,8 +149,8 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		err = fmt.Errorf("Error in sending request to %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
 		// Pend PVD
-		c.ReputationMgr.UpdatePVDRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendPVD(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -160,8 +160,8 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
 		// Pend PVD
-		c.ReputationMgr.UpdatePVDRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendPVD(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -173,8 +173,8 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 			err = fmt.Errorf("Error in verifying response from %v: %v", targetID, err.Error())
 			logging.Error(err.Error())
 			// Pend PVD
-			c.ReputationMgr.UpdatePVDRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendPVD(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 	}
@@ -184,8 +184,8 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		err = fmt.Errorf("Reponse contains an error: %v", response.Error())
 		logging.Error(err.Error())
 		// Pend PVD
-		c.ReputationMgr.UpdatePVDRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendPVD(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -195,8 +195,8 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		err = fmt.Errorf("Error in decoding response from %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
 		// Pend PVD
-		c.ReputationMgr.UpdatePVDRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendPVD(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -204,8 +204,8 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		err = fmt.Errorf("Nonce mismatch: expected %v got %v", nonce, nonceRecv)
 		logging.Error(err.Error())
 		// Pend PVD
-		c.ReputationMgr.UpdatePVDRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendPVD(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -247,12 +247,12 @@ func DataRetrievalRequester(reader fcrserver.FCRServerResponseReader, writer fcr
 		err = fmt.Errorf("Received data with wrong cid expected: %v got: %v", offer.GetSubCID().ToString(), cid.ToString())
 		logging.Error(err.Error())
 		// Pend PVD
-		c.ReputationMgr.UpdatePVDRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendPVD(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
 	// Succeed
-	c.ReputationMgr.UpdatePVDRecord(targetID, reputation.ContentRetrieved.Copy(), 0)
+	c.ReputationMgr.UpdatePeerRecord(targetID, reputation.ContentRetrieved.Copy(), 0)
 	return response, nil
 }

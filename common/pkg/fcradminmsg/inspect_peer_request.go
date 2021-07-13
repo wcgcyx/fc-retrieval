@@ -22,31 +22,27 @@ import "encoding/json"
 
 // inspectPeerRequestJson represents the request to inspect a peer.
 type inspectPeerRequestJson struct {
-	NodeID  string `json:"node_id"`
-	Gateway bool   `json:"gateway"`
+	NodeID string `json:"node_id"`
 }
 
 // EncodeInspectPeerRequest is used to get the byte array of inspectPeerRequestJson
 func EncodeInspectPeerRequest(
 	nodeID string,
-	gateway bool,
 ) ([]byte, error) {
 	return json.Marshal(&inspectPeerRequestJson{
-		NodeID:  nodeID,
-		Gateway: gateway,
+		NodeID: nodeID,
 	})
 }
 
 // DecodeInspectPeerRequest is used to get the fields from byte array of inspectPeerRequestJson
 func DecodeInspectPeerRequest(data []byte) (
 	string, // node id
-	bool, // gateway
 	error, // error
 ) {
 	msg := inspectPeerRequestJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return "", false, err
+		return "", err
 	}
-	return msg.NodeID, msg.Gateway, nil
+	return msg.NodeID, nil
 }

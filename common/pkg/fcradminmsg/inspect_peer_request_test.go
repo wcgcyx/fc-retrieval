@@ -27,14 +27,12 @@ import (
 
 func TestInspectPeerRequest(t *testing.T) {
 	mockID := "testid"
-	mockGateway := true
 
-	data, err := EncodeInspectPeerRequest(mockID, mockGateway)
+	data, err := EncodeInspectPeerRequest(mockID)
 	assert.Empty(t, err)
 	assert.Equal(t, "7b226e6f64655f6964223a22746573746964222c2267617465776179223a747275657d", hex.EncodeToString(data))
 
-	resID, resGateway, err := DecodeInspectPeerRequest(data)
+	resID, err := DecodeInspectPeerRequest(data)
 	assert.Empty(t, err)
 	assert.Equal(t, mockID, resID)
-	assert.Equal(t, mockGateway, resGateway)
 }

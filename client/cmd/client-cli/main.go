@@ -63,21 +63,15 @@ func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "init", Description: "Initialise the client by given key and service API Addr"},
 		{Text: "search", Description: "Search gateways by given location"},
-		{Text: "add-active-gateway", Description: "Add active gateway"},
-		{Text: "ls-active-gateways", Description: "List active gateways"},
-		{Text: "inspect-active-gateway", Description: "Inspect given active gateway"},
-		{Text: "add-active-provider", Description: "Add active provider"},
-		{Text: "ls-active-providers", Description: "List active providers"},
-		{Text: "inspect-active-provider", Description: "Inspect given active provider"},
-		{Text: "block-gateway", Description: "Block given gateway"},
-		{Text: "unblock-gateway", Description: "Unblock given gateway"},
-		{Text: "resume-gateway", Description: "Resume given gateway"},
-		{Text: "block-provider", Description: "Block given provider"},
-		{Text: "unblock-provider", Description: "Unblock given provider"},
-		{Text: "resume-provider", Description: "Resume given provider"},
+		{Text: "add-peer", Description: "Add active peer"},
+		{Text: "ls-peers", Description: "List active peers"},
+		{Text: "inspect-peer", Description: "Inspect given active peer"},
+		{Text: "block-peer", Description: "Block given peer"},
+		{Text: "unblock-peer", Description: "Unblock given peer"},
+		{Text: "resume-peer", Description: "Resume given peer"},
 		{Text: "find-offer", Description: "Find offers for given cid"},
 		{Text: "find-offer-dht", Description: "Find offers for given cid using DHT discovery"},
-		{Text: "list-offers", Description: "List obtained offers for given cid"},
+		{Text: "ls-offers", Description: "List obtained offers for given cid"},
 		{Text: "retrieve", Description: "Retrieve data using an offer by given offer digest"},
 		{Text: "retrieve-fast", Description: "Fast-retrieve data by given cid (automated offer discovery, selection and data retrieval)"},
 		{Text: "exit", Description: "Exit the program"},
@@ -128,176 +122,92 @@ func (c *ClientCLI) executor(in string) {
 		for _, gw := range gws {
 			fmt.Printf("ID: %v\n", gw)
 		}
-	case "add-active-gateway":
+	case "add-peer":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
 		if len(blocks) != 2 {
-			fmt.Println("Usage: add-active-gateway ${targetID}")
+			fmt.Println("Usage: add-peer ${peerID}")
 			return
 		}
-		err := c.client.AddActiveGW(blocks[1])
+		err := c.client.AddActivePeer(blocks[1])
 		if err != nil {
-			fmt.Printf("Error in adding active gateway for %v: %v\n", blocks[1], err.Error())
+			fmt.Printf("Error in adding active peer for %v: %v\n", blocks[1], err.Error())
 			return
 		}
-		fmt.Println("Added.")
-	case "ls-active-gateways":
+		fmt.Println("Done.")
+	case "ls-peers":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
-		gws := c.client.ListActiveGWS()
-		fmt.Println("Current active gateways:")
-		for _, gw := range gws {
-			score, pending, blocked, err := c.client.GetGWReputaion(gw)
+		peers := c.client.ListActivePeers()
+		fmt.Println("Current active peers:")
+		for _, peer := range peers {
+			score, pending, blocked, err := c.client.GetPeerReputaion(peer)
 			history := ""
-			temp := c.client.GetGWHistory(gw, 0, 1)
+			temp := c.client.GetPeerHistory(peer, 0, 1)
 			if len(temp) == 1 {
 				history = temp[0]
 			}
 			if err != nil {
-				fmt.Printf("ID: %v\t Error loading reputation details: %v\n", gw, err.Error())
+				fmt.Printf("ID: %v\t Error loading reputation details: %v\n", peer, err.Error())
 			} else {
-				fmt.Printf("ID: %v\tReputation score: %v\tPending: %t\tBlocked: %t\tRecent: %v\n", gw, score, pending, blocked, history)
+				fmt.Printf("ID: %v\tReputation score: %v\tPending: %t\tBlocked: %t\tRecent: %v\n", peer, score, pending, blocked, history)
 			}
 		}
-	case "inspect-active-gateway":
+	case "inspect-peer":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
 		if len(blocks) != 2 {
-			fmt.Println("Usage: inspect-active-gateway ${gatewayID}")
+			fmt.Println("Usage: inspect-peer ${peerID}")
 			return
 		}
-		score, pending, blocked, err := c.client.GetGWReputaion(blocks[1])
+		score, pending, blocked, err := c.client.GetPeerReputaion(blocks[1])
 		if err != nil {
 			fmt.Printf("ID: %v\t Error loading reputation details: %v\n", blocks[1], err.Error())
 		} else {
 			fmt.Printf("ID: %v\tReputation score: %v\tPending: %t\tBlocked: %t\n", blocks[1], score, pending, blocked)
 		}
-		history := c.client.GetGWHistory(blocks[1], 0, 10)
+		history := c.client.GetPeerHistory(blocks[1], 0, 10)
 		fmt.Println("Recent 10 activites:")
 		for index, entry := range history {
 			fmt.Printf("Activity %v: %v\n", index, entry)
 		}
-	case "add-active-provider":
+	case "block-peer":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
 		if len(blocks) != 2 {
-			fmt.Println("Usage: add-active-provider ${targetID}")
+			fmt.Println("Usage: block-peer ${peerID}")
 			return
 		}
-		err := c.client.AddActivePVD(blocks[1])
-		if err != nil {
-			fmt.Printf("Error in adding active provider for %v: %v\n", blocks[1], err.Error())
-			return
-		}
-		fmt.Println("Added.")
-	case "ls-active-providers":
-		if !c.initialised {
-			fmt.Println("Client has not been initialised yet")
-			return
-		}
-		pvds := c.client.ListActivePVDS()
-		fmt.Println("Current active providers:")
-		for _, pvd := range pvds {
-			score, pending, blocked, err := c.client.GetPVDReputaion(pvd)
-			history := ""
-			temp := c.client.GetPVDHistory(pvd, 0, 1)
-			if len(temp) == 1 {
-				history = temp[0]
-			}
-			if err != nil {
-				fmt.Printf("ID: %v\t Error loading reputation details: %v\n", pvd, err.Error())
-			} else {
-				fmt.Printf("ID: %v\tReputation score: %v\tPending: %t\tBlocked: %t\tRecent: %v\n", pvd, score, pending, blocked, history)
-			}
-		}
-	case "inspect-active-provider":
+		c.client.BlockPeer(blocks[1])
+		fmt.Println("Done")
+	case "unblock-peer":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
 		if len(blocks) != 2 {
-			fmt.Println("Usage: inspect-active-provider ${providerID}")
+			fmt.Println("Usage: unblock-peer ${peerID}")
 			return
 		}
-		score, pending, blocked, err := c.client.GetPVDReputaion(blocks[1])
-		if err != nil {
-			fmt.Printf("ID: %v\t Error loading reputation details: %v\n", blocks[1], err.Error())
-		} else {
-			fmt.Printf("ID: %v\tReputation score: %v\tPending: %t\tBlocked: %t\n", blocks[1], score, pending, blocked)
-		}
-		history := c.client.GetPVDHistory(blocks[1], 0, 10)
-		fmt.Println("Recent 10 activites:")
-		for index, entry := range history {
-			fmt.Printf("Activity %v: %v\n", index, entry)
-		}
-	case "block-gateway":
+		c.client.UnblockPeer(blocks[1])
+	case "resume-peer":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
 		if len(blocks) != 2 {
-			fmt.Println("Usage: block-gateway ${gatewayID}")
+			fmt.Println("Usage: resume-peer ${peerID}")
 			return
 		}
-		c.client.BlockGW(blocks[1])
-	case "unblock-gateway":
-		if !c.initialised {
-			fmt.Println("Client has not been initialised yet")
-			return
-		}
-		if len(blocks) != 2 {
-			fmt.Println("Usage: unblock-gateway ${gatewayID}")
-			return
-		}
-		c.client.UnblockGW(blocks[1])
-	case "resume-gateway":
-		if !c.initialised {
-			fmt.Println("Client has not been initialised yet")
-			return
-		}
-		if len(blocks) != 2 {
-			fmt.Println("Usage: resume-gateway ${gatewayID}")
-			return
-		}
-		c.client.ResumeGW(blocks[1])
-	case "block-provider":
-		if !c.initialised {
-			fmt.Println("Client has not been initialised yet")
-			return
-		}
-		if len(blocks) != 2 {
-			fmt.Println("Usage: block-provider ${providerID}")
-			return
-		}
-		c.client.BlockPVD(blocks[1])
-	case "unblock-provider":
-		if !c.initialised {
-			fmt.Println("Client has not been initialised yet")
-			return
-		}
-		if len(blocks) != 2 {
-			fmt.Println("Usage: unblock-provider ${providerID}")
-			return
-		}
-		c.client.UnblockPVD(blocks[1])
-	case "resume-provider":
-		if !c.initialised {
-			fmt.Println("Client has not been initialised yet")
-			return
-		}
-		if len(blocks) != 2 {
-			fmt.Println("Usage: resume-provider ${providerID}")
-			return
-		}
-		c.client.ResumePVD(blocks[1])
+		c.client.ResumePeer(blocks[1])
 	case "find-offer":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
@@ -307,11 +217,7 @@ func (c *ClientCLI) executor(in string) {
 			fmt.Println("Usage: find-offer ${contentID}")
 			return
 		}
-		toContact := make(map[string]uint32)
-		for _, gw := range c.client.ListActiveGWS() {
-			toContact[gw] = 1
-		}
-		offers, err := c.client.StandardDiscovery(blocks[1], toContact)
+		offers, err := c.client.StandardDiscovery(blocks[1])
 		if err != nil {
 			fmt.Printf("Error doing standard discovery for %v: %v\n", blocks[1], err.Error())
 			return
@@ -329,7 +235,7 @@ func (c *ClientCLI) executor(in string) {
 			fmt.Println("Usage: find-offer ${contentID} ${gatewayID}")
 			return
 		}
-		offers, err := c.client.DHTDiscovery(blocks[1], blocks[2], 4, 1)
+		offers, err := c.client.DHTDiscovery(blocks[1], blocks[2])
 		if err != nil {
 			fmt.Printf("Error doing dht discovery for %v by %v: %v\n", blocks[1], blocks[2], err.Error())
 			return
@@ -338,13 +244,13 @@ func (c *ClientCLI) executor(in string) {
 		for _, offer := range offers {
 			fmt.Printf("Offer %v: provider-%v, price-%v, expiry-%v, qos-%v\n", offer.GetMessageDigest(), offer.GetProviderID(), offer.GetPrice().String(), offer.GetExpiry(), offer.GetQoS())
 		}
-	case "list-offers":
+	case "ls-offers":
 		if !c.initialised {
 			fmt.Println("Client has not been initialised yet")
 			return
 		}
 		if len(blocks) != 2 {
-			fmt.Println("Usage: list-offers ${contentID}")
+			fmt.Println("Usage: ls-offers ${contentID}")
 			return
 		}
 		offers, err := c.client.ListOffers(blocks[1])

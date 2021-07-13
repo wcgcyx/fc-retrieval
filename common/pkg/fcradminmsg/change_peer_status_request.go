@@ -23,7 +23,6 @@ import "encoding/json"
 // changePeerStatusRequestJson represents the request to change peer status.
 type changePeerStatusRequestJson struct {
 	NodeID  string `json:"node_id"`
-	Gateway bool   `json:"gateway"`
 	Block   bool   `json:"block"`
 	Unblock bool   `json:"unblock"`
 }
@@ -31,13 +30,11 @@ type changePeerStatusRequestJson struct {
 // EncodeChangePeerStatusRequest is used to get the byte array of changePeerStatusRequestJson
 func EncodeChangePeerStatusRequest(
 	nodeID string,
-	gateway bool,
 	block bool,
 	unblock bool,
 ) ([]byte, error) {
 	return json.Marshal(&changePeerStatusRequestJson{
 		NodeID:  nodeID,
-		Gateway: gateway,
 		Block:   block,
 		Unblock: unblock,
 	})
@@ -46,7 +43,6 @@ func EncodeChangePeerStatusRequest(
 // DecodeChangePeerStatusRequest is used to get the fields from changePeerStatusRequestJson
 func DecodeChangePeerStatusRequest(data []byte) (
 	string, // node id
-	bool, // gateway
 	bool, // block
 	bool, // unblock
 	error, // error
@@ -54,7 +50,7 @@ func DecodeChangePeerStatusRequest(data []byte) (
 	msg := changePeerStatusRequestJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return "", false, false, false, err
+		return "", false, false, err
 	}
-	return msg.NodeID, msg.Gateway, msg.Block, msg.Unblock, nil
+	return msg.NodeID, msg.Block, msg.Unblock, nil
 }

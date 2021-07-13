@@ -61,7 +61,7 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 	}
 
 	// Check if the gateway is blocked/pending
-	rep := c.ReputationMgr.GetGWReputation(targetID)
+	rep := c.ReputationMgr.GetPeerReputation(targetID)
 	if rep == nil {
 		err := fmt.Errorf("Gateway %v is not active", targetID)
 		logging.Error(err.Error())
@@ -130,8 +130,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		err = fmt.Errorf("Error in sending request to %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
 		// Pend GW
-		c.ReputationMgr.UpdateGWRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -141,8 +141,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		err = fmt.Errorf("Error in receiving response from %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
 		// Pend GW
-		c.ReputationMgr.UpdateGWRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.NetworkErrorAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -154,8 +154,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 			err = fmt.Errorf("Error in verifying response from %v: %v", targetID, err.Error())
 			logging.Error(err.Error())
 			// Pend GW
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 	}
@@ -165,8 +165,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		err = fmt.Errorf("Reponse contains an error: %v", response.Error())
 		logging.Error(err.Error())
 		// Pend GW
-		c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -176,8 +176,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		err = fmt.Errorf("Error in decoding response from %v: %v", targetID, err.Error())
 		logging.Error(err.Error())
 		// Pend GW
-		c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -185,8 +185,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		err = fmt.Errorf("Nonce mismatch: expected %v got %v", nonce, nonceRecv)
 		logging.Error(err.Error())
 		// Pend GW
-		c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-		c.ReputationMgr.PendGW(targetID)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+		c.ReputationMgr.PendPeer(targetID)
 		return nil, err
 	}
 
@@ -205,8 +205,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 				// Not found, return error
 				err = fmt.Errorf("Error in obtaining information for provider %v", pvdID)
 				logging.Error(err.Error())
-				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-				c.ReputationMgr.PendGW(targetID)
+				c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+				c.ReputationMgr.PendPeer(targetID)
 				return nil, err
 			}
 		}
@@ -214,24 +214,24 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		if offer.GetSubCID().ToString() != pieceCID.ToString() {
 			err = fmt.Errorf("Received offer that doesn't contain requested cid, expect: %v, got: %v", pieceCID.ToString(), offer.GetSubCID().ToString())
 			logging.Error(err.Error())
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 		// Verify offer signature
 		if offer.Verify(pvdInfo.OfferSigningKey) != nil {
 			err = fmt.Errorf("Received offer fails to verify against signature of provider %v", pvdID)
 			logging.Error(err.Error())
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 		// Verify offer merkle proof
 		if offer.VerifyMerkleProof() != nil {
 			err = fmt.Errorf("Received offer fails to verify merkle proof")
 			logging.Error(err.Error())
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 		// Check duplicates
@@ -239,8 +239,8 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 		if ok {
 			err = fmt.Errorf("Received duplicated offers")
 			logging.Error(err.Error())
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 		// Check offer expiry, reject if less than 1 hour
@@ -248,14 +248,14 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 			// Offer is soon to expire
 			err = fmt.Errorf("Received soon to expire offer")
 			logging.Error(err.Error())
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidResponseAfterPayment.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 			return nil, err
 		}
 		// Offer verified
 		remain--
 		c.OfferMgr.AddSubOffer(&offer)
-		c.ReputationMgr.UpdateGWRecord(targetID, reputation.StandardOfferRetrieved.Copy(), 0)
+		c.ReputationMgr.UpdatePeerRecord(targetID, reputation.StandardOfferRetrieved.Copy(), 0)
 	}
 
 	if remain > 0 {
@@ -265,16 +265,16 @@ func OfferQueryRequester(reader fcrserver.FCRServerResponseReader, writer fcrser
 			// Refund is wrong, but we can still respond to client, no need to return error
 			err = fmt.Errorf("Error in receiving refund %v", err.Error())
 			logging.Error(err.Error())
-			c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidRefund.Copy(), 0)
-			c.ReputationMgr.PendGW(targetID)
+			c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidRefund.Copy(), 0)
+			c.ReputationMgr.PendPeer(targetID)
 		} else {
 			expectedRefund := big.NewInt(0).Mul(c.OfferPrice, big.NewInt(remain))
 			if refunded.Cmp(expectedRefund) < 0 {
 				// Refund is wrong, but we can still respond to client, no need to return error
 				err = fmt.Errorf("Error in receiving refund expect %v got %v", expectedRefund.String(), refunded.String())
 				logging.Error(err.Error())
-				c.ReputationMgr.UpdateGWRecord(targetID, reputation.InvalidRefund.Copy(), 0)
-				c.ReputationMgr.PendGW(targetID)
+				c.ReputationMgr.UpdatePeerRecord(targetID, reputation.InvalidRefund.Copy(), 0)
+				c.ReputationMgr.PendPeer(targetID)
 			}
 		}
 	}

@@ -22,53 +22,33 @@ import "encoding/json"
 
 // listPeersResponseJson represents the response of listing peers.
 type listPeersResponseJson struct {
-	GatewayIDs      []string `json:"gateway_ids"`
-	GatewayScore    []int64  `json:"gateway_score"`
-	GatewayPending  []bool   `json:"gateway_pending"`
-	GatewayBlocked  []bool   `json:"gateway_blocked"`
-	GatewayRecent   []string `json:"gateway_recent"`
-	ProviderIDs     []string `json:"provider_ids"`
-	ProviderScore   []int64  `json:"provider_score"`
-	ProviderPending []bool   `json:"provider_pending"`
-	ProviderBlocked []bool   `json:"provider_blocked"`
-	ProviderRecent  []string `json:"provider_recent"`
+	PeerIDs     []string `json:"peer_ids"`
+	PeerScore   []int64  `json:"peer_score"`
+	PeerPending []bool   `json:"peer_pending"`
+	PeerBlocked []bool   `json:"peer_blocked"`
+	PeerRecent  []string `json:"peer_recent"`
 }
 
 // EncodeListPeersResponse is used to get the byte array of listPeersResponseJson
 func EncodeListPeersResponse(
-	gatewayIDs []string,
-	gatewayScore []int64,
-	gatewayPending []bool,
-	gatewayBlocked []bool,
-	gatewayRecent []string,
-	providerIDs []string,
-	providerScore []int64,
-	providerPending []bool,
-	providerBlocked []bool,
-	providerRecent []string,
+	peerIDs []string,
+	peerScore []int64,
+	peerPending []bool,
+	peerBlocked []bool,
+	peerRecent []string,
 ) ([]byte, error) {
 	return json.Marshal(&listPeersResponseJson{
-		GatewayIDs:      gatewayIDs,
-		GatewayScore:    gatewayScore,
-		GatewayPending:  gatewayPending,
-		GatewayBlocked:  gatewayBlocked,
-		GatewayRecent:   gatewayRecent,
-		ProviderIDs:     providerIDs,
-		ProviderScore:   providerScore,
-		ProviderPending: providerPending,
-		ProviderBlocked: providerBlocked,
-		ProviderRecent:  providerRecent,
+		PeerIDs:     peerIDs,
+		PeerScore:   peerScore,
+		PeerPending: peerPending,
+		PeerBlocked: peerBlocked,
+		PeerRecent:  peerRecent,
 	})
 }
 
 // DecodeListPeersResponse is used to get the fields from byte array of listPeersResponseJson
 func DecodeListPeersResponse(data []byte) (
-	[]string, // gateway IDs
-	[]int64, // score
-	[]bool, // pending
-	[]bool, // blocked
-	[]string, // most recent activity
-	[]string, // provider IDs
+	[]string, // peer IDs
 	[]int64, // score
 	[]bool, // pending
 	[]bool, // blocked
@@ -78,7 +58,7 @@ func DecodeListPeersResponse(data []byte) (
 	msg := listPeersResponseJson{}
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
-	return msg.GatewayIDs, msg.GatewayScore, msg.GatewayPending, msg.GatewayBlocked, msg.GatewayRecent, msg.ProviderIDs, msg.ProviderScore, msg.ProviderPending, msg.ProviderBlocked, msg.ProviderRecent, nil
+	return msg.PeerIDs, msg.PeerScore, msg.PeerPending, msg.PeerBlocked, msg.PeerRecent, nil
 }

@@ -149,12 +149,7 @@ func (a *FilecoinRetrievalGatewayAdmin) ListGateways() (
 
 // ListPeers lists all the peers a given gateway is having a business relationship with.
 func (a *FilecoinRetrievalGatewayAdmin) ListPeers(targetID string) (
-	[]string, // gateway IDs
-	[]int64, // score
-	[]bool, // pending
-	[]bool, // blocked
-	[]string, // most recent activity
-	[]string, // provider IDs
+	[]string, // peer IDs
 	[]int64, // score
 	[]bool, // pending
 	[]bool, // blocked
@@ -167,13 +162,13 @@ func (a *FilecoinRetrievalGatewayAdmin) ListPeers(targetID string) (
 	if !ok {
 		err := fmt.Errorf("Gateway %v is not in active gateways", targetID)
 		logging.Error(err.Error())
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	return adminapi.RequestListPeers(g.adminURL, g.adminKey)
 }
 
-// InspectGateway inspects a given peer gateway from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) InspectGateway(targetID string, peerID string) (
+// InspectGateway inspects a given peer from a managed gateway
+func (a *FilecoinRetrievalGatewayAdmin) InspectPeer(targetID string, peerID string) (
 	int64, // score
 	bool, // pending
 	bool, // blocked
@@ -188,30 +183,11 @@ func (a *FilecoinRetrievalGatewayAdmin) InspectGateway(targetID string, peerID s
 		logging.Error(err.Error())
 		return 0, false, false, nil, err
 	}
-	return adminapi.RequestInspectPeer(g.adminURL, g.adminKey, peerID, true)
+	return adminapi.RequestInspectPeer(g.adminURL, g.adminKey, peerID)
 }
 
-// InspectProvider inspects a given peer provider from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) InspectProvider(targetID string, peerID string) (
-	int64, // score
-	bool, // pending
-	bool, // blocked
-	[]string, // history
-	error, // error
-) {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
-	g, ok := a.activeGateways[targetID]
-	if !ok {
-		err := fmt.Errorf("Gateway %v is not in active gateways", targetID)
-		logging.Error(err.Error())
-		return 0, false, false, nil, err
-	}
-	return adminapi.RequestInspectPeer(g.adminURL, g.adminKey, peerID, false)
-}
-
-// BlockGateway blocks a given peer gateway from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) BlockGateway(targetID string, peerID string) (
+// BlockPeer blocks a given peer from a managed gateway
+func (a *FilecoinRetrievalGatewayAdmin) BlockPeer(targetID string, peerID string) (
 	bool, // Success
 	string, // Information
 	error, // error
@@ -224,11 +200,11 @@ func (a *FilecoinRetrievalGatewayAdmin) BlockGateway(targetID string, peerID str
 		logging.Error(err.Error())
 		return false, "", err
 	}
-	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, true, true, false)
+	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, true, false)
 }
 
-// UnblockGateway unblocks a given peer gateway from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) UnblockGateway(targetID string, peerID string) (
+// UnblockPeer unblocks a given peer gateway from a managed gateway
+func (a *FilecoinRetrievalGatewayAdmin) UnblockPeer(targetID string, peerID string) (
 	bool, // Success
 	string, // Information
 	error, // error
@@ -241,11 +217,11 @@ func (a *FilecoinRetrievalGatewayAdmin) UnblockGateway(targetID string, peerID s
 		logging.Error(err.Error())
 		return false, "", err
 	}
-	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, true, false, true)
+	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, false, true)
 }
 
-// ResumeGateway resumes a given peer gateway from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) ResumeGateway(targetID string, peerID string) (
+// ResumePeer resumes a given peer from a managed gateway
+func (a *FilecoinRetrievalGatewayAdmin) ResumePeer(targetID string, peerID string) (
 	bool, // Success
 	string, // Information
 	error, // error
@@ -258,58 +234,7 @@ func (a *FilecoinRetrievalGatewayAdmin) ResumeGateway(targetID string, peerID st
 		logging.Error(err.Error())
 		return false, "", err
 	}
-	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, true, false, false)
-}
-
-// BlockProvider blocks a given peer provider from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) BlockProvider(targetID string, peerID string) (
-	bool, // Success
-	string, // Information
-	error, // error
-) {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
-	g, ok := a.activeGateways[targetID]
-	if !ok {
-		err := fmt.Errorf("Gateway %v is not in active gateways", targetID)
-		logging.Error(err.Error())
-		return false, "", err
-	}
-	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, false, true, false)
-}
-
-// UnblockProvider unblocks a given peer provider from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) UnblockProvider(targetID string, peerID string) (
-	bool, // Success
-	string, // Information
-	error, // error
-) {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
-	g, ok := a.activeGateways[targetID]
-	if !ok {
-		err := fmt.Errorf("Gateway %v is not in active gateways", targetID)
-		logging.Error(err.Error())
-		return false, "", err
-	}
-	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, false, false, true)
-}
-
-// ResumeProvider resumes a given peer provider from a managed gateway
-func (a *FilecoinRetrievalGatewayAdmin) ResumeProvider(targetID string, peerID string) (
-	bool, // Success
-	string, // Information
-	error, // error
-) {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
-	g, ok := a.activeGateways[targetID]
-	if !ok {
-		err := fmt.Errorf("Gateway %v is not in active gateways", targetID)
-		logging.Error(err.Error())
-		return false, "", err
-	}
-	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, false, false, false)
+	return adminapi.RequestChangePeerStatus(g.adminURL, g.adminKey, peerID, false, false)
 }
 
 // ListCIDFrequency lists the cid frequency from a managed gateway

@@ -65,14 +65,10 @@ func completer(d prompt.Document) []prompt.Suggest {
 		{Text: "sync", Description: "Force the default gateway to sync"},
 		{Text: "ls", Description: "List gateways this admin is administering"},
 		{Text: "ls-peers", Description: "List the peers of the default gateway"},
-		{Text: "inspect-gwpeer", Description: "Inspect a given gateway peer of the default gateway"},
-		{Text: "block-gwpeer", Description: "Block a given gateway peer of the default gateway"},
-		{Text: "unblock-gwpeer", Description: "Unblock a given gateway peer of the default gateway"},
-		{Text: "resume-gwpeer", Description: "Resume a given gateway peer of the default gateway"},
-		{Text: "inspect-pvdpeer", Description: "Inspect a given provider peer of the default gateway"},
-		{Text: "block-pvdpeer", Description: "Block a given provider peer of the default gateway"},
-		{Text: "unblock-pvdpeer", Description: "Unblock a given provider peer of the default gateway"},
-		{Text: "resume-pvdpeer", Description: "Resume a given provider peer of the default gateway"},
+		{Text: "inspect-peer", Description: "Inspect a given peer of the default gateway"},
+		{Text: "block-peer", Description: "Block a given gateway peer of the default gateway"},
+		{Text: "unblock-peer", Description: "Unblock a given peer of the default gateway"},
+		{Text: "resume-peer", Description: "Resume a given peer of the default gateway"},
 		{Text: "list-cids", Description: "List the cid access frequency of the default gateway"},
 		{Text: "get-offers", Description: "Get offers by given cid from the default gateway"},
 		{Text: "cache-content", Description: "Cache offer by given offer digest and and a given sub cid using the default gateway"},
@@ -138,30 +134,26 @@ func (c *GatewayAdminCLI) executor(in string) {
 			}
 		}
 	case "ls-peers":
-		gwIDs, gwScore, gwPending, gwBlocked, gwRecent, pvdIDs, pvdScore, pvdPending, pvdBlocked, pvdRecent, err := c.admin.ListPeers(c.defaultGW)
+		peerIDs, peerScore, peerPending, peerBlocked, peerRecent, err := c.admin.ListPeers(c.defaultGW)
 		if err != nil {
 			fmt.Printf("Error in listing peers for given gateway: %v\n", err.Error())
 			return
 		}
-		fmt.Println("Peer gateways:")
-		for i, gwID := range gwIDs {
-			fmt.Printf("%v:\tid-%v\tscore-%v\tpending-%t\tblocked-%t\trecent-%v", i, gwID, gwScore[i], gwPending[i], gwBlocked[i], gwRecent[i])
+		fmt.Println("Peers:")
+		for i, peerID := range peerIDs {
+			fmt.Printf("%v:\tid-%v\tscore-%v\tpending-%t\tblocked-%t\trecent-%v", i, peerID, peerScore[i], peerPending[i], peerBlocked[i], peerRecent[i])
 		}
-		fmt.Println("Peer providers:")
-		for i, pvdID := range pvdIDs {
-			fmt.Printf("%v:\tid-%v\tscore-%v\tpending-%t\tblocked-%t\trecent-%v", i, pvdID, pvdScore[i], pvdPending[i], pvdBlocked[i], pvdRecent[i])
-		}
-	case "inspect-gwpeer":
+	case "inspect-peer":
 		if len(blocks) != 2 {
-			fmt.Println("Usage: inspect-gwpeer ${peerID}")
+			fmt.Println("Usage: inspect-peer ${peerID}")
 			return
 		}
-		score, pending, blocked, history, err := c.admin.InspectGateway(c.defaultGW, blocks[1])
+		score, pending, blocked, history, err := c.admin.InspectPeer(c.defaultGW, blocks[1])
 		if err != nil {
 			fmt.Printf("Error in inspecting peer for given gateway: %v\n", err.Error())
 			return
 		}
-		fmt.Printf("Gateway peer %v:\n", blocks[2])
+		fmt.Printf("Peer %v:\n", blocks[2])
 		fmt.Printf("Reputation score: %v\n", score)
 		fmt.Printf("Pending: %t\n", pending)
 		fmt.Printf("Blocked: %t\n", blocked)
@@ -169,12 +161,12 @@ func (c *GatewayAdminCLI) executor(in string) {
 		for i, entry := range history {
 			fmt.Printf("History %v - %v\n", i, entry)
 		}
-	case "block-gwpeer":
+	case "block-peer":
 		if len(blocks) != 2 {
-			fmt.Println("Usage: block-gwpeer ${peerID}")
+			fmt.Println("Usage: block-peer ${peerID}")
 			return
 		}
-		ok, msg, err := c.admin.BlockGateway(c.defaultGW, blocks[1])
+		ok, msg, err := c.admin.BlockPeer(c.defaultGW, blocks[1])
 		if err != nil {
 			fmt.Printf("Error in blocking peer for given gateway: %v\n", err.Error())
 			return
@@ -184,12 +176,12 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		fmt.Println("Done")
-	case "unblock-gwpeer":
+	case "unblock-peer":
 		if len(blocks) != 2 {
-			fmt.Println("Usage: unblock-gwpeer ${peerID}")
+			fmt.Println("Usage: unblock-peer ${peerID}")
 			return
 		}
-		ok, msg, err := c.admin.UnblockGateway(c.defaultGW, blocks[1])
+		ok, msg, err := c.admin.UnblockPeer(c.defaultGW, blocks[1])
 		if err != nil {
 			fmt.Printf("Error in unblocking peer for given gateway: %v\n", err.Error())
 			return
@@ -199,75 +191,12 @@ func (c *GatewayAdminCLI) executor(in string) {
 			return
 		}
 		fmt.Println("Done")
-	case "resume-gwpeer":
+	case "resume-peer":
 		if len(blocks) != 2 {
-			fmt.Println("Usage: resume-gwpeer ${peerID}")
+			fmt.Println("Usage: resume-peer ${peerID}")
 			return
 		}
-		ok, msg, err := c.admin.ResumeGateway(c.defaultGW, blocks[1])
-		if err != nil {
-			fmt.Printf("Error in resuming peer for given gateway: %v\n", err.Error())
-			return
-		}
-		if !ok {
-			fmt.Printf("Fail to resuming peer for given gateway: %v\n", msg)
-			return
-		}
-		fmt.Println("Done")
-	case "inspect-pvdpeer":
-		if len(blocks) != 2 {
-			fmt.Println("Usage: inspect-pvdpeer ${peerID}")
-			return
-		}
-		score, pending, blocked, history, err := c.admin.InspectProvider(c.defaultGW, blocks[1])
-		if err != nil {
-			fmt.Printf("Error in inspecting peer for given gateway: %v\n", err.Error())
-			return
-		}
-		fmt.Printf("Provider peer %v:\n", blocks[2])
-		fmt.Printf("Reputation score: %v\n", score)
-		fmt.Printf("Pending: %t\n", pending)
-		fmt.Printf("Blocked: %t\n", blocked)
-		fmt.Println("Recent history:")
-		for i, entry := range history {
-			fmt.Printf("History %v - %v\n", i, entry)
-		}
-	case "block-pvdpeer":
-		if len(blocks) != 2 {
-			fmt.Println("Usage: block-pvdpeer ${peerID}")
-			return
-		}
-		ok, msg, err := c.admin.BlockProvider(c.defaultGW, blocks[1])
-		if err != nil {
-			fmt.Printf("Error in blocking peer for given gateway: %v\n", err.Error())
-			return
-		}
-		if !ok {
-			fmt.Printf("Fail to block peer for given gateway: %v\n", msg)
-			return
-		}
-		fmt.Println("Done")
-	case "unblock-pvdpeer":
-		if len(blocks) != 2 {
-			fmt.Println("Usage: unblock-pvdpeer ${peerID}")
-			return
-		}
-		ok, msg, err := c.admin.UnblockProvider(c.defaultGW, blocks[1])
-		if err != nil {
-			fmt.Printf("Error in unblocking peer for given gateway: %v\n", err.Error())
-			return
-		}
-		if !ok {
-			fmt.Printf("Fail to unblock peer for given gateway: %v\n", msg)
-			return
-		}
-		fmt.Println("Done")
-	case "resume-pvdpeer":
-		if len(blocks) != 2 {
-			fmt.Println("Usage: resume-pvdpeer ${peerID}")
-			return
-		}
-		ok, msg, err := c.admin.ResumeProvider(c.defaultGW, blocks[1])
+		ok, msg, err := c.admin.ResumePeer(c.defaultGW, blocks[1])
 		if err != nil {
 			fmt.Printf("Error in resuming peer for given gateway: %v\n", err.Error())
 			return

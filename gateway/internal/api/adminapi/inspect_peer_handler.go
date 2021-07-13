@@ -42,7 +42,7 @@ func InspectPeerHandler(data []byte) (byte, []byte, error) {
 	}
 
 	// Decode payload
-	nodeID, gateway, err := fcradminmsg.DecodeInspectPeerRequest(data)
+	nodeID, err := fcradminmsg.DecodeInspectPeerRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())
@@ -51,13 +51,8 @@ func InspectPeerHandler(data []byte) (byte, []byte, error) {
 
 	var rep *fcrreputationmgr.Reputation
 	var history []reputation.Record
-	if gateway {
-		rep = c.ReputationMgr.GetGWReputation(nodeID)
-		history = c.ReputationMgr.GetGWHistory(nodeID, 0, 10)
-	} else {
-		rep = c.ReputationMgr.GetPVDReputation(nodeID)
-		history = c.ReputationMgr.GetPVDHistory(nodeID, 0, 10)
-	}
+	rep = c.ReputationMgr.GetPeerReputation(nodeID)
+	history = c.ReputationMgr.GetPeerHistory(nodeID, 0, 10)
 	if rep == nil {
 		err = fmt.Errorf("Cannot find reputation for: %v", nodeID)
 		ack := fcradminmsg.EncodeACK(false, err.Error())

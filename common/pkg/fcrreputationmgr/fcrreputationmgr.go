@@ -28,83 +28,44 @@ type FCRReputationMgr interface {
 	// Shutdown ends the manager's routine safely.
 	Shutdown()
 
-	// AddGW starts tracking given gateway's reputation.
-	AddGW(gwID string)
+	// AddPeer starts tracking given peer's reputation.
+	AddPeer(peerID string)
 
-	// ListGWS lists all gateways in tracking.
-	ListGWS() []string
+	// ListPeers lists all peers' ids in tracking.
+	ListPeers() []string
 
-	// RemvoeGW stops tracking given gateway's reputation.
-	RemoveGW(gwID string)
+	// RemvoePeer stops tracking given peer's reputation.
+	RemovePeer(peerID string)
 
-	// AddPVD starts tracking given provider's reputation.
-	AddPVD(pvdID string)
+	// GetPeerReputation gets the reputation of a given peer.
+	GetPeerReputation(peerID string) *Reputation
 
-	// ListPVDS lists all providers in tracking.
-	ListPVDS() []string
+	// UpdatePeerRecord updates the peer's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
+	UpdatePeerRecord(peerID string, record *reputation.Record, replica uint)
 
-	// RemovePVD stops tracking given provider's reputation.
-	RemovePVD(pvdID string)
+	// PendPeer puts a given peer into pending.
+	PendPeer(peerID string)
 
-	// GetGWReputation gets the reputation of a given gateway.
-	GetGWReputation(gwID string) *Reputation
+	// ResumePeer puts a given peer out of pending.
+	ResumePeer(peerID string)
 
-	// GetPVDReputation gets the reputation of a given provider.
-	GetPVDReputation(pvdID string) *Reputation
+	// GetPendingPeers gets a list of peers currently in pending.
+	GetPendingPeers() []string
 
-	// UpdateGWRecord updates the gateway's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
-	UpdateGWRecord(gwID string, record *reputation.Record, replica uint)
+	// BlockPeer blocks a peer.
+	BlockPeer(peerID string)
 
-	// UpdatePVDRecord updates the provider's reputation with a given record and a given replica (replica = 1 means one additional application of the same record).
-	UpdatePVDRecord(pvdID string, record *reputation.Record, replica uint)
+	// UnBlockPeer unblocks a peer.
+	UnBlockPeer(peerID string)
 
-	// PendGW puts a given gateway into pending.
-	PendGW(gwID string)
+	// GetBlockedPeers gets a list of blocked peers.
+	GetBlockedPeers() []string
 
-	// PendPVD puts a given provider into pending.
-	PendPVD(pvdID string)
+	// GetPeerViolations gets a list of violations from given index to given index for a given peer.
+	GetPeerViolations(peerID string, from uint, to uint) []reputation.Record
 
-	// ResumeGW puts a given gateway out of pending.
-	ResumeGW(gwID string)
-
-	// ResumePVD puts a provider out of pending.
-	ResumePVD(pvdID string)
-
-	// GetPendingGWS gets a list of gateways currently in pending.
-	GetPendingGWS() []string
-
-	// GetPendingPVDS gets a list of providers currently in pending.
-	GetPendingPVDS() []string
-
-	// BlockGW blocks a gateway.
-	BlockGW(gwID string)
-
-	// BlockPVD blocks a provider.
-	BlockPVD(pvdID string)
-
-	// UnBlockGW unblocks a gateway.
-	UnBlockGW(gwID string)
-
-	// UnBlockPVD unblocks a provider.
-	UnBlockPVD(pvdID string)
-
-	// GetBlockedGWS gets a list of blocked gateways.
-	GetBlockedGWS() []string
-
-	// GetBlockedPVDS gets a list of blocked providers.
-	GetBlockedPVDS() []string
-
-	// GetGWViolations gets a list of violations from given index to given index for a given gateway.
-	GetGWViolations(gwID string, from uint, to uint) []reputation.Record
-
-	// GetPVDViolations gets a list of violations from given index to given index for a given provider.
-	GetPVDViolations(pvdID string, from uint, to uint) []reputation.Record
-
-	// GetGWHistory gets a list of history from given index to given index for a given gateway.
-	GetGWHistory(gwID string, from uint, to uint) []reputation.Record
-
-	// GetPVDHistory gets a list of history from given index to given index for a given provider.
-	GetPVDHistory(pvdID string, from uint, to uint) []reputation.Record
+	// GetPeerHistory gets a list of history from given index to given index for a given peer.
+	GetPeerHistory(peerID string, from uint, to uint) []reputation.Record
 }
 
 // Reputation represents the reputation of a peer in the system.

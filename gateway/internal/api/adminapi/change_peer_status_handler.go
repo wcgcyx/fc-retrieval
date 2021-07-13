@@ -39,31 +39,20 @@ func ChangePeerStatusHandler(data []byte) (byte, []byte, error) {
 		return fcradminmsg.ACKType, ack, err
 	}
 
-	nodeID, gateway, block, unblock, err := fcradminmsg.DecodeChangePeerStatusRequest(data)
+	nodeID, block, unblock, err := fcradminmsg.DecodeChangePeerStatusRequest(data)
 	if err != nil {
 		err = fmt.Errorf("Error in decoding payload: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())
 		return fcradminmsg.ACKType, ack, err
 	}
 
-	if gateway {
-		if block {
-			c.ReputationMgr.BlockGW(nodeID)
-		} else if unblock {
-			c.ReputationMgr.UnBlockGW(nodeID)
-		} else {
-			// Resume
-			c.ReputationMgr.ResumeGW(nodeID)
-		}
+	if block {
+		c.ReputationMgr.BlockPeer(nodeID)
+	} else if unblock {
+		c.ReputationMgr.UnBlockPeer(nodeID)
 	} else {
-		if block {
-			c.ReputationMgr.BlockPVD(nodeID)
-		} else if unblock {
-			c.ReputationMgr.UnBlockPVD(nodeID)
-		} else {
-			// Resume
-			c.ReputationMgr.ResumePVD(nodeID)
-		}
+		// Resume
+		c.ReputationMgr.ResumePeer(nodeID)
 	}
 
 	// Succeed

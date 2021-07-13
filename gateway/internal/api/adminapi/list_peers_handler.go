@@ -39,46 +39,28 @@ func ListPeersHandler(data []byte) (byte, []byte, error) {
 		return fcradminmsg.ACKType, ack, err
 	}
 
-	gatewayIDs := make([]string, 0)
-	gatewayScore := make([]int64, 0)
-	gatewayPending := make([]bool, 0)
-	gatewayBlocked := make([]bool, 0)
-	gatewayRecent := make([]string, 0)
-	providerIDs := make([]string, 0)
-	providerScore := make([]int64, 0)
-	providerPending := make([]bool, 0)
-	providerBlocked := make([]bool, 0)
-	providerRecent := make([]string, 0)
+	peerIDs := make([]string, 0)
+	peerScore := make([]int64, 0)
+	peerPending := make([]bool, 0)
+	peerBlocked := make([]bool, 0)
+	peerRecent := make([]string, 0)
 
-	for _, gw := range c.ReputationMgr.ListGWS() {
-		rep := c.ReputationMgr.GetGWReputation(gw)
-		gatewayIDs = append(gatewayIDs, gw)
-		gatewayScore = append(gatewayScore, rep.Score)
-		gatewayPending = append(gatewayPending, rep.Pending)
-		gatewayBlocked = append(gatewayBlocked, rep.Blocked)
-		recent := c.ReputationMgr.GetGWHistory(gw, 0, 1)
+	for _, peerID := range c.ReputationMgr.ListPeers() {
+		rep := c.ReputationMgr.GetPeerReputation(peerID)
+		peerIDs = append(peerIDs, peerID)
+		peerScore = append(peerScore, rep.Score)
+		peerPending = append(peerPending, rep.Pending)
+		peerBlocked = append(peerBlocked, rep.Blocked)
+		recent := c.ReputationMgr.GetPeerHistory(peerID, 0, 1)
 		if len(recent) == 0 {
-			gatewayRecent = append(gatewayRecent, "No record found")
+			peerRecent = append(peerRecent, "No record found")
 		} else {
-			gatewayRecent = append(gatewayRecent, recent[0].Reason())
-		}
-	}
-	for _, pvd := range c.ReputationMgr.ListPVDS() {
-		rep := c.ReputationMgr.GetGWReputation(pvd)
-		providerIDs = append(providerIDs, pvd)
-		providerScore = append(providerScore, rep.Score)
-		providerPending = append(providerPending, rep.Pending)
-		providerBlocked = append(providerBlocked, rep.Blocked)
-		recent := c.ReputationMgr.GetPVDHistory(pvd, 0, 1)
-		if len(recent) == 0 {
-			providerRecent = append(providerRecent, "No record found")
-		} else {
-			providerRecent = append(providerRecent, recent[0].Reason())
+			peerRecent = append(peerRecent, recent[0].Reason())
 		}
 	}
 
 	// Succeed
-	response, err := fcradminmsg.EncodeListPeersResponse(gatewayIDs, gatewayScore, gatewayPending, gatewayBlocked, gatewayRecent, providerIDs, providerScore, providerPending, providerBlocked, providerRecent)
+	response, err := fcradminmsg.EncodeListPeersResponse(peerIDs, peerScore, peerPending, peerBlocked, peerRecent)
 	if err != nil {
 		err = fmt.Errorf("Error in encoding response: %v", err.Error())
 		ack := fcradminmsg.EncodeACK(false, err.Error())

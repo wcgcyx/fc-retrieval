@@ -26,37 +26,25 @@ import (
 
 // FCRReputationMgrImplV1 implements FCRReputationMgr, it is an in-memory version.
 type FCRReputationMgrImplV1 struct {
-	gwsLock  sync.RWMutex
-	pvdsLock sync.RWMutex
+	lock sync.RWMutex
 
-	gws  map[string]*Reputation
-	pvds map[string]*Reputation
+	peers map[string]*Reputation
 
-	gwHistory     map[string]([]reputation.Record)
-	pvdHistory    map[string]([]reputation.Record)
-	gwViolations  map[string]([]reputation.Record)
-	pvdViolations map[string]([]reputation.Record)
+	peerHistory    map[string]([]reputation.Record)
+	peerViolations map[string]([]reputation.Record)
 
-	pendingGWS  map[string]bool
-	pendingPVDS map[string]bool
-	blockedGWS  map[string]bool
-	blockedPVDS map[string]bool
+	pendingPeers map[string]bool
+	blockedPeers map[string]bool
 }
 
 func NewFCRReputationMgrImpV1() FCRReputationMgr {
 	return &FCRReputationMgrImplV1{
-		gwsLock:       sync.RWMutex{},
-		pvdsLock:      sync.RWMutex{},
-		gws:           make(map[string]*Reputation),
-		pvds:          make(map[string]*Reputation),
-		gwHistory:     make(map[string]([]reputation.Record)),
-		pvdHistory:    make(map[string][]reputation.Record),
-		gwViolations:  make(map[string][]reputation.Record),
-		pvdViolations: make(map[string][]reputation.Record),
-		pendingGWS:    make(map[string]bool),
-		pendingPVDS:   make(map[string]bool),
-		blockedGWS:    make(map[string]bool),
-		blockedPVDS:   make(map[string]bool),
+		lock:           sync.RWMutex{},
+		peers:          make(map[string]*Reputation),
+		peerHistory:    make(map[string][]reputation.Record),
+		peerViolations: make(map[string][]reputation.Record),
+		pendingPeers:   make(map[string]bool),
+		blockedPeers:   map[string]bool{},
 	}
 }
 
@@ -67,85 +55,46 @@ func (mgr *FCRReputationMgrImplV1) Start() error {
 func (mgr *FCRReputationMgrImplV1) Shutdown() {
 }
 
-func (mgr *FCRReputationMgrImplV1) AddGW(gwID string) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	_, ok := mgr.gws[gwID]
+func (mgr *FCRReputationMgrImplV1) AddPeer(peerID string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	_, ok := mgr.peers[peerID]
 	if ok {
 		return
 	}
-	mgr.gws[gwID] = &Reputation{
-		NodeID:  gwID,
+	mgr.peers[peerID] = &Reputation{
+		NodeID:  peerID,
 		Score:   0,
 		Pending: false,
 		Blocked: false,
 	}
-	mgr.gwHistory[gwID] = make([]reputation.Record, 0)
-	mgr.gwViolations[gwID] = make([]reputation.Record, 0)
+	mgr.peerHistory[peerID] = make([]reputation.Record, 0)
+	mgr.peerViolations[peerID] = make([]reputation.Record, 0)
 }
 
-func (mgr *FCRReputationMgrImplV1) ListGWS() []string {
-	mgr.gwsLock.RLock()
-	defer mgr.gwsLock.RUnlock()
+func (mgr *FCRReputationMgrImplV1) ListPeers() []string {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
 	res := make([]string, 0)
-	for id := range mgr.gws {
+	for id := range mgr.peers {
 		res = append(res, id)
 	}
 	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) RemoveGW(gwID string) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	delete(mgr.gws, gwID)
-	delete(mgr.gwHistory, gwID)
-	delete(mgr.gwViolations, gwID)
-	delete(mgr.pendingGWS, gwID)
-	delete(mgr.blockedGWS, gwID)
+func (mgr *FCRReputationMgrImplV1) RemovePeer(peerID string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	delete(mgr.peers, peerID)
+	delete(mgr.peerHistory, peerID)
+	delete(mgr.peerViolations, peerID)
 }
 
-func (mgr *FCRReputationMgrImplV1) AddPVD(pvdID string) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	_, ok := mgr.pvds[pvdID]
-	if ok {
-		return
-	}
-	mgr.pvds[pvdID] = &Reputation{
-		NodeID:  pvdID,
-		Score:   0,
-		Pending: false,
-		Blocked: false,
-	}
-	mgr.pvdHistory[pvdID] = make([]reputation.Record, 0)
-	mgr.pvdViolations[pvdID] = make([]reputation.Record, 0)
-}
-
-func (mgr *FCRReputationMgrImplV1) ListPVDS() []string {
-	mgr.pvdsLock.RLock()
-	defer mgr.pvdsLock.RUnlock()
-	res := make([]string, 0)
-	for id := range mgr.pvds {
-		res = append(res, id)
-	}
-	return res
-}
-
-func (mgr *FCRReputationMgrImplV1) RemovePVD(pvdID string) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	delete(mgr.pvds, pvdID)
-	delete(mgr.pvdHistory, pvdID)
-	delete(mgr.pvdViolations, pvdID)
-	delete(mgr.pendingPVDS, pvdID)
-	delete(mgr.blockedPVDS, pvdID)
-}
-
-func (mgr *FCRReputationMgrImplV1) GetGWReputation(gwID string) *Reputation {
+func (mgr *FCRReputationMgrImplV1) GetPeerReputation(peerID string) *Reputation {
 	// Return a copy
-	mgr.gwsLock.RLock()
-	defer mgr.gwsLock.RUnlock()
-	rep, ok := mgr.gws[gwID]
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
+	rep, ok := mgr.peers[peerID]
 	if !ok {
 		return nil
 	}
@@ -156,188 +105,91 @@ func (mgr *FCRReputationMgrImplV1) GetGWReputation(gwID string) *Reputation {
 		Blocked: rep.Blocked,
 	}
 }
-
-func (mgr *FCRReputationMgrImplV1) GetPVDReputation(pvdID string) *Reputation {
-	// Return a copy
-	mgr.pvdsLock.RLock()
-	defer mgr.pvdsLock.RUnlock()
-	rep, ok := mgr.pvds[pvdID]
-	if !ok {
-		return nil
-	}
-	return &Reputation{
-		NodeID:  rep.NodeID,
-		Score:   rep.Score,
-		Pending: rep.Pending,
-		Blocked: rep.Blocked,
-	}
-}
-
-func (mgr *FCRReputationMgrImplV1) UpdateGWRecord(gwID string, record *reputation.Record, replica uint) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	rep, ok := mgr.gws[gwID]
+func (mgr *FCRReputationMgrImplV1) UpdatePeerRecord(peerID string, record *reputation.Record, replica uint) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	rep, ok := mgr.peers[peerID]
 	if !ok {
 		return
 	}
 	for i := uint(0); i < replica+1; i++ {
 		rep.Score += record.Point()
-		mgr.gwHistory[gwID] = append([]reputation.Record{*record.Copy()}, mgr.gwHistory[gwID]...)
+		mgr.peerHistory[peerID] = append([]reputation.Record{*record.Copy()}, mgr.peerHistory[peerID]...)
 		if record.Violation() {
-			mgr.gwViolations[gwID] = append([]reputation.Record{*record.Copy()}, mgr.gwViolations[gwID]...)
+			mgr.peerViolations[peerID] = append([]reputation.Record{*record.Copy()}, mgr.peerViolations[peerID]...)
 		}
 	}
 }
 
-func (mgr *FCRReputationMgrImplV1) UpdatePVDRecord(pvdID string, record *reputation.Record, replica uint) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	rep, ok := mgr.pvds[pvdID]
-	if !ok {
-		return
-	}
-	for i := uint(0); i < replica+1; i++ {
-		rep.Score += record.Point()
-		mgr.pvdHistory[pvdID] = append([]reputation.Record{*record.Copy()}, mgr.pvdHistory[pvdID]...)
-		if record.Violation() {
-			mgr.pvdViolations[pvdID] = append([]reputation.Record{*record.Copy()}, mgr.pvdViolations[pvdID]...)
-		}
-	}
-}
-
-func (mgr *FCRReputationMgrImplV1) PendGW(gwID string) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	rep, ok := mgr.gws[gwID]
+func (mgr *FCRReputationMgrImplV1) PendPeer(peerID string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	rep, ok := mgr.peers[peerID]
 	if !ok {
 		return
 	}
 	rep.Pending = true
-	mgr.pendingGWS[gwID] = true
+	mgr.pendingPeers[peerID] = true
 }
 
-func (mgr *FCRReputationMgrImplV1) PendPVD(pvdID string) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	rep, ok := mgr.pvds[pvdID]
-	if !ok {
-		return
-	}
-	rep.Pending = true
-	mgr.pendingPVDS[pvdID] = true
-}
-
-func (mgr *FCRReputationMgrImplV1) ResumeGW(gwID string) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	rep, ok := mgr.gws[gwID]
+func (mgr *FCRReputationMgrImplV1) ResumePeer(peerID string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	rep, ok := mgr.peers[peerID]
 	if !ok {
 		return
 	}
 	rep.Pending = false
-	delete(mgr.pendingGWS, gwID)
+	delete(mgr.pendingPeers, peerID)
 }
 
-func (mgr *FCRReputationMgrImplV1) ResumePVD(pvdID string) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	rep, ok := mgr.pvds[pvdID]
-	if !ok {
-		return
-	}
-	rep.Pending = false
-	delete(mgr.pendingPVDS, pvdID)
-}
-
-func (mgr *FCRReputationMgrImplV1) GetPendingGWS() []string {
-	mgr.gwsLock.RLock()
-	defer mgr.gwsLock.RUnlock()
+func (mgr *FCRReputationMgrImplV1) GetPendingPeers() []string {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
 	res := make([]string, 0)
-	for key := range mgr.pendingGWS {
+	for key := range mgr.pendingPeers {
 		res = append(res, key)
 	}
 	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPendingPVDS() []string {
-	mgr.pvdsLock.RLock()
-	defer mgr.pvdsLock.RUnlock()
-	res := make([]string, 0)
-	for key := range mgr.pendingPVDS {
-		res = append(res, key)
-	}
-	return res
-}
-
-func (mgr *FCRReputationMgrImplV1) BlockGW(gwID string) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	rep, ok := mgr.gws[gwID]
+func (mgr *FCRReputationMgrImplV1) BlockPeer(peerID string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	rep, ok := mgr.peers[peerID]
 	if !ok {
 		return
 	}
 	rep.Blocked = true
-	mgr.blockedGWS[gwID] = true
+	mgr.blockedPeers[peerID] = true
 }
 
-func (mgr *FCRReputationMgrImplV1) BlockPVD(pvdID string) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	rep, ok := mgr.pvds[pvdID]
-	if !ok {
-		return
-	}
-	rep.Blocked = true
-	mgr.blockedPVDS[pvdID] = true
-}
-
-func (mgr *FCRReputationMgrImplV1) UnBlockGW(gwID string) {
-	mgr.gwsLock.Lock()
-	defer mgr.gwsLock.Unlock()
-	rep, ok := mgr.gws[gwID]
+func (mgr *FCRReputationMgrImplV1) UnBlockPeer(peerID string) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+	rep, ok := mgr.peers[peerID]
 	if !ok {
 		return
 	}
 	rep.Blocked = false
-	delete(mgr.blockedGWS, gwID)
+	delete(mgr.blockedPeers, peerID)
 }
 
-func (mgr *FCRReputationMgrImplV1) UnBlockPVD(pvdID string) {
-	mgr.pvdsLock.Lock()
-	defer mgr.pvdsLock.Unlock()
-	rep, ok := mgr.pvds[pvdID]
-	if !ok {
-		return
-	}
-	rep.Blocked = false
-	delete(mgr.blockedPVDS, pvdID)
-}
-
-func (mgr *FCRReputationMgrImplV1) GetBlockedGWS() []string {
-	mgr.gwsLock.RLock()
-	defer mgr.gwsLock.RUnlock()
+func (mgr *FCRReputationMgrImplV1) GetBlockedPeers() []string {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
 	res := make([]string, 0)
-	for key := range mgr.blockedGWS {
+	for key := range mgr.blockedPeers {
 		res = append(res, key)
 	}
 	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetBlockedPVDS() []string {
-	mgr.pvdsLock.RLock()
-	defer mgr.pvdsLock.RUnlock()
-	res := make([]string, 0)
-	for key := range mgr.blockedPVDS {
-		res = append(res, key)
-	}
-	return res
-}
-
-func (mgr *FCRReputationMgrImplV1) GetGWViolations(gwID string, from uint, to uint) []reputation.Record {
-	mgr.gwsLock.RLock()
-	defer mgr.gwsLock.RUnlock()
+func (mgr *FCRReputationMgrImplV1) GetPeerViolations(gwID string, from uint, to uint) []reputation.Record {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
 	res := make([]reputation.Record, 0)
-	violations, ok := mgr.gwViolations[gwID]
+	violations, ok := mgr.peerViolations[gwID]
 	if !ok || from > to || from > uint(len(violations)) {
 		return res
 	}
@@ -347,39 +199,11 @@ func (mgr *FCRReputationMgrImplV1) GetGWViolations(gwID string, from uint, to ui
 	return res
 }
 
-func (mgr *FCRReputationMgrImplV1) GetPVDViolations(pvdID string, from uint, to uint) []reputation.Record {
-	mgr.pvdsLock.RLock()
-	defer mgr.pvdsLock.RUnlock()
+func (mgr *FCRReputationMgrImplV1) GetPeerHistory(gwID string, from uint, to uint) []reputation.Record {
+	mgr.lock.RLock()
+	defer mgr.lock.RUnlock()
 	res := make([]reputation.Record, 0)
-	violations, ok := mgr.pvdViolations[pvdID]
-	if !ok || from > to || from > uint(len(violations)) {
-		return res
-	}
-	for i := from; i < to && i < uint(len(violations)); i++ {
-		res = append(res, *violations[i].Copy())
-	}
-	return res
-}
-
-func (mgr *FCRReputationMgrImplV1) GetGWHistory(gwID string, from uint, to uint) []reputation.Record {
-	mgr.gwsLock.RLock()
-	defer mgr.gwsLock.RUnlock()
-	res := make([]reputation.Record, 0)
-	history, ok := mgr.gwHistory[gwID]
-	if !ok || from > to || from > uint(len(history)) {
-		return res
-	}
-	for i := from; i < to && i < uint(len(history)); i++ {
-		res = append(res, *history[i].Copy())
-	}
-	return res
-}
-
-func (mgr *FCRReputationMgrImplV1) GetPVDHistory(pvdID string, from uint, to uint) []reputation.Record {
-	mgr.pvdsLock.RLock()
-	defer mgr.pvdsLock.RUnlock()
-	res := make([]reputation.Record, 0)
-	history, ok := mgr.pvdHistory[pvdID]
+	history, ok := mgr.peerHistory[gwID]
 	if !ok || from > to || from > uint(len(history)) {
 		return res
 	}

@@ -27,14 +27,14 @@ import (
 )
 
 // RequestInspectPeer inspects a given peer from a managed gateway
-func RequestInspectPeer(adminURL string, adminKey string, targetID string, gateway bool) (
+func RequestInspectPeer(adminURL string, adminKey string, targetID string) (
 	int64, // score
 	bool, // pending
 	bool, // blocked
 	[]string, // history
 	error, // error
 ) {
-	request, err := fcradminmsg.EncodeInspectPeerRequest(targetID, gateway)
+	request, err := fcradminmsg.EncodeInspectPeerRequest(targetID)
 	if err != nil {
 		err = fmt.Errorf("Error in encoding request: %v", request)
 		logging.Error(err.Error())

@@ -28,12 +28,7 @@ import (
 
 // RequestListPeers lists all the peers a given gateway is having a business relationship with.
 func RequestListPeers(adminURL string, adminKey string) (
-	[]string, // gateway IDs
-	[]int64, // score
-	[]bool, // pending
-	[]bool, // blocked
-	[]string, // most recent activity
-	[]string, // provider IDs
+	[]string, // peer IDs
 	[]int64, // score
 	[]bool, // pending
 	[]bool, // blocked
@@ -44,13 +39,13 @@ func RequestListPeers(adminURL string, adminKey string) (
 	if err != nil {
 		err = fmt.Errorf("Error in sending request: %v", err.Error())
 		logging.Error(err.Error())
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	if respType != fcradminmsg.ListPeersResponseType {
 		err = fmt.Errorf("Getting response of wrong type expect %v, got %v", fcradminmsg.ListPeersResponseType, respType)
 		logging.Error(err.Error())
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	return fcradminmsg.DecodeListPeersResponse(respData)

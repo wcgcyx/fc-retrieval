@@ -27,12 +27,12 @@ import (
 )
 
 // RequestChangePeerStatus requests a managed gateway to change given peer's status
-func RequestChangePeerStatus(adminURL string, adminKey string, targetID string, gateway bool, block bool, unblock bool) (
+func RequestChangePeerStatus(adminURL string, adminKey string, targetID string, block bool, unblock bool) (
 	bool, // Success
 	string, // Information
 	error, // error
 ) {
-	request, err := fcradminmsg.EncodeChangePeerStatusRequest(targetID, gateway, block, unblock)
+	request, err := fcradminmsg.EncodeChangePeerStatusRequest(targetID, block, unblock)
 	if err != nil {
 		err = fmt.Errorf("Error in encoding request: %v", request)
 		logging.Error(err.Error())

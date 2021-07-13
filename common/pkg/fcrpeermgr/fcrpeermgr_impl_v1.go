@@ -177,8 +177,8 @@ func (mgr *FCRPeerMgrImplV1) SyncGW(gwID string) *Peer {
 	gwPeer.Deregistering = gwReg.Deregistering
 	gwPeer.DeregisteringHeight = gwReg.DeregisteringHeight
 	if gwPeer.Deregistering && mgr.reputationMgr != nil {
-		mgr.reputationMgr.UpdateGWRecord(gwID, reputation.NodeDeregistering.Copy(), 0)
-		mgr.reputationMgr.PendGW(gwID)
+		mgr.reputationMgr.UpdatePeerRecord(gwID, reputation.NodeDeregistering.Copy(), 0)
+		mgr.reputationMgr.PendPeer(gwID)
 	}
 	return &Peer{
 		RootKey:             gwPeer.RootKey,
@@ -221,8 +221,8 @@ func (mgr *FCRPeerMgrImplV1) SyncPVD(pvdID string) *Peer {
 	pvdPeer.Deregistering = pvdReg.Deregistering
 	pvdPeer.DeregisteringHeight = pvdReg.DeregisteringHeight
 	if pvdPeer.Deregistering && mgr.reputationMgr != nil {
-		mgr.reputationMgr.UpdatePVDRecord(pvdID, reputation.NodeDeregistering.Copy(), 0)
-		mgr.reputationMgr.PendPVD(pvdID)
+		mgr.reputationMgr.UpdatePeerRecord(pvdID, reputation.NodeDeregistering.Copy(), 0)
+		mgr.reputationMgr.PendPeer(pvdID)
 	}
 	// Return copy
 	return &Peer{
@@ -422,8 +422,8 @@ func (mgr *FCRPeerMgrImplV1) gwSyncRoutine() {
 					}
 					mgr.discoveredGWSLock.Unlock()
 					if gwInfo.Deregistering && mgr.reputationMgr != nil {
-						mgr.reputationMgr.UpdateGWRecord(gwInfo.NodeID, reputation.NodeDeregistering.Copy(), 0)
-						mgr.reputationMgr.PendGW(gwInfo.NodeID)
+						mgr.reputationMgr.UpdatePeerRecord(gwInfo.NodeID, reputation.NodeDeregistering.Copy(), 0)
+						mgr.reputationMgr.PendPeer(gwInfo.NodeID)
 					}
 				}
 			}
@@ -522,8 +522,8 @@ func (mgr *FCRPeerMgrImplV1) pvdSyncRoutine() {
 					}
 					mgr.discoveredPVDSLock.Unlock()
 					if pvdInfo.Deregistering && mgr.reputationMgr != nil {
-						mgr.reputationMgr.UpdatePVDRecord(pvdInfo.NodeID, reputation.NodeDeregistering.Copy(), 0)
-						mgr.reputationMgr.PendPVD(pvdInfo.NodeID)
+						mgr.reputationMgr.UpdatePeerRecord(pvdInfo.NodeID, reputation.NodeDeregistering.Copy(), 0)
+						mgr.reputationMgr.PendPeer(pvdInfo.NodeID)
 					}
 				}
 			}
