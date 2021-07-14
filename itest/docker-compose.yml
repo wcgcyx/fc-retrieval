@@ -28,7 +28,7 @@ services:
     networks:
       - shared
     env_file:
-      - register/.env.example
+      - .env.register
     restart: unless-stopped
     depends_on:
       - redis
@@ -39,11 +39,33 @@ services:
     networks:
       - shared
     env_file:
-      - provider/.env.example
+      - .env.provider
     restart: unless-stopped
     depends_on: 
       - register
       - lotus
+
+  provider1:
+    image: wcgcyx/fc-retrieval/provider
+    container_name: provider0
+    networks:
+      - shared
+    env_file:
+      - .env.provider
+    restart: unless-stopped
+    depends_on: 
+      - provider0
+
+  provider2:
+    image: wcgcyx/fc-retrieval/provider
+    container_name: provider0
+    networks:
+      - shared
+    env_file:
+      - .env.provider
+    restart: unless-stopped
+    depends_on: 
+      - provider1
 
   gateway0:
     image: wcgcyx/fc-retrieval/gateway
@@ -51,10 +73,10 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - provider0
+      - provider2
 
   gateway1:
     image: wcgcyx/fc-retrieval/gateway
@@ -62,7 +84,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway0
@@ -73,7 +95,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway1
@@ -84,7 +106,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway2
@@ -95,7 +117,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway3
@@ -106,7 +128,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway4
@@ -117,7 +139,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway5
@@ -128,7 +150,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway6
@@ -139,7 +161,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway7
@@ -150,7 +172,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway8
@@ -161,7 +183,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway9
@@ -172,7 +194,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway10
@@ -183,7 +205,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway11
@@ -194,7 +216,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway12
@@ -205,7 +227,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway13
@@ -216,7 +238,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway14
@@ -227,7 +249,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway15
@@ -238,7 +260,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway16
@@ -249,7 +271,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway17
@@ -260,7 +282,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway18
@@ -271,7 +293,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway19
@@ -282,7 +304,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway20
@@ -293,7 +315,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway21
@@ -304,7 +326,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway22
@@ -315,7 +337,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway23
@@ -326,7 +348,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway24
@@ -337,7 +359,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway25
@@ -348,7 +370,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway26
@@ -359,7 +381,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway27
@@ -370,7 +392,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway28
@@ -381,7 +403,7 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway29
@@ -392,21 +414,21 @@ services:
     networks:
       - shared
     env_file:
-      - gateway/.env.example
+      - .env.gateway
     restart: unless-stopped
     depends_on: 
       - gateway30
 
-  # gateway32:
-  #   image: wcgcyx/fc-retrieval/gateway
-  #   container_name: gateway32
-  #   networks:
-  #     - shared
-  #   env_file:
-  #     - gateway/.env.example
-  #   restart: unless-stopped
-  #   depends_on: 
-  #     - gateway31
+  gateway32:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway32
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway31
 
 networks:
   shared:
