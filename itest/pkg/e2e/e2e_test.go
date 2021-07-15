@@ -115,7 +115,6 @@ const adminKey = "64656161353131326566363338646539623931323063663635373336646564
 var lotusAPI string
 var lotusToken string
 var registerAPI string
-var gateway32AdminAP string
 var gateway32IP string
 var gwAdmin *gatewayadmin.FilecoinRetrievalGatewayAdmin
 var pvdAdmin *provideradmin.FilecoinRetrievalProviderAdmin
@@ -135,17 +134,16 @@ func TestInitialisation(t *testing.T) {
 
 	// Test gateway initialisation
 	// Get admin AP and IPs for all gateways
-	adminAPs, ips := util.GetContainerInfo(false)
+	ips := util.GetContainerInfo(false)
 	gwAdmin = gatewayadmin.NewFilecoinRetrievalGatewayAdmin()
-	for i, adminAP := range adminAPs {
+	for i, ip := range ips {
 		if i == 32 {
 			// Initialise gateway-32 later
-			gateway32AdminAP = adminAP
-			gateway32IP = ips[i]
+			gateway32IP = ip
 			break
 		}
 		err = gwAdmin.InitialiseGateway(
-			adminAP,
+			fmt.Sprintf("%v:9010", ip),
 			adminKey,
 			9011,
 			ips[i],
@@ -164,11 +162,11 @@ func TestInitialisation(t *testing.T) {
 
 	// Test provider initialisation
 	// Get admin AP and IPs for all providers
-	adminAPs, ips = util.GetContainerInfo(true)
+	ips = util.GetContainerInfo(true)
 	pvdAdmin = provideradmin.NewFilecoinRetrievalProviderAdmin()
-	for i, adminAP := range adminAPs {
+	for i, ip := range ips {
 		err = pvdAdmin.InitialiseProvider(
-			adminAP,
+			fmt.Sprintf("%v:9010", ip),
 			adminKey,
 			9011,
 			ips[i],
@@ -272,7 +270,7 @@ func TestDHTDiscovery(t *testing.T) {
 
 func TestNewGateway(t *testing.T) {
 	err := gwAdmin.InitialiseGateway(
-		gateway32AdminAP,
+		fmt.Sprintf("%v:9010", gateway32IP),
 		adminKey,
 		9011,
 		gateway32IP,
