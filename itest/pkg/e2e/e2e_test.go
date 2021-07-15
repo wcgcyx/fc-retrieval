@@ -78,9 +78,9 @@ const clientKey = "72dd0be8b35fac690d0e763ce13326d9512c81c664b2a0a143bfb87bde5fc
 
 const adminKey = "6465616135313132656636333864653962393132306366363537333664656465"
 
-// test1.txt - QmZcKGSc63SnDfLoeiHcU9B1qZ53xBDEr7Y4a7LUSi9d5T
-// test2.txt - QmTQ5MBuph9v4ggsWRK9rUBrUJqRoC6HG7MvTQusYGaBfy
-// test3.txt - QmU83BhFDvqT2BR1yvm8EuexeYLvMoAnPXRvmF7bq1gj4x
+// test1.txt - QmUN1ytvX4w2VG5LinWySBriHKjCA6484mdbyMJw36LdHa
+// test2.txt - QmYb36f6SPpEN8oeznyxD5qSwztygQrK4jn3JEaCvwxUBx
+// test3.txt - QmRLm3zrumrNrWSwy3Awy4MJyK1Ujk2efqfAV8SaHM2z7X
 
 // Testing scenario
 // Step 1:
@@ -242,7 +242,7 @@ func TestPublishOffer(t *testing.T) {
 }
 
 func TestStandardDiscovery(t *testing.T) {
-	res, err := fcrClient.StandardDiscovery("QmZcKGSc63SnDfLoeiHcU9B1qZ53xBDEr7Y4a7LUSi9d5T")
+	res, err := fcrClient.StandardDiscovery("QmUN1ytvX4w2VG5LinWySBriHKjCA6484mdbyMJw36LdHa")
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in standard discovery: %v", err.Error()))
 	}
@@ -252,14 +252,14 @@ func TestStandardDiscovery(t *testing.T) {
 }
 
 func TestDHTDiscovery(t *testing.T) {
-	res, err := fcrClient.StandardDiscovery("QmTQ5MBuph9v4ggsWRK9rUBrUJqRoC6HG7MvTQusYGaBfy")
+	res, err := fcrClient.StandardDiscovery("QmYb36f6SPpEN8oeznyxD5qSwztygQrK4jn3JEaCvwxUBx")
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in standard discovery: %v", err.Error()))
 	}
 	if !assert.Equal(t, 0, len(res)) {
 		panic(fmt.Errorf("Should find 0 offer by standard discovery but find %v offers", len(res)))
 	}
-	res, err = fcrClient.DHTDiscovery("QmTQ5MBuph9v4ggsWRK9rUBrUJqRoC6HG7MvTQusYGaBfy", "7128499dd89ffcf278b622190bfb344eefd5fdf33ecc64ce1508197cb22419c8")
+	res, err = fcrClient.DHTDiscovery("QmYb36f6SPpEN8oeznyxD5qSwztygQrK4jn3JEaCvwxUBx", "7128499dd89ffcf278b622190bfb344eefd5fdf33ecc64ce1508197cb22419c8")
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in dht discovery: %v", err.Error()))
 	}
@@ -311,7 +311,7 @@ func TestRingUpdate(t *testing.T) {
 	if !assert.True(t, ok) {
 		panic(fmt.Errorf("Fail to publish offer: %v", msg))
 	}
-	res, err := fcrClient.StandardDiscovery("QmZcKGSc63SnDfLoeiHcU9B1qZ53xBDEr7Y4a7LUSi9d5T")
+	res, err := fcrClient.StandardDiscovery("QmUN1ytvX4w2VG5LinWySBriHKjCA6484mdbyMJw36LdHa")
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in standard discovery: %v", err.Error()))
 	}
@@ -322,7 +322,7 @@ func TestRingUpdate(t *testing.T) {
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in adding active gateway: %v", err.Error()))
 	}
-	res, err = fcrClient.StandardDiscovery("QmZcKGSc63SnDfLoeiHcU9B1qZ53xBDEr7Y4a7LUSi9d5T")
+	res, err = fcrClient.StandardDiscovery("QmUN1ytvX4w2VG5LinWySBriHKjCA6484mdbyMJw36LdHa")
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in standard discovery: %v", err.Error()))
 	}
