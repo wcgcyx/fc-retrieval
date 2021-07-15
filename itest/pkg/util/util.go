@@ -144,7 +144,7 @@ func GetContainerInfo(pvd bool) []string {
 		if pvd {
 			return vars[37:]
 		} else {
-			return vars[33:37]
+			return vars[4:37]
 		}
 	}
 }
