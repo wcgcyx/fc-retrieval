@@ -47,7 +47,7 @@ services:
 
   provider1:
     image: wcgcyx/fc-retrieval/provider
-    container_name: provider0
+    container_name: provider1
     networks:
       - shared
     env_file:
@@ -58,7 +58,7 @@ services:
 
   provider2:
     image: wcgcyx/fc-retrieval/provider
-    container_name: provider0
+    container_name: provider2
     networks:
       - shared
     env_file:
