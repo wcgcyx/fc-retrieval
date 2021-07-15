@@ -147,7 +147,7 @@ func main() {
 		registerAPIAddr := config[6]
 		// registerAuthToken := config[7]
 		msgSigningKey := config[8]
-		msgSigningKeyVer, err := strconv.ParseInt(config[10], 9, 32)
+		msgSigningKeyVer, err := strconv.ParseInt(config[9], 10, 32)
 		if err != nil {
 			return
 		}
