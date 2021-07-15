@@ -225,14 +225,14 @@ func TestClientAddActiveGateway(t *testing.T) {
 }
 
 func TestPublishOffer(t *testing.T) {
-	ok, msg, err := pvdAdmin.PublishOffer("ea9a44d5aa53b4714efb7df4aed727ea0cf68b7ed18ac3d36ac2c90f262daf5f", []string{"test1.txt"}, big.NewInt(1000000), time.Now().Add(time.Hour*24).Unix(), 24)
+	ok, msg, err := pvdAdmin.PublishOffer("3f3bb8d3768a56b0d718e01f29a491dcdbf91e5fc7193e948689d001a22099b6", []string{"test1.txt"}, big.NewInt(1000000), time.Now().Add(time.Hour*24).Unix(), 24)
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in publishing offer: %v", err.Error()))
 	}
 	if !assert.True(t, ok) {
 		panic(fmt.Errorf("Fail to publish offer: %v", msg))
 	}
-	ok, msg, err = pvdAdmin.PublishOffer("0d90700579ab17bcf579ccf904a9911ff5e6f4b9d5a450d1c1aef41e56736de0", []string{"test2.txt"}, big.NewInt(1000000), time.Now().Add(time.Hour*24).Unix(), 24)
+	ok, msg, err = pvdAdmin.PublishOffer("56651e4cf52c36b56498df851a52e6d95172f399d86b64d8ac3b69c573087f10", []string{"test2.txt"}, big.NewInt(1000000), time.Now().Add(time.Hour*24).Unix(), 24)
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in publishing offer: %v", err.Error()))
 	}
@@ -304,7 +304,7 @@ func TestNewGateway(t *testing.T) {
 }
 
 func TestRingUpdate(t *testing.T) {
-	ok, msg, err := pvdAdmin.PublishOffer("f2754a52c0fb15e3be023346ccab3919a7f0687d876356810398799410280d57", []string{"test1.txt", "test2.txt"}, big.NewInt(1000000), time.Now().Add(time.Hour*24).Unix(), 24)
+	ok, msg, err := pvdAdmin.PublishOffer("f79f39161ed74c86d27ac21d98728ffbfd8ddd7ea5a5c5dbbb411b47162d3494", []string{"test1.txt", "test2.txt"}, big.NewInt(1000000), time.Now().Add(time.Hour*24).Unix(), 24)
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in publishing offer: %v", err.Error()))
 	}
