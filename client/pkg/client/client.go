@@ -410,7 +410,7 @@ func (c *FilecoinRetrievalClient) DHTDiscovery(cidStr string, targetID string) (
 		}
 	}
 	temp := make(map[string]*cidoffer.SubCIDOffer, 0)
-	response, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.DHTOfferDiscoveryRequestType, targetID, pieceCID, 4, 1)
+	response, err := c.core.P2PServer.Request(gwInfo.NetworkAddr, fcrmessages.DHTOfferDiscoveryRequestType, targetID, pieceCID, uint32(4), uint32(1))
 	if err != nil {
 		err = fmt.Errorf("Error in requesting gateway %v for offers in DHT: %v", targetID, err.Error())
 		logging.Error(err.Error())
