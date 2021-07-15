@@ -1,0 +1,425 @@
+version: "3.8"
+services:
+  
+  lotus:
+    image: wcgcyx/lotusfull
+    container_name: lotus
+    ports:
+      - "1234:1234"
+      - "2345:2345"
+    networks:
+      - shared
+    restart: unless-stopped
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    networks:
+      - shared
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: 
+      redis-server --requirepass xxxx
+    restart: always
+
+  register:
+    image: wcgcyx/fc-retrieval/register
+    container_name: register
+    networks:
+      - shared
+    env_file:
+      - .env.register
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  provider0:
+    image: wcgcyx/fc-retrieval/provider
+    container_name: provider0
+    networks:
+      - shared
+    env_file:
+      - .env.provider
+    restart: unless-stopped
+    depends_on: 
+      - register
+      - lotus
+
+  provider1:
+    image: wcgcyx/fc-retrieval/provider
+    container_name: provider1
+    networks:
+      - shared
+    env_file:
+      - .env.provider
+    restart: unless-stopped
+    depends_on: 
+      - provider0
+
+  provider2:
+    image: wcgcyx/fc-retrieval/provider
+    container_name: provider2
+    networks:
+      - shared
+    env_file:
+      - .env.provider
+    restart: unless-stopped
+    depends_on: 
+      - provider1
+
+  gateway0:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway0
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - provider2
+
+  gateway1:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway1
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway0
+
+  gateway2:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway2
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway1
+    
+  gateway3:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway3
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway2
+
+  gateway4:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway4
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway3
+
+  gateway5:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway5
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway4
+
+  gateway6:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway6
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway5
+
+  gateway7:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway7
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway6
+
+  gateway8:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway8
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway7
+
+  gateway9:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway9
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway8
+
+  gateway10:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway10
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway9
+
+  gateway11:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway11
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway10
+
+  gateway12:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway12
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway11
+
+  gateway13:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway13
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway12
+
+  gateway14:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway14
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway13
+
+  gateway15:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway15
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway14
+
+  gateway16:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway16
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway15
+
+  gateway17:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway17
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway16
+
+  gateway18:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway18
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway17
+
+  gateway19:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway19
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway18
+
+  gateway20:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway20
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway19
+
+  gateway21:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway21
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway20
+
+  gateway22:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway22
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway21
+
+  gateway23:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway23
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway22
+
+  gateway24:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway24
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway23
+
+  gateway25:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway25
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway24
+
+  gateway26:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway26
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway25
+
+  gateway27:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway27
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway26
+
+  gateway28:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway28
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway27
+
+  gateway29:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway29
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway28
+
+  gateway30:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway30
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway29
+
+  gateway31:
+    image: wcgcyx/fc-retrieval/gateway
+    container_name: gateway31
+    networks:
+      - shared
+    env_file:
+      - .env.gateway
+    restart: unless-stopped
+    depends_on: 
+      - gateway30
+
+networks:
+  shared:
+    name: shared
+    external: true
