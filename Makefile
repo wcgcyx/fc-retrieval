@@ -26,3 +26,6 @@ buildlotus:
 
 buildregister:
 	docker build -t wcgcyx/fc-retrieval/register -f register/Dockerfile .
+
+builditest:
+	docker build -t wcgcyx/fc-retrieval/itest -f itest/Dockerfile .
