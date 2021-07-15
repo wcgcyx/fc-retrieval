@@ -318,7 +318,7 @@ func TestRingUpdate(t *testing.T) {
 	if !assert.Equal(t, 1, len(res)) {
 		panic(fmt.Errorf("Should find 1 offer by standard discovery but find %v offers", len(res)))
 	}
-	err = fcrClient.AddActivePeer("54b81c2cc94a8a10be4820716ddcddf834b24d1359bdedbf5a5a78251175793b")
+	err = fcrClient.AddActivePeer("79f1dfc58999bc9a1a3cb9f6cc1b8b3109b6e21350cd85c4641ab9a64907f4b0")
 	if !assert.Empty(t, err) {
 		panic(fmt.Errorf("Error in adding active gateway: %v", err.Error()))
 	}
