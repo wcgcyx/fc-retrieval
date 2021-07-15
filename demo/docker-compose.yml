@@ -54,7 +54,8 @@ services:
       - .env.provider
     restart: unless-stopped
     depends_on: 
-      - provider0
+      - register
+      - lotus
 
   provider2:
     image: wcgcyx/fc-retrieval/provider
@@ -65,7 +66,8 @@ services:
       - .env.provider
     restart: unless-stopped
     depends_on: 
-      - provider1
+      - register
+      - lotus
 
   gateway0:
     image: wcgcyx/fc-retrieval/gateway
@@ -76,7 +78,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - provider2
+      - register
+      - lotus
 
   gateway1:
     image: wcgcyx/fc-retrieval/gateway
@@ -87,7 +90,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway0
+      - register
+      - lotus
 
   gateway2:
     image: wcgcyx/fc-retrieval/gateway
@@ -98,7 +102,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway1
+      - register
+      - lotus
     
   gateway3:
     image: wcgcyx/fc-retrieval/gateway
@@ -109,7 +114,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway2
+      - register
+      - lotus
 
   gateway4:
     image: wcgcyx/fc-retrieval/gateway
@@ -120,7 +126,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway3
+      - register
+      - lotus
 
   gateway5:
     image: wcgcyx/fc-retrieval/gateway
@@ -131,7 +138,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway4
+      - register
+      - lotus
 
   gateway6:
     image: wcgcyx/fc-retrieval/gateway
@@ -142,7 +150,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway5
+      - register
+      - lotus
 
   gateway7:
     image: wcgcyx/fc-retrieval/gateway
@@ -153,7 +162,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway6
+      - register
+      - lotus
 
   gateway8:
     image: wcgcyx/fc-retrieval/gateway
@@ -164,7 +174,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway7
+      - register
+      - lotus
 
   gateway9:
     image: wcgcyx/fc-retrieval/gateway
@@ -175,7 +186,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway8
+      - register
+      - lotus
 
   gateway10:
     image: wcgcyx/fc-retrieval/gateway
@@ -186,7 +198,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway9
+      - register
+      - lotus
 
   gateway11:
     image: wcgcyx/fc-retrieval/gateway
@@ -197,7 +210,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway10
+      - register
+      - lotus
 
   gateway12:
     image: wcgcyx/fc-retrieval/gateway
@@ -208,7 +222,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway11
+      - register
+      - lotus
 
   gateway13:
     image: wcgcyx/fc-retrieval/gateway
@@ -219,7 +234,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway12
+      - register
+      - lotus
 
   gateway14:
     image: wcgcyx/fc-retrieval/gateway
@@ -230,7 +246,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway13
+      - register
+      - lotus
 
   gateway15:
     image: wcgcyx/fc-retrieval/gateway
@@ -241,7 +258,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway14
+      - register
+      - lotus
 
   gateway16:
     image: wcgcyx/fc-retrieval/gateway
@@ -252,7 +270,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway15
+      - register
+      - lotus
 
   gateway17:
     image: wcgcyx/fc-retrieval/gateway
@@ -263,7 +282,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway16
+      - register
+      - lotus
 
   gateway18:
     image: wcgcyx/fc-retrieval/gateway
@@ -274,7 +294,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway17
+      - register
+      - lotus
 
   gateway19:
     image: wcgcyx/fc-retrieval/gateway
@@ -285,7 +306,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway18
+      - register
+      - lotus
 
   gateway20:
     image: wcgcyx/fc-retrieval/gateway
@@ -296,7 +318,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway19
+      - register
+      - lotus
 
   gateway21:
     image: wcgcyx/fc-retrieval/gateway
@@ -307,7 +330,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway20
+      - register
+      - lotus
 
   gateway22:
     image: wcgcyx/fc-retrieval/gateway
@@ -329,7 +353,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway22
+      - register
+      - lotus
 
   gateway24:
     image: wcgcyx/fc-retrieval/gateway
@@ -340,7 +365,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway23
+      - register
+      - lotus
 
   gateway25:
     image: wcgcyx/fc-retrieval/gateway
@@ -351,7 +377,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway24
+      - register
+      - lotus
 
   gateway26:
     image: wcgcyx/fc-retrieval/gateway
@@ -362,7 +389,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway25
+      - register
+      - lotus
 
   gateway27:
     image: wcgcyx/fc-retrieval/gateway
@@ -373,7 +401,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway26
+      - register
+      - lotus
 
   gateway28:
     image: wcgcyx/fc-retrieval/gateway
@@ -384,7 +413,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway27
+      - register
+      - lotus
 
   gateway29:
     image: wcgcyx/fc-retrieval/gateway
@@ -395,7 +425,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway28
+      - register
+      - lotus
 
   gateway30:
     image: wcgcyx/fc-retrieval/gateway
@@ -406,7 +437,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway29
+      - register
+      - lotus
 
   gateway31:
     image: wcgcyx/fc-retrieval/gateway
@@ -417,7 +449,8 @@ services:
       - .env.gateway
     restart: unless-stopped
     depends_on: 
-      - gateway30
+      - register
+      - lotus
 
 networks:
   shared:
